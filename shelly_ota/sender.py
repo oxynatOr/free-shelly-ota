@@ -19,7 +19,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable
 
-from . import firmware, logwatch, rpc
+from . import firmware, logwatch, rpc, secrets_check
 from .builder import OtaError, read_official_manifest
 from .profile import Profile
 
@@ -148,6 +148,9 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     else:
         out(f"NOTE: no official {profile.name} ZIP cached, so it was not checked whether this package replaces "
             f"Shelly's bootloader (run 'ota.py inspect' on it, or 'ota.py fetch {profile.name}').")
+    note = secrets_check.report_note(zip_path)
+    if note:
+        out(f"{note[0]}: {note[1]}")
     if dry_run:
         server.httpd.server_close()
         out("Dry run: nothing sent.")

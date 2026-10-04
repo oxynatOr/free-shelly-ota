@@ -76,7 +76,8 @@ ota:
     allow_partition_access: true   # needed later to update the bootloader
 ```
 
-`--esphome-yaml` makes `build` check the offset and the partition table (errors) and warns if `allow_partition_access` is missing.
+`--esphome-yaml` makes `build` check the offset and the partition table (errors). Without `--esphome-factory` it also warns if
+`allow_partition_access` is missing (needed to update the bootloader later). It also enables the [credential check](#credential-check).
 
 
 Commands
@@ -129,6 +130,8 @@ an input file.
 | `--esphome-yaml YAML` | no | none | Also check the partition offset and `partitions:` CSV of this config |
 | `--esphome-factory FACTORY.bin` | no | none | Also ship ESPHome's bootloader and a clean `otadata` taken from this factory image, so no separate bootloader update is needed later. Heavily checked first, see [After the first boot](#after-the-first-boot) |
 | `--boot-min-version VER` | no | one patch above Shelly's | Only with `--esphome-factory`: the bootloader `min_version` in the manifest. The installer writes only a newer bootloader, hence the default 1.0.2 to 1.0.3. `keep` leaves it, which probably makes the installer skip the bootloader |
+| `--secrets FILE` | no | `secrets.yaml` next to `--esphome-yaml` | Values to look for in the image, see [Credential check](#credential-check) |
+| `--fail-on-secrets` | no | off | Stop (no output) if the image contains credentials. Use it for packages meant to be shared |
 | `--tag LABEL` | no | none | Own label for file name and report; the manifest stays untouched |
 | `--drop LIST` | no | nothing | Leave out parts: `boot,pt,otadata,nvs,fs` (dropping `nvs`/`otadata` is untested on devices) |
 | `-o`, `--output ZIP` | no | `out/<auto name>` | Output file |
@@ -268,7 +271,27 @@ Notes & troubleshooting
   On the Plug M Gen3, ESPHome came up after a power-off of about 30 seconds (whether it would also have started
   without it was not tested).
 - **Safety:** nothing is downloaded unless you run `fetch` (or pass `--download`). Shelly firmware is not part of this
-  repository (`fw/` and `out/` are git-ignored); you download it yourself.
+  repository (`fw/` and `out/` are git-ignored; `out/` can contain credentials, see [Credential check](#credential-check)); you download it yourself.
+
+
+Credential check
+----------------
+
+An ESPHome image stores Wi-Fi SSID/password, API keys and similar values **in plain text**, and so does every package built from
+it. `build` therefore compares the image (and the `--esphome-factory` image) with the values from your ESPHome config and its
+`secrets.yaml` (`wifi.ssid`, `wifi.password`, `wifi.ap.password`, `api.encryption.key`, `api.password`, `ota[].password`,
+`web_server.auth.password`, `mqtt.password` and every other value in `secrets.yaml`). On a hit it prints a warning with the
+**names** of the matches (never the values), writes them to `<zip>.report.json` as `contains_secrets`, and `send`/`inspect` warn again.
+`--fail-on-secrets` turns the warning into an error. Without `--esphome-yaml`/`--secrets` nothing can be compared; the build says so.
+`build` also warns if the output file lies in a git work tree where it is not ignored. Never share, upload or commit such a ZIP; a package
+for others should come from a config without credentials (e.g. a Wi-Fi setup config).
+
+
+Versioning
+----------
+
+[Semantic Versioning](https://semver.org); while the version is 0.x the tool is experimental and minor releases may change behaviour.
+`python ota.py --version` shows it, the build report records it as `tool_version`, and changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 
 <!-- LICENSE -->

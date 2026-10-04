@@ -14,6 +14,7 @@ import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import __version__, secrets_check
 from .profile import Profile
 
 DROPPABLE_PARTS = ("boot", "pt", "otadata", "nvs", "fs")
@@ -40,6 +41,7 @@ class BuildResult:
     tag: str | None = None
     warnings: list[str] = field(default_factory=list)
     replaced: list[str] = field(default_factory=list)  # parts taken from an ESPHome factory image (boot, otadata)
+    secrets_found: list[str] | None = None  # names of credentials found in the image; None = not checked
 
 
 def check_app_image(app: bytes, platform: str, slot_size: int, slot_name: str) -> list[str]:
@@ -115,7 +117,8 @@ def default_output_name(profile: Profile, app_path: Path, today: dt.date | None 
 
 def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
           drop: tuple[str, ...] = (), tag: str | None = None, factory: Path | None = None,
-          boot_min_version: str | None = None) -> BuildResult:
+          boot_min_version: str | None = None, secrets: dict[str, list[bytes]] | None = None,
+          fail_on_secrets: bool = False) -> BuildResult:
     tag = check_tag(tag)
     for part in drop:
         if part not in DROPPABLE_PARTS:
@@ -132,6 +135,20 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
 
     app = app_path.read_bytes()
     warnings = check_app_image(app, profile.platform, profile.app_slot_size, profile.app_ptn)
+
+    secrets_found: list[str] | None = None
+    if secrets is not None:
+        images = [app] + ([factory.read_bytes()] if factory else [])
+        secrets_found = sorted({n for img in images for n in secrets_check.scan(img, secrets)})
+        if secrets_found:
+            warnings.append("CREDENTIALS IN THE IMAGE: " + ", ".join(secrets_found) + " are stored in plain text in this "
+                            "package. Do not share, upload or commit it.")
+            if fail_on_secrets:
+                raise OtaError("The image contains credentials (" + ", ".join(secrets_found) + "); --fail-on-secrets is set. "
+                               "Build a version without them if the package is meant to be shared.")
+    else:
+        warnings.append("Credentials were not checked (give --esphome-yaml with a secrets.yaml next to it, or --secrets FILE). "
+                        "ESPHome images contain Wi-Fi data in plain text if the config has it: do not share this package.")
 
     with zipfile.ZipFile(official_zip) as original:
         manifest = read_official_manifest(original, profile.name)
@@ -208,7 +225,7 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
         output=output, sha256=zip_sha, app_size=len(app), app_sha256=hashlib.sha256(app).hexdigest(),
         parts=list(written["parts"]), dropped=dropped,
         official_version=manifest["version"], official_build_id=manifest.get("build_id"), tag=tag, warnings=warnings,
-        replaced=replaced,
+        replaced=replaced, secrets_found=secrets_found,
     )
 
 
@@ -221,7 +238,9 @@ def write_report(result: BuildResult) -> None:
         "app_sha256": result.app_sha256, "parts": result.parts, "dropped": result.dropped,
         "official_version": result.official_version, "official_build_id": result.official_build_id, "tag": result.tag,
         "bootloader_replaced": "boot" in result.replaced,
+        "contains_secrets": result.secrets_found,  # names only (never values); null = not checked
         "warnings": result.warnings,
+        "tool_version": __version__,
         "built": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
     }
     Path(str(out) + ".report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

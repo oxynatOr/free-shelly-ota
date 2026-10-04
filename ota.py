@@ -11,7 +11,7 @@ import json
 import sys
 from pathlib import Path
 
-from shelly_ota import MODULE_DIR, builder, devicegen, firmware, lint, logwatch, profile, sender
+from shelly_ota import MODULE_DIR, __version__, builder, devicegen, firmware, lint, logwatch, profile, secrets_check, sender
 
 EPILOG = """\
 examples:
@@ -22,6 +22,8 @@ examples:
   python ota.py send PlugMG3 out/PlugMG3-app-20261004.zip --watch 60
   python ota.py inspect out/PlugMG3-app-20261004.zip
 
+A built package contains your Wi-Fi/API credentials in plain text if the config has them. build compares the image with
+--esphome-yaml/secrets.yaml and warns (--fail-on-secrets stops); never share such a ZIP.
 Applying a built ZIP wipes NVS (Wi-Fi, settings) unless you --drop nvs.
 Bootloader: by default Shelly's bootloader stays. --esphome-factory swaps in ESPHome's (and a clean otadata) so later
 ESPHome OTAs work; confirmed on the Plug M Gen3 only, and if it does not suit a device only UART can recover it.
@@ -71,6 +73,11 @@ def cmd_build(args) -> None:
         print(f"ESPHome config check OK ({args.esphome_yaml.name})")
         for w in lint.lint_warnings(args.esphome_yaml, bootloader_shipped=bool(args.esphome_factory)):
             print(f"  WARNING: {w}")
+    secrets = None
+    if args.esphome_yaml or args.secrets:
+        secrets, problem = secrets_check.collect(args.esphome_yaml, args.secrets)
+        if problem:
+            secrets = None
     drop = tuple(x for x in args.drop.split(",") if x)
     if args.drop_fs:
         drop += ("fs",)
@@ -83,7 +90,8 @@ def cmd_build(args) -> None:
         official = _fetch_official(p, version=args.version, insecure=args.insecure)
     output = args.output or MODULE_DIR / "out" / builder.default_output_name(p, args.app, tag=builder.check_tag(args.tag))
     result = builder.build(p, args.app, official, output, drop=drop, tag=args.tag, factory=args.esphome_factory,
-                           boot_min_version=args.boot_min_version)
+                           boot_min_version=args.boot_min_version, secrets=secrets,
+                           fail_on_secrets=args.fail_on_secrets)
     if not args.dry_run:
         builder.write_report(result)
     else:
@@ -91,8 +99,12 @@ def cmd_build(args) -> None:
     print(f"{'DRY RUN, removed: ' if args.dry_run else 'OK: '}{result.output}")
     print(f"  base firmware {result.official_version} ({result.official_build_id}), "
           f"app {result.app_size} bytes, parts {result.parts}")
+    if result.secrets_found == []:
+        print(f"  Credential check OK: none of {len(secrets)} known values found in the image")
     for w in result.warnings:
-        print(f"  NOTE: {w}")
+        print(f"  {'WARNING' if w.startswith(('CREDENTIALS', 'BOOTLOADER', 'Credentials were not')) else 'NOTE'}: {w}")
+    if not args.dry_run and result.secrets_found != [] and secrets_check.git_would_track(output):
+        print(f"  WARNING: {output} is inside a git work tree and not ignored there; git add would pick up this package.")
 
 
 def _send(args, zip_path: Path) -> None:
@@ -152,6 +164,9 @@ def cmd_clean(args) -> None:
 def cmd_inspect(args) -> None:
     p = profile.load_profile(args.device) if args.device else None
     print(builder.inspect_zip(args.zip, p))
+    note = secrets_check.report_note(args.zip)
+    if note:
+        print(f"  {note[0]}: {note[1]}")
 
 
 def device_options() -> argparse.ArgumentParser:
@@ -180,6 +195,7 @@ def send_options() -> argparse.ArgumentParser:
 def main() -> None:
     ap = argparse.ArgumentParser(prog="ota.py", description=__doc__, epilog=EPILOG,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = ap.add_subparsers(dest="cmd", required=True, title="commands", metavar="<command>")
     fmt = argparse.RawDescriptionHelpFormatter
     dev_help = f"device name ({', '.join(profile.list_devices())})"
@@ -220,6 +236,11 @@ def main() -> None:
                         "writes a bootloader newer than the installed one, so the default is one patch level above "
                         "the official one (1.0.2 -> 1.0.3). 'keep' leaves it unchanged, which probably makes the "
                         "installer skip the bootloader (then the old one stays)")
+    b.add_argument("--secrets", type=Path, metavar="FILE",
+                   help="secrets.yaml to compare the image with (default: secrets.yaml next to --esphome-yaml)")
+    b.add_argument("--fail-on-secrets", action="store_true",
+                   help="stop if the image contains credentials from the config/secrets (default: only warn). "
+                        "Use it for packages that are meant to be shared")
     b.add_argument("--dry-run", action="store_true", help="check only, keep no output")
     g = b.add_argument_group("parts")
     g.add_argument("--drop", default="", metavar="LIST", help="leave out parts: boot,pt,otadata,nvs,fs")

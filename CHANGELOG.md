@@ -1,0 +1,20 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org).
+
+## [0.1.0] - 2026-10-04
+First release (experimental).
+
+### Added
+- `build`, `send`, `restore`, `log`, `fetch`, `add-device`, `inspect`, `list`, `clean`; profiles for 8 Shelly Gen3/Gen4 devices
+  (hardware-confirmed: Plug M Gen3 only).
+- `--esphome-factory` / `--boot-min-version`: ship ESPHome's bootloader and a clean `otadata` in the package.
+- Credential check: `build` compares the image with the ESPHome config and `secrets.yaml`, warns with the names of matches,
+  records them in the report; `--secrets FILE`, `--fail-on-secrets`; `send` and `inspect` warn again.
+- `ota.py --version`, `tool_version` in the build report.
+
+### Changed
+- Help texts and post-flash messages describe the bootloader options and their risk; the follow-up "update the bootloader"
+  note and the `allow_partition_access` warning no longer appear when the package already carries ESPHome's bootloader.
+- `send` says when it could not check whether the bootloader is replaced (no cached official ZIP).
