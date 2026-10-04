@@ -1,0 +1,12 @@
+Free-Shelly OTA
+Copyright 2026 oxynatOr
+
+This copyright covers only the original work in this repository: the source code,
+tests and documentation. It does not cover Shelly firmware or OTA packages (not part of
+this repository, they belong to their owners) or the research of the projects listed
+under "Credits" in README.github.md.
+
+Shelly is a trademark of Allterco Robotics. ESPHome, Espressif, Schneider Electric, CSA
+and all other names are trademarks of their respective owners. This project is not
+affiliated with or endorsed by any of them; the Apache License 2.0 (section 6) grants
+no rights to use their names or marks.

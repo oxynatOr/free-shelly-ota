@@ -1,0 +1,6 @@
+# OTA profile for RGBCCTBulbG3, generated from the official 2.0.1 package.
+display_name: "Shelly Multicolor Bulb E27 Gen3"
+platform: esp32c3
+update_id: RGBCCTBulbG3        # name used by https://updates.shelly.cloud/update/<update_id>
+app_ptn: app_0
+app_slot_size: 0x280000   # app_0 @0x20000

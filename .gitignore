@@ -1,0 +1,29 @@
+# Shelly firmware and generated packages: downloaded/built locally, never committed
+fw/
+out/
+*.bin
+*.img
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# ESPHome build output and secrets
+.esphome/
+secrets.yaml
+
+# Local notes, logs, temp files
+*.log
+*.tmp
+Demo-README.md
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
