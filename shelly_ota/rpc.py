@@ -59,7 +59,11 @@ def request(url: str, *, data: bytes | None = None, user: str | None = None, pas
                                         timeout=timeout) as resp:
                 return resp.read()
     except urllib.error.HTTPError as e:
-        raise OtaError(f"HTTP {e.code} from {url}") from e
+        try:
+            detail = e.read(300).decode(errors="replace").strip()
+        except OSError:
+            detail = ""
+        raise OtaError(f"HTTP {e.code} from {url}" + (f": {detail}" if detail else "")) from e
     except OSError as e:
         raise OtaError(f"No answer from {url}: {e}") from e
 

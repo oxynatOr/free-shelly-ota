@@ -11,8 +11,6 @@ import yaml
 
 from .profile import Profile
 
-WANTED_OFFSET = 0x10000  # Shelly keeps its partition table here, ESP-IDF's default is 0x8000
-
 
 class _Loader(yaml.SafeLoader):
     pass
@@ -42,9 +40,10 @@ def lint_esphome(yaml_path: Path, profile: Profile) -> list[str]:
         problems.append("esp32.framework.type should be 'esp-idf'.")
     value = (framework.get("sdkconfig_options") or {}).get("CONFIG_PARTITION_TABLE_OFFSET")
     offset = int(str(value), 0) if value is not None and str(value).strip() else None
-    if offset != WANTED_OFFSET:
-        problems.append("esp32.framework.sdkconfig_options.CONFIG_PARTITION_TABLE_OFFSET must be \"0x10000\" "
-                        f"(found: {value!r}). Without it the app looks for its partitions at 0x8000.")
+    if offset != profile.pt_offset:  # ESP-IDF's default is 0x8000, Shelly keeps its table elsewhere
+        problems.append("esp32.framework.sdkconfig_options.CONFIG_PARTITION_TABLE_OFFSET must be "
+                        f"\"0x{profile.pt_offset:x}\" (found: {value!r}). "
+                        "Without it the app looks for its partitions at 0x8000.")
 
     partitions = esp32.get("partitions")
     if not partitions:

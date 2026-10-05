@@ -127,10 +127,10 @@ class SlotAndChipTests(unittest.TestCase):
 
 class VariantTests(unittest.TestCase):
     def test_zigbee_profile_has_parent_and_own_firmware(self):
-        zb = profile.load_profile("PlugUSG4ZB")
-        self.assertEqual(zb.parent, "PlugUSG4")
-        self.assertIsNone(profile.load_profile("PlugUSG4").parent)
-        self.assertNotEqual(firmware.cached_zip("PlugUSG4ZB"), firmware.cached_zip("PlugUSG4"))
+        zb = profile.load_profile("PowerStripZB")
+        self.assertEqual(zb.parent, "PowerStrip")
+        self.assertIsNone(profile.load_profile("PowerStrip").parent)
+        self.assertNotEqual(firmware.cached_zip("PowerStripZB"), firmware.cached_zip("PowerStrip"))
 
     def _send_dry(self, app, profile_name, **kw):
         tmp = Path(tempfile.mkdtemp())
@@ -144,16 +144,16 @@ class VariantTests(unittest.TestCase):
         return lines
 
     def test_zigbee_device_accepted_by_base_package_via_compatible_pattern(self):
-        lines = self._send_dry("PlugUSG4ZB", "PlugUSG4")
+        lines = self._send_dry("PowerStripZB", "PowerStrip")
         self.assertTrue(any("compatible pattern" in l for l in lines), lines)
 
     def test_exact_match_has_no_note(self):
-        lines = self._send_dry("PlugUSG4ZB", "PlugUSG4ZB")
+        lines = self._send_dry("PowerStripZB", "PowerStripZB")
         self.assertFalse(any("compatible pattern" in l for l in lines), lines)
 
     def test_unrelated_device_still_refused(self):
         with self.assertRaises(builder.OtaError):
-            self._send_dry("PlugMG3", "PlugUSG4")
+            self._send_dry("PlugMG3", "PowerStrip")
 
     def test_alt_missing_in_reply_is_an_error(self):
         orig = firmware.query_update_api
@@ -259,6 +259,22 @@ class OfflineTests(unittest.TestCase):
     def test_lint_accepts_good_config(self):
         y = self._yaml(self.GOOD, "app_0, app, ota_0, 0x20000, 0x2a0000\n")
         self.assertEqual(lint.lint_esphome(y, profile.load_profile("PlugMG3")), [])
+
+    def test_lint_uses_profile_pt_offset(self):
+        htg3 = profile.load_profile("HTG3")
+        self.assertEqual(htg3.pt_offset, 0xf000)
+        self.assertEqual(profile.load_profile("PlugMG3").pt_offset, 0x10000)
+        csv = "app_0, app, ota_0, 0x20000, 0x280000\n"
+        good = self._yaml(self.GOOD.replace("0x10000", "0xf000"), csv)
+        self.assertEqual(lint.lint_esphome(good, htg3), [])
+        bad = self._yaml(self.GOOD, csv)  # Plug M's offset on the H&T
+        self.assertEqual(len(lint.lint_esphome(bad, htg3)), 1)
+
+    def test_add_device_writes_pt_offset_only_when_not_default(self):
+        path, _ = devicegen.create_profile(firmware.cached_zip("HTG3"), devices_dir=self.tmp)
+        self.assertEqual(profile.load_profile("HTG3", self.tmp).pt_offset, 0xf000)
+        path, _ = devicegen.create_profile(firmware.cached_zip("PlugMG3"), devices_dir=self.tmp)
+        self.assertNotIn("pt_offset", path.read_text(encoding="utf-8"))
 
     def test_lint_flags_missing_offset_and_wrong_slot(self):
         y = self._yaml("esp32:\n  partitions: p.csv\n  framework:\n    type: esp-idf\n",

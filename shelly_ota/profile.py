@@ -25,6 +25,7 @@ class Profile:
     app_ptn: str
     app_slot_size: int
     parent: str | None = None  # base device whose update API lists this variant under "alt"
+    pt_offset: int = 0x10000  # where the device keeps its partition table (HTG3: 0xf000)
 
 
 def _to_int(value, key: str) -> int:
@@ -53,4 +54,5 @@ def load_profile(name: str, devices_dir: Path = DEVICES_DIR) -> Profile:
         app_ptn=raw.get("app_ptn", "app_0"),
         app_slot_size=_to_int(raw["app_slot_size"], "app_slot_size"),
         parent=raw.get("parent"),
+        pt_offset=_to_int(raw.get("pt_offset", 0x10000), "pt_offset"),
     )

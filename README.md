@@ -39,8 +39,7 @@ Tested devices
 | Shelly       | Duo Bulb Gen3                | `DuoBulbG3`   | ESP32-C3 | 2.0.1   | not yet |
 | Shelly       | Multicolor Bulb E27 Gen3     | `RGBCCTBulbG3`| ESP32-C3 | 2.0.1   | not yet |
 | Shelly       | Plug S Gen3                  | `PlugSG3`     | ESP32-C3 | 2.0.1   | not yet |
-| Shelly       | Plug US Gen4                 | `PlugUSG4`    | ESP32-C6 | 2.0.1   | not yet |
-| Shelly       | Plug US Gen4 (Zigbee)        | `PlugUSG4ZB`  | ESP32-C6 | 2.0.1   | not yet |
+| Shelly       | H&T Gen3                     | `HTG3`        | ESP32-C3 | 2.0.1   | ✅ `send` from stock 2.0.1 (slot 0) with ESPHome bootloader (`--esphome-factory`), ESPHome came up; repeated from a UART-restored original dump, updated to stock 2.0.1 first; partition table at `0xf000`, so `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"` |
 | Shelly       | Power Strip 4 Gen4           | `PowerStrip`  | ESP32-C6 | 2.0.1   | not yet |
 | Shelly       | Power Strip 4 Gen4 (Zigbee)  | `PowerStripZB`| ESP32-C6 | 2.0.1   | not yet |
 
@@ -228,7 +227,7 @@ Before building, the tool verifies:
   `fs_0/1`; differences in `scratch`/`shelly` only warn) and its `otadata` area is erased;
 - the factory image contains exactly the app you are packing (same build).
 
-`send` warns again when a package replaces the bootloader. It worked on the Plug M Gen3 only; on other models the
+`send` warns again when a package replaces the bootloader. It worked on the Plug M Gen3 and the H&T Gen3; on other models the
 installer's rule may differ, and a bootloader that does not suit the device can only be fixed with UART. The Plug US
 project advises against replacing the bootloader in the initial package; this goes beyond its findings.
 `--boot-min-version VER` sets the value yourself, `keep` leaves Shelly's.
@@ -264,6 +263,10 @@ Notes & troubleshooting
   possible because Gen4 verifies OTA images with an ECDSA signature, so it needs a UART flash. The Gen4 project above
   documents OTA installs for other Gen4 models. Which is true may depend on model and firmware version; unverified here.
   If a Gen4 device rejects the package, check the log (`send --watch`) and fall back to UART.
+- **Battery devices (H&T Gen3):** the stock updater refuses to start below 30 % battery: `Shelly.Update` answers
+  HTTP 500 with `{"code":-109,"message":"OTA not allowed (Battery below 30 percent. )"}` (seen on the H&T Gen3). Charge or
+  replace the battery first; after that `send` ran through. `send` shows the device's answer after "HTTP 500". The device
+  must also be awake.
 - **Power cycle:** after the first boot a real power cycle may be needed (the cause is not understood; some state of the
   stock firmware seems to survive a soft reset). Disconnect the device from mains, wait at least 30 seconds so the
   capacitors can discharge (a quick unplug may leave the ESP powered; the time is a rule of thumb, not measured), then

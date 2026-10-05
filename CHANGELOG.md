@@ -3,6 +3,21 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Added
+- Profile `HTG3` (Shelly H&T Gen3), hardware-confirmed with `--esphome-factory`.
+- Optional profile key `pt_offset` (partition table address, default `0x10000`); `add-device` reads it from the package.
+  The H&T Gen3 keeps its table at `0xf000`.
+
+### Removed
+- Profiles `PlugUSG4` and `PlugUSG4ZB` (Plug US Gen4): cannot be tested by the maintainer. `add-device` still creates
+  profiles for them. The variant tests now use `PowerStrip` / `PowerStripZB`.
+
+### Fixed
+- `--esphome-yaml` check no longer hard-codes the partition table offset 0x10000; it uses the profile's `pt_offset`.
+- RPC errors now include the device's answer (e.g. `OTA not allowed (Battery below 30 percent. )`) instead of only the HTTP code.
+
 ## [0.1.0] - 2026-10-04
 First release (experimental).
 
