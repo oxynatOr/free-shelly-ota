@@ -60,7 +60,10 @@ python ota.py build PlugMG3 app.ota.bin --esphome-factory app.factory.bin --esph
 python ota.py send PlugMG3 out/PlugMG3-app-<date>.zip --watch 60
 ```
 
-Your ESPHome config needs Shelly's partition table and offset:
+Your ESPHome config needs Shelly's partition table and offset. The tables are in [`partitions/`](partitions) (one CSV per
+device, copy it next to your YAML); `python ota.py partition-csv <Device> -o <file>` writes it from the official package.
+The offset is where the device keeps its table (it is in the CSV header): `0x10000` for the Plug M Gen3, `0xf000` for the
+H&T Gen3.
 
 ```yaml
 esp32:
@@ -68,11 +71,11 @@ esp32:
   framework:
     type: esp-idf
     sdkconfig_options:
-      CONFIG_PARTITION_TABLE_OFFSET: "0x10000"
+      CONFIG_PARTITION_TABLE_OFFSET: "0x10000"   # H&T Gen3: "0xf000"
 
 ota:
   - platform: esphome
-    allow_partition_access: true   # needed later to update the bootloader
+    allow_partition_access: true   # only needed to update the bootloader later; not needed with --esphome-factory
 ```
 
 `--esphome-yaml` makes `build` check the offset and the partition table (errors). Without `--esphome-factory` it also warns if
@@ -94,6 +97,7 @@ python ota.py send  PlugMG3 out/<file>.zip --watch 60   # 3. send it to the devi
 | --- | --- | --- |
 | Prepare | `fetch` | Download the official package and keep it in `fw/` |
 | Prepare | `add-device` | Create a device profile from an official ZIP (`--parent` for a variant) |
+| Prepare | `partition-csv` | Write the stock partition table as ESPHome `partitions:` CSV (`-o FILE`) |
 | Build | `build` | Replace the app part, check the image, write the ZIP to `out/` |
 | Deploy | `send` | Check the device, serve the ZIP, trigger the update |
 | Deploy | `restore` | Send the cached official firmware back |
@@ -154,7 +158,9 @@ an input file.
 Checks the device (`Shelly.GetDeviceInfo`, model must match), asks before flashing, serves the ZIP on a temporary web
 server and calls `Shelly.Update?url=…`. The Shelly downloads the file itself, so this PC must be reachable from it, for
 example connected to the Shelly's own access point. `restore` takes the same options and sends the cached official
-firmware instead of a ZIP you choose. It only works while the Shelly firmware is still running; a device that already
+firmware instead of a ZIP you choose. While `send` runs, its web server listens on all interfaces of this PC and hands
+the ZIP to anyone on the network who asks for its exact file name; the ZIP may contain your Wi-Fi password (see
+[Credential check](#credential-check)), so do not run it on an untrusted network. `restore` only works while the Shelly firmware is still running; a device that already
 runs ESPHome does not answer, and the way back is then UART with a flash backup. The official package also resets NVS
 and `otadata`, so Wi-Fi credentials and settings are lost.
 
@@ -267,8 +273,16 @@ Notes & troubleshooting
 - **Slot:** the stock updater writes to the slot it is not running from. `send` shows the device's `slot` and warns on
   slot 0: for Gen4 the installer is reported to skip the app there (not verified for Gen3). If nothing changes, install
   one normal stock update first.
-- **eFuse:** a related project reports a permanent eFuse marker for non-official firmware (Plus Plug US).
-  Unverified for Gen3.
+- **Empty `--watch` log:** the log arrives as UDP datagrams on port 9514 (`--log-port`). A firewall that blocks incoming UDP
+  on that port (on Windows, the Python program in Windows Defender Firewall) leaves the log empty; the update itself still
+  works. With the log you see the installer's `ota_progress` events (0 to 95 %, then `ota_success`) and, for a package with
+  ESPHome's bootloader, the line `Boot: cur ... min ... update? 0/1` that says whether the bootloader gets written.
+- **eFuse:** a related project reports a permanent eFuse marker for non-official firmware (Plus Plug US). Unverified for
+  Gen3. Observed on the H&T Gen3 (stock 2.0.1, unsigned package): after the update the installer logged `FW signatures:
+  want 07 got 00` followed by `EFUSE write error bit[1]` and `bit[2]` with `Bits are not empty. Write operation is
+  forbidden.` So it tries to write eFuse bits for a package without the signature marks, and those writes were refused
+  because the bits were already set. The update still succeeded and ESPHome ran. What the bits mean is not known; this may
+  be irreversible on a device where the bits were still empty, so treat it as a possible permanent change.
 - **URL vs. upload:** `send` uses `Shelly.Update?url=` with a local web server. This worked on the Plug M Gen3 (stock
   firmware 1.8.99, running from slot 1). The Tasmota project advises against URL updates and uses the web UI file
   upload instead; if URL mode fails on your device, that is why.

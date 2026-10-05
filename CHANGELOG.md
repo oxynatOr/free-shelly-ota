@@ -3,9 +3,11 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org).
 
-## [Unreleased]
+## [0.2.0] - 2026-10-05
 
 ### Added
+- `partition-csv` command and `partitions/<Device>-stock.csv` for every profile: the stock partition table as ESPHome
+  `partitions:` CSV (so the README's Quick start works without extra files).
 - Profile `HTG3` (Shelly H&T Gen3), hardware-confirmed with `--esphome-factory`.
 - Optional profile key `pt_offset` (partition table address, default `0x10000`); `add-device` reads it from the package.
   The H&T Gen3 keeps its table at `0xf000`.
@@ -15,6 +17,8 @@ All notable changes to this project are documented here. The format follows
   skipped and Shelly's loader stayed. With 1.0.9 the bootloader is written (hardware-confirmed).
 
 ### Changed
+- README: notes on the web server exposure during `send`, the UDP firewall for `--watch`, and the eFuse write errors seen on
+  the H&T Gen3; the HTG3 row now covers an ESPHome OTA after the package install (confirmed).
 - README: how to check that the bootloader was really replaced (installer log `Boot: cur ... min ...`, UART boot log) and
   the UART fix.
 

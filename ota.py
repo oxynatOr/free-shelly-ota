@@ -64,6 +64,21 @@ def cmd_add_device(args) -> None:
     print(f"Stored the ZIP in {firmware.FW_DIR / info['name']}")
 
 
+def cmd_partition_csv(args) -> None:
+    p = profile.load_profile(args.device)
+    official = args.official or firmware.cached_zip(p.name, args.version)
+    if official is None:
+        raise builder.OtaError(f"No official {p.name} ZIP cached. Run 'ota.py fetch {p.name}' first, or pass --official <zip>.")
+    text = devicegen.partition_csv(official)
+    if args.output:
+        if args.output.exists() and not args.force:
+            raise builder.OtaError(f"{args.output} already exists (use --force to overwrite).")
+        args.output.write_text(text, encoding="utf-8")
+        print(f"Wrote {args.output}")
+    else:
+        print(text, end="")
+
+
 def cmd_build(args) -> None:
     p = profile.load_profile(args.device)
     if args.esphome_yaml:
@@ -218,6 +233,15 @@ def main() -> None:
     a.add_argument("--parent", metavar="DEVICE", help="base device, if this is a variant (e.g. PlugUSG4 for PlugUSG4ZB)")
     a.add_argument("--force", action="store_true", help="overwrite an existing profile")
     a.set_defaults(func=cmd_add_device)
+
+    pc = sub.add_parser("partition-csv", help="write the stock partition table as ESPHome partitions CSV",
+                        formatter_class=fmt, epilog="example: python ota.py partition-csv HTG3 -o HTG3-stock.csv")
+    pc.add_argument("device", metavar="DEVICE", help=dev_help)
+    pc.add_argument("-o", "--output", type=Path, metavar="CSV", help="write to this file (default: print)")
+    pc.add_argument("--force", action="store_true", help="overwrite an existing output file")
+    pc.add_argument("--official", type=Path, metavar="ZIP", help="use this official ZIP instead of the cache")
+    pc.add_argument("--version", metavar="VER", help="use this cached version (default: latest)")
+    pc.set_defaults(func=cmd_partition_csv)
 
     b = sub.add_parser("build", help="build an OTA ZIP from your app image", formatter_class=fmt,
                        epilog="example: python ota.py build PlugMG3 app.bin --tag v2 --drop nvs")

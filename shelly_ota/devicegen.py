@@ -27,6 +27,34 @@ def parse_partitions(table: bytes) -> list[dict]:
     return entries
 
 
+_SUBTYPES = {(0, 0x00): "factory", (0, 0x10): "ota_0", (0, 0x11): "ota_1",
+             (1, 0x00): "ota", (1, 0x02): "nvs", (1, 0x82): "spiffs"}  # (type, subtype) -> ESP-IDF CSV name
+
+
+def partition_csv(zip_path: Path) -> str:
+    """ESPHome partitions CSV for the partition table inside an official Shelly OTA ZIP.
+
+    Needed so ESPHome builds against the layout the device really has (the table in flash stays Shelly's).
+    """
+    with zipfile.ZipFile(zip_path) as zf:
+        manifest = read_official_manifest(zf)
+        pt_part = manifest["parts"].get("pt")
+        if not pt_part or "src" not in pt_part:
+            raise OtaError("The ZIP has no partition table part ('pt').")
+        table = parse_partitions(zf.read(pt_part["src"]))
+    pt_addr = pt_part.get("addr", 0x10000)
+    lines = [f"# {manifest['name']} stock partition table (read from the official {manifest['version']} package, "
+             f"partition-table.bin at 0x{pt_addr:x}).",
+             "# Only used so ESPHome builds against the same layout the device really has; the table in flash stays Shelly's.",
+             f"# Set CONFIG_PARTITION_TABLE_OFFSET: \"0x{pt_addr:x}\" in the ESPHome config (ESP-IDF's default is 0x8000).",
+             "# Name,    Type, SubType, Offset,   Size,     Flags"]
+    for e in table:
+        kind = {0: "app", 1: "data"}.get(e["type"], f"0x{e['type']:x}")
+        sub = _SUBTYPES.get((e["type"], e["subtype"]), f"0x{e['subtype']:x}")
+        lines.append(f"{e['name']}, {kind}, {sub}, 0x{e['offset']:x}, 0x{e['size']:x},")
+    return "\n".join(lines) + "\n"
+
+
 def create_profile(zip_path: Path, *, name: str | None = None, devices_dir: Path = DEVICES_DIR,
                    force: bool = False, parent: str | None = None) -> tuple[Path, dict]:
     """Write devices/<name>.yaml from the manifest and partition table inside the ZIP."""

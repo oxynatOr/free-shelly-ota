@@ -241,6 +241,21 @@ class OfflineTests(unittest.TestCase):
             self.assertEqual(written.app_slot_size, profile.load_profile(name).app_slot_size)
             self.assertEqual(info["ptn"], "app_0")
 
+    def test_partition_csv_matches_the_files_in_partitions_dir(self):
+        for name in profile.list_devices():
+            committed = profile.MODULE_DIR / "partitions" / f"{name}-stock.csv"
+            zip_path = firmware.cached_zip(name)
+            if not zip_path:
+                continue
+            self.assertEqual(devicegen.partition_csv(zip_path), committed.read_text(encoding="utf-8"), name)
+
+    def test_partition_csv_rows_pass_the_lint_slot_check(self):
+        text = devicegen.partition_csv(firmware.cached_zip("HTG3"))
+        self.assertIn("app_0, app, ota_0, 0x20000, 0x280000,", text)
+        self.assertIn('"0xf000"', text)
+        y = self._yaml(self.GOOD.replace("0x10000", "0xf000"), text)
+        self.assertEqual(lint.lint_esphome(y, profile.load_profile("HTG3")), [])
+
     def test_add_device_refuses_overwrite(self):
         devicegen.create_profile(firmware.cached_zip("PlugMG3"), devices_dir=self.tmp)
         with self.assertRaises(builder.OtaError):
