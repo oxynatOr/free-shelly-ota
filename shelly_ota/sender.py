@@ -145,6 +145,9 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
         if boot_replaced:
             out("WARNING: this package replaces Shelly's bootloader. If it does not suit the device, only UART can "
                 "bring it back. Do not interrupt the power during the update.")
+            out("NOTE: ESPHome's bootloader starts app_0 (the installer overwrites otadata). With --watch, the log must "
+                "say 'Will write to slot 0'; on 'slot 1' the old app in app_0 starts instead (seen on the Power Strip "
+                "Gen4 running 1.7.99). Then install one official update first (ota.py restore), and send again.")
     else:
         out(f"NOTE: no official {profile.name} ZIP cached, so it was not checked whether this package replaces "
             f"Shelly's bootloader (run 'ota.py inspect' on it, or 'ota.py fetch {profile.name}').")

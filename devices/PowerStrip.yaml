@@ -4,3 +4,4 @@ platform: esp32c6
 update_id: PowerStrip        # name used by https://updates.shelly.cloud/update/<update_id>
 app_ptn: app_0
 app_slot_size: 0x300000   # app_0 @0x20000
+boot_min_version: "1.0.9"   # with this value the installer wrote ESPHome's bootloader (hardware-confirmed)

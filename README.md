@@ -40,7 +40,7 @@ Tested devices
 | Shelly       | Multicolor Bulb E27 Gen3     | `RGBCCTBulbG3`| ESP32-C3 | 2.0.1   | not yet |
 | Shelly       | Plug S Gen3                  | `PlugSG3`     | ESP32-C3 | 2.0.1   | not yet |
 | Shelly       | H&T Gen3                     | `HTG3`        | ESP32-C3 | 2.0.1   | ✅ `send` from stock 2.0.1 (slot 0) with `--esphome-factory`: ESPHome's bootloader is written (profile sets `boot_min_version 1.0.9`, the default 1.0.3 was skipped), ESPHome boots and ESPHome OTAs take effect. Partition table at `0xf000`, so `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"` |
-| Shelly       | Power Strip 4 Gen4           | `PowerStrip`  | ESP32-C6 | 2.0.1   | not yet |
+| Shelly       | Power Strip 4 Gen4           | `PowerStrip`  | ESP32-C6 | 2.0.1   | ✅ ESPHome boots and joins Wi-Fi/Home Assistant (UART log) with ESPHome's bootloader (`boot_min_version 1.0.9`). From stock 1.7.99 a direct `send` did not work (app landed in slot 1, old app started); it worked after one official update to 2.0.1, see [Notes](#notes--troubleshooting). Outlets and metering not checked here |
 | Shelly       | Power Strip 4 Gen4 (Zigbee)  | `PowerStripZB`| ESP32-C6 | 2.0.1   | not yet |
 
 > "Not yet" means the package builds, every part hash verifies and the image checks pass, but flashing a real device
@@ -273,6 +273,15 @@ Notes & troubleshooting
 - **Slot:** the stock updater writes to the slot it is not running from. `send` shows the device's `slot` and warns on
   slot 0: for Gen4 the installer is reported to skip the app there (not verified for Gen3). If nothing changes, install
   one normal stock update first.
+- **ESPHome must land in slot 0 (packages with ESPHome's bootloader):** after the update the installer writes its own boot
+  state into `otadata`, which ESPHome's bootloader cannot read (`ota data partition invalid and no factory, will try all
+  partitions`); it then starts the first valid app in the table, `app_0`. So the app only runs if the installer wrote it
+  to slot 0 (`--watch` log: `Will write to slot 0`). On the Power Strip 4 Gen4 running stock 1.7.99 the installer wrote to
+  slot 1 (`app_1`), and the old stock app in `app_0` started again, although the update reported success and ESPHome's
+  bootloader was in place (UART log: `ESP-IDF ... 2nd stage bootloader`, `Loaded app from partition at offset 0x20000`,
+  `PowerStrip 1.7.99`). After one official update to 2.0.1 and a new `send`, ESPHome started. The same 1.7.99 installer also
+  left the old partition table (no `scratch`); after 2.0.1 it was the new one. The `slot=` value `send` shows is not a
+  reliable predictor of the target (H&T: `slot=0`, target 0; Plug M Gen3: `slot=1` and it worked), so read the log line.
 - **Empty `--watch` log:** the log arrives as UDP datagrams on port 9514 (`--log-port`). A firewall that blocks incoming UDP
   on that port (on Windows, the Python program in Windows Defender Firewall) leaves the log empty; the update itself still
   works. With the log you see the installer's `ota_progress` events (0 to 95 %, then `ota_success`) and, for a package with
