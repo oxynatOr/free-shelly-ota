@@ -26,6 +26,7 @@ class Profile:
     app_slot_size: int
     parent: str | None = None  # base device whose update API lists this variant under "alt"
     pt_offset: int = 0x10000  # where the device keeps its partition table (HTG3: 0xf000)
+    boot_min_version: str | None = None  # default for --boot-min-version with --esphome-factory (HTG3: 1.0.9)
 
 
 def _to_int(value, key: str) -> int:
@@ -55,4 +56,5 @@ def load_profile(name: str, devices_dir: Path = DEVICES_DIR) -> Profile:
         app_slot_size=_to_int(raw["app_slot_size"], "app_slot_size"),
         parent=raw.get("parent"),
         pt_offset=_to_int(raw.get("pt_offset", 0x10000), "pt_offset"),
+        boot_min_version=str(raw["boot_min_version"]) if raw.get("boot_min_version") else None,
     )

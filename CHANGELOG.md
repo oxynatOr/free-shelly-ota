@@ -10,6 +10,14 @@ All notable changes to this project are documented here. The format follows
 - Optional profile key `pt_offset` (partition table address, default `0x10000`); `add-device` reads it from the package.
   The H&T Gen3 keeps its table at `0xf000`.
 
+- Optional profile key `boot_min_version`: default for `--boot-min-version` with `--esphome-factory`. `HTG3` sets `1.0.9`:
+  the H&T Gen3 installer reports an installed bootloader 1.0.3, so the generic "one patch above the package" (1.0.3) was
+  skipped and Shelly's loader stayed. With 1.0.9 the bootloader is written (hardware-confirmed).
+
+### Changed
+- README: how to check that the bootloader was really replaced (installer log `Boot: cur ... min ...`, UART boot log) and
+  the UART fix.
+
 ### Removed
 - Profiles `PlugUSG4` and `PlugUSG4ZB` (Plug US Gen4): cannot be tested by the maintainer. `add-device` still creates
   profiles for them. The variant tests now use `PowerStrip` / `PowerStripZB`.

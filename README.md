@@ -39,7 +39,7 @@ Tested devices
 | Shelly       | Duo Bulb Gen3                | `DuoBulbG3`   | ESP32-C3 | 2.0.1   | not yet |
 | Shelly       | Multicolor Bulb E27 Gen3     | `RGBCCTBulbG3`| ESP32-C3 | 2.0.1   | not yet |
 | Shelly       | Plug S Gen3                  | `PlugSG3`     | ESP32-C3 | 2.0.1   | not yet |
-| Shelly       | H&T Gen3                     | `HTG3`        | ESP32-C3 | 2.0.1   | ✅ `send` from stock 2.0.1 (slot 0) with ESPHome bootloader (`--esphome-factory`), ESPHome came up; repeated from a UART-restored original dump, updated to stock 2.0.1 first; partition table at `0xf000`, so `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"` |
+| Shelly       | H&T Gen3                     | `HTG3`        | ESP32-C3 | 2.0.1   | ✅ `send` from stock 2.0.1 (slot 0) with `--esphome-factory`: ESPHome's bootloader is written (profile sets `boot_min_version 1.0.9`, the default 1.0.3 was skipped), ESPHome boots and ESPHome OTAs take effect. Partition table at `0xf000`, so `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"` |
 | Shelly       | Power Strip 4 Gen4           | `PowerStrip`  | ESP32-C6 | 2.0.1   | not yet |
 | Shelly       | Power Strip 4 Gen4 (Zigbee)  | `PowerStripZB`| ESP32-C6 | 2.0.1   | not yet |
 
@@ -226,6 +226,19 @@ Before building, the tool verifies:
 - the factory image's partition table has the same critical entries as the device (`otadata`, `nvs`, `app_0/1`,
   `fs_0/1`; differences in `scratch`/`shelly` only warn) and its `otadata` area is erased;
 - the factory image contains exactly the app you are packing (same build).
+
+**Check that it really happened.** The installer writes the bootloader only if the package's `min_version` is higher than
+what it considers installed. On the H&T Gen3 that is 1.0.3 (the update log shows `Boot: cur 010003ff, ... min ...,
+update? 0/1`), so the default of one patch above the official 1.0.2 (= 1.0.3) was skipped: ESPHome started, but later ESPHome
+OTAs silently did not take effect (the version did not change), and `otadata` stayed in Shelly's format (`SH0S`). The H&T
+profile therefore sets `boot_min_version: 1.0.9`; with that the installer wrote ESPHome's bootloader (`send --watch` shows
+`Installing BL ... -> boot(0)`) and the next boot showed `ESP-IDF ... 2nd stage bootloader`. Check it yourself: Shelly's loader
+prints only the ROM lines over UART, ESPHome's prints `ESP-IDF ... 2nd stage bootloader`. If a package was installed with
+the wrong value, a UART fix (backup first): write ESPHome's bootloader to `0x0` and a clean (all `0xFF`) `otadata` to the
+`otadata` partition (`0x11000` here), both taken from the package. Other models may report another installed version:
+read `Boot: cur ...` in the `--watch` log and pass a higher `--boot-min-version` (or set `boot_min_version:` in the profile).
+Untested: a later `restore` of the official package, whose `min_version` is lower than 1.0.9, may then leave ESPHome's
+bootloader in place.
 
 `send` warns again when a package replaces the bootloader. It worked on the Plug M Gen3 and the H&T Gen3; on other models the
 installer's rule may differ, and a bootloader that does not suit the device can only be fixed with UART. The Plug US

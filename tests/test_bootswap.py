@@ -116,6 +116,14 @@ class BootswapTests(unittest.TestCase):
         self.assertEqual(self._min_version(boot_min_version="keep")[0], "1.0.2")
         self.assertEqual(self._min_version(boot_min_version="2.0.0")[0], "2.0.0")
 
+    def test_profile_boot_min_version_is_the_default_and_the_option_still_wins(self):
+        import dataclasses
+        self.profile = dataclasses.replace(self.profile, boot_min_version="1.0.9")
+        self.assertEqual(self._min_version()[0], "1.0.9")
+        self.assertEqual(self._min_version(boot_min_version="2.0.0")[0], "2.0.0")
+        self.assertEqual(profile.load_profile("HTG3").boot_min_version, "1.0.9")
+        self.assertIsNone(profile.load_profile("PlugMG3").boot_min_version)
+
     def test_boot_min_version_needs_factory_and_valid_format(self):
         with self.assertRaises(builder.OtaError):
             builder.build(self.profile, self.tmp / "app.bin", self.official, self.tmp / "o.zip",

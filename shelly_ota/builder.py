@@ -185,16 +185,17 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
                 replaced.append(key)
             # The installer writes the bootloader only if the installed one is older than the package's boot
             # min_version (seen on the Plug M Gen3: 1.0.2 was skipped, 1.0.3 was written). So raise it by one patch
-            # level unless told otherwise.
+            # level unless the option or the profile says otherwise. The H&T Gen3 reports an installed 1.0.3
+            # ("Boot: cur 010003ff"), so one patch is not enough there: its profile sets boot_min_version.
             old = parts["boot"].get("min_version")
-            target = boot_min_version or _bump_patch(old)
+            target = boot_min_version or profile.boot_min_version or _bump_patch(old)
             if target and target != "keep" and target != old:
                 parts["boot"]["min_version"] = target
                 warnings.append(f"boot min_version raised from {old} to {target}, so that the Shelly installer "
                                 f"writes the new bootloader (use --boot-min-version keep to leave it).")
             warnings.append("BOOTLOADER REPLACED: the package carries ESPHome's bootloader and a clean otadata. If the "
                             "bootloader does not suit the device, only UART can bring it back. Worked on the Plug M "
-                            "Gen3; untested on other models.")
+                            "Gen3 and the H&T Gen3; untested on other models.")
 
         if "nvs" in parts:
             warnings.append("NVS part is included: applying this package wipes NVS (Wi-Fi credentials, settings).")
