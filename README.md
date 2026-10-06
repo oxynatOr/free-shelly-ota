@@ -37,9 +37,9 @@ Tested devices
 | Manufacturer | Device                       | Profile       | Chip     | Package | Tested on hardware |
 | ---          | ---                          | ---           | ---      | ---     | --- |
 | Shelly       | Plug M Gen3                  | `PlugMG3`     | ESP32-C3 | 2.0.1   | ✅ `send` from stock 1.8.99, then two ESPHome OTAs |
-| Shelly       | Duo Bulb Gen3                | `DuoBulbG3`   | ESP32-C3 | 2.0.1   | not yet |
-| Shelly       | Multicolor Bulb E27 Gen3     | `RGBCCTBulbG3`| ESP32-C3 | 2.0.1   | not yet |
-| Shelly       | Plug S Gen3                  | `PlugSG3`     | ESP32-C3 | 2.0.1   | not yet |
+| Shelly       | Duo Bulb Gen3                | `DuoBulbG3`   | ESP32-C3 | 2.0.1   | not yet. The owner reports the same main board as the Multicolor Bulb with a different lamp module; its stock firmware has no I2C code (LED PWM instead), so the LED driver config of the Multicolor Bulb does not apply. The OTA chain should be the same, but it has not been run |
+| Shelly       | Multicolor Bulb E27 Gen3     | `RGBCCTBulbG3`| ESP32-C3 | 2.0.1   | ✅ `send` with `--esphome-factory` (installed loader 1.0.2, profile default raises it to 1.0.3) ran through and ESPHome runs (reported by the owner). The LED driver (KP18068, own component, config in the device branch) and the channel order were not confirmed yet |
+| Shelly       | Plug S Gen3                  | `PlugSG3`     | ESP32-C3 | 2.0.1   | ✅ `send` with `--esphome-factory` (profile default `boot_min_version`, one patch level above the official loader) ran and ESPHome runs (reported by the owner). The build was the base config without relay or metering |
 | Shelly       | H&T Gen3                     | `HTG3`        | ESP32-C3 | 2.0.1   | ✅ `send` from stock 2.0.1 (slot 0) with `--esphome-factory`: ESPHome's bootloader is written (profile sets `boot_min_version 1.0.9`, the default 1.0.3 was skipped), ESPHome boots and ESPHome OTAs take effect. Partition table at `0xf000`, so `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"` |
 | Shelly       | Power Strip 4 Gen4           | `PowerStrip`  | ESP32-C6 | 2.0.1   | ✅ ESPHome boots and joins Wi-Fi/Home Assistant (UART log) with ESPHome's bootloader (`boot_min_version 1.0.9`). From stock 1.7.99 a direct `send` did not work (app landed in slot 1, old app started); it worked after one official update to 2.0.1, see [Notes](#notes--troubleshooting). Outlets and metering not checked here |
 | Shelly       | Power Strip 4 Gen4 (Zigbee)  | `PowerStripZB`| ESP32-C6 | 2.0.1   | not yet |
