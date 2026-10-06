@@ -43,7 +43,6 @@ Click the profile for the device page: ESPHome config, the exact commands and wh
 | Power Strip 4 Gen4 | [`PowerStrip`](docs/devices/PowerStrip.md) | ESP32-C6 | ✅ boots, outlets not checked |
 | Power Strip 4 Gen4 (Zigbee) | [`PowerStripZB`](docs/devices/PowerStripZB.md) | ESP32-C6 | 🧪 |
 | Plus Plug S (V2 hardware, Gen2) | [`PlusPlugS`](docs/devices/PlusPlugS.md) | ESP32 | ✅ without UART |
-| Shelly Cury | [`Cury`](docs/devices/Cury.md) | ESP32-C6 | 🧪 |
 | The Pill | [`Pill`](docs/devices/Pill.md) | ESP32-C3 | 🧪 |
 | Mini 1PM Gen3 | [`Mini1PMG3`](docs/devices/Mini1PMG3.md) | ESP32-C3 | 🧪 |
 | Mini 1PM Gen4 | [`Mini1PMG4`](docs/devices/Mini1PMG4.md) | ESP32-C6 | 🧪 |
