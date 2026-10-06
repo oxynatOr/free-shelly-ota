@@ -317,6 +317,12 @@ Notes & troubleshooting
 
   Undo: `esptool erase-region 0xd000 0x2000` makes the bootloader start `app_0` again. After that, ESPHome's own OTA switches
   between the two slots (confirmed for the OTA path above: 0.2.0 to 0.2.11; not checked after the UART variant).
+- **`build` refuses to replace the bootloader** ("differs from Shelly's in ..."): the ESPHome bootloader's header must match the
+  one in the official package in flash mode, size/frequency, chip and minimum chip revision, otherwise the device might not
+  start. The message prints both values and the fix. Seen so far: flash frequency 40 MHz instead of 80 MHz (classic ESP32:
+  `CONFIG_ESPTOOLPY_FLASHFREQ_80M: y` under `sdkconfig_options`; ESP32-C6: `board_build.f_flash: 80000000L`), and
+  `minimum_chip_revision` / `sram1_as_iram` in the config (remove them for the package; they are fine for builds you only
+  update with ESPHome OTA). A differing partition table or a `.factory.bin` from another build are refused with a fix too.
 - **Empty `--watch` log:** the log arrives as UDP datagrams on port 9514 (`--log-port`). A firewall that blocks incoming UDP
   on that port (on Windows, the Python program in Windows Defender Firewall) leaves the log empty; the update itself still
   works. With the log you see the installer's `ota_progress` events (0 to 95 %, then `ota_success`) and, for a package with
