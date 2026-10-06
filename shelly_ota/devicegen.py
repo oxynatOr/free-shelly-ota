@@ -88,6 +88,8 @@ def create_profile(zip_path: Path, *, name: str | None = None, devices_dir: Path
         + (f"parent: {parent}        # variant: listed under \"alt\" in the update API reply of {parent}\n" if parent else "")
         + f"app_ptn: {ptn}\n"
         f"app_slot_size: 0x{slot['size']:x}   # {ptn} @0x{slot['offset']:x}\n"
-        + (f"pt_offset: 0x{pt_addr:x}   # partition table address (default 0x10000)\n" if pt_addr != 0x10000 else ""),
+        + (f"pt_offset: 0x{pt_addr:x}   # partition table address (default 0x10000)\n" if pt_addr != 0x10000 else "")
+        + "revision: 1   # counts changes of this profile: raise it when anything else in this file changes "
+          "(see devices/profiles.lock)\n",
         encoding="utf-8")
     return path, info

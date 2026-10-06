@@ -113,7 +113,7 @@ class SecretsTests(unittest.TestCase):
         import subprocess
         out = subprocess.run([sys.executable, str(Path(__file__).resolve().parent.parent / "ota.py"), "--version"],
                              capture_output=True, text=True)
-        self.assertEqual(out.stdout.strip(), f"ota.py {__version__}")
+        self.assertTrue(out.stdout.strip().startswith(f"ota.py {__version__}"), out.stdout)   # plus branch/commit in a checkout
 
 
 if __name__ == "__main__":
