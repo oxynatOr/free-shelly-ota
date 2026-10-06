@@ -34,6 +34,9 @@ All notable changes to this project are documented here. The format follows
   words WARNING/NOTE/Error/OK stay in the text.
 
 ### Changed
+- `build` errors about the ESPHome bootloader header, the partition layout, a `.factory.bin` from another build, a wrong chip and
+  an app that is too big now show both values in plain words (for example "4 MB, 40 MHz (0x20)" against "4 MB, 80 MHz (0x2f)")
+  and a "Fix:" line naming the ESPHome setting that worked on the tested devices.
 - README status paragraph lists the four hardware-confirmed devices.
 - Messages checked for Gen2/Gen3/Gen4: removed the `slot 0` warning in `send` (it was wrong for H&T and Plus Plug S and clashed
   with the target-slot check; `send` now prints "reported slot" instead); the bootloader notes no longer say "confirmed on the

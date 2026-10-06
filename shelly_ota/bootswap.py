@@ -50,6 +50,51 @@ def verify_image(img: bytes, what: str) -> bytes:
     return img
 
 
+_FLASH_MODES = {0: "QIO", 1: "QOUT", 2: "DIO", 3: "DOUT"}
+_FLASH_SIZES = {0: "1 MB", 1: "2 MB", 2: "4 MB", 3: "8 MB", 4: "16 MB"}
+_FLASH_FREQS = {0x0: "40 MHz", 0xF: "80 MHz", 0x1: "26 MHz", 0x2: "20 MHz"}  # ESP32 and ESP32-C3; other chips use other codes
+_CHIP_NAMES = {0x0000: "ESP32", 0x0005: "ESP32-C3", 0x000D: "ESP32-C6"}
+
+# What to change in the ESPHome config (esp32: ...) when a header field differs. Only things seen to work are named.
+_HEADER_HINTS = {
+    "flash mode": (
+        "Use the flash mode of the device: `esphome: platformio_options: board_build.flash_mode: dio`, or "
+        "`CONFIG_ESPTOOLPY_FLASHMODE_DIO: y` under esp32 > framework > sdkconfig_options."),
+    "flash size/frequency": (
+        "Use the same flash size and frequency as the device. Size: `esp32: flash_size: ...` (the stock partition table "
+        "tells it). Frequency: on the classic ESP32 set `CONFIG_ESPTOOLPY_FLASHFREQ_80M: y` under esp32 > framework > "
+        "sdkconfig_options (the PlatformIO option had no effect there); on the ESP32-C6 `esphome: platformio_options: "
+        "board_build.f_flash: 80000000L` was enough (Power Strip). Then build again."),
+    "chip id": (
+        "The ESPHome build is for another chip. Check `variant:` under esp32: (ESP32, ESP32C3 or ESP32C6) and the board."),
+    "minimum chip revision": (
+        "Remove `minimum_chip_revision` (esp32 > framework > advanced) and `sram1_as_iram` from the config you build the "
+        "package from. They are fine for builds you only update with ESPHome OTA (the bootloader on the device stays), "
+        "just not for a package that replaces the bootloader."),
+}
+
+
+def _describe(label: str, raw: bytes, platform: str) -> str:
+    """A header field as text, e.g. '4 MB, 80 MHz (0x2f)'."""
+    value = int.from_bytes(raw, "little")
+    if label == "flash mode":
+        return f"{_FLASH_MODES.get(value, 'unknown')} (0x{value:02x})"
+    if label == "flash size/frequency":
+        size = _FLASH_SIZES.get(value >> 4, f"size code {value >> 4}")
+        freq = _FLASH_FREQS.get(value & 0xF) if platform in ("esp32", "esp32c3") else None
+        return f"{size}, {freq or f'frequency code 0x{value & 0xF:x}'} (0x{value:02x})"
+    if label == "chip id":
+        return f"{_CHIP_NAMES.get(value, 'unknown chip')} (0x{value:04x})"
+    return f"minimum revision byte {value}"
+
+
+def _header_mismatch_message(label: str, mine: bytes, shelly: bytes, platform: str) -> str:
+    return (f"The ESPHome bootloader differs from Shelly's in {label}: your build has {_describe(label, mine, platform)}, "
+            f"the device's package has {_describe(label, shelly, platform)}.\n"
+            f"  Not replacing the bootloader: one with other settings might not start the device.\n"
+            f"  Fix: {_HEADER_HINTS[label]}")
+
+
 def _entry_key(e: dict) -> tuple:
     return (e["name"], e["type"], e["subtype"], e["offset"], e["size"])
 
@@ -77,9 +122,7 @@ def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: byte
     for label, sl in (("flash mode", slice(2, 3)), ("flash size/frequency", slice(3, 4)),
                       ("chip id", slice(12, 14)), ("minimum chip revision", slice(14, 15))):
         if boot[sl] != shelly_boot[sl]:
-            raise OtaError(f"The ESPHome bootloader differs from Shelly's in {label} "
-                           f"({boot[sl].hex()} vs {shelly_boot[sl].hex()}). Not replacing the bootloader: "
-                           f"the device might not start.")
+            raise OtaError(_header_mismatch_message(label, boot[sl], shelly_boot[sl], str(manifest.get("platform", ""))))
 
     shelly_entries = parse_partitions(shelly_pt)
     esphome_entries = parse_partitions(factory[pt_offset:pt_offset + 4096])
@@ -91,7 +134,11 @@ def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: byte
             msg = (f"partition '{name}' differs: Shelly {_entry_key(se)[2:]} vs ESPHome "
                    f"{_entry_key(ee)[2:] if ee else 'missing'}")
             if name in CRITICAL_PARTITIONS:
-                raise OtaError(f"The ESPHome build uses another partition layout than the device: {msg}.")
+                name = manifest.get("name", "<Device>")
+                raise OtaError(f"The ESPHome build uses another partition layout than the device: {msg}.\n"
+                               f"  Fix: build with Shelly's table: `esp32: partitions: {name}-stock.csv` (the file is in "
+                               f"partitions/, or `python ota.py partition-csv {name}` writes it) and set "
+                               f"CONFIG_PARTITION_TABLE_OFFSET as the CSV header says.")
             warnings.append(f"{msg}. Harmless here because Shelly's partition table is kept, but fix your "
                             f"partitions CSV.")
 
@@ -106,7 +153,9 @@ def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: byte
     app0 = shelly_by_name.get(parts["app"].get("ptn", "app_0"))
     if app0 is None or factory[app0["offset"]:app0["offset"] + len(app)] != app:
         raise OtaError("The factory image does not contain the app image you are packing (not the same build). "
-                       "The bootloader must come from the same build as the app.")
+                       "The bootloader must come from the same build as the app.\n"
+                       "  Fix: take firmware.ota.bin and firmware.factory.bin from one and the same build "
+                       "(rebuild once and copy both files).")
 
     return {
         parts["boot"]["src"]: boot,

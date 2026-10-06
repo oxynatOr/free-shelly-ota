@@ -58,11 +58,15 @@ def check_app_image(app: bytes, platform: str, slot_size: int, slot_name: str) -
                        ".pioenvs/<name>/firmware.bin, not firmware.factory.bin.")
     if len(app) > slot_size:
         raise OtaError(f"App image is {len(app)} bytes, slot {slot_name} only holds {slot_size} "
-                       f"({slot_size / 1024:.0f} KB).")
+                       f"({slot_size / 1024:.0f} KB).\n"
+                       f"  Fix: make the ESPHome build smaller (fewer components, `COMPILER_OPTIMIZATION_SIZE: y` under "
+                       f"esp32 > framework > sdkconfig_options, less logging).")
     expected = CHIP_IDS.get(platform)
     chip_id = int.from_bytes(app[12:14], "little")
     if expected is not None and chip_id != expected:
-        raise OtaError(f"Image chip id is 0x{chip_id:04x}, expected 0x{expected:04x} for {platform}.")
+        raise OtaError(f"Image chip id is 0x{chip_id:04x}, expected 0x{expected:04x} for {platform}.\n"
+                       f"  Fix: the ESPHome config is for another chip; check `variant:` under esp32: "
+                       f"({platform.upper()} for this device).")
     segments = app[1]
     if not 1 <= segments <= 16:
         raise OtaError(f"Implausible segment count in image header: {segments}.")
