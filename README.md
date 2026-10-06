@@ -45,6 +45,7 @@ Click the profile for the device page: ESPHome config, the exact commands and wh
 | Plus Plug S (V2 hardware, Gen2) | [`PlusPlugS`](docs/devices/PlusPlugS.md) | ESP32 | ✅ without UART |
 | Shelly Cury | [`Cury`](docs/devices/Cury.md) | ESP32-C6 | 🧪 |
 | The Pill | [`Pill`](docs/devices/Pill.md) | ESP32-C3 | 🧪 |
+| Mini 1PM Gen3 | [`Mini1PMG3`](docs/devices/Mini1PMG3.md) | ESP32-C3 | 🧪 |
 
 Another device? `python ota.py add-device <official.zip>` creates a profile from an official package
 (`--parent <base device>` for a variant, e.g. the Zigbee version). Reports are welcome.
