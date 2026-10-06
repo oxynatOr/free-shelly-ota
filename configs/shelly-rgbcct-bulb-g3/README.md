@@ -3,7 +3,7 @@
 Status: **the OTA works, the light is unconfirmed.** `ota.py send` with `--esphome-factory` ran through on a real bulb and ESPHome runs
 (reported by the owner, 2026-10-06). The LED driver component, the channel order and the colours have not been checked yet. 
 
-Files: `shelly-rgbcct-bulb-g3.yaml` (config with an RGBW light and per-channel test lights), `components/kp18058/` (LED driver component, see below), `RGBCCTBulbG3-stock.csv` (Shelly's partition table from the
+Files: `shelly-rgbcct-bulb-g3.yaml` (config with an RGBW light and per-channel test lights), the LED driver component lives in its own repository, https://github.com/oxynatOr/esphome-kp18058 (pinned in the YAML), `RGBCCTBulbG3-stock.csv` (Shelly's partition table from the
 official 2.0.1 package), `secrets.yaml.example`.
 
 ## What is known
@@ -46,11 +46,11 @@ Correction of an earlier note: the I2C **addresses are `0x70` and `0x40`** (7-bi
 ## What is missing
 
 - **No official ESPHome component.** There is no `kp18058` page in the ESPHome documentation; the pull request
-  (esphome/esphome#7685) was closed. `components/kp18058/` is a separate, own component (2-wire bit-bang on two pins, a frame
-  that matches the one above: 14 bytes with the address byte, high half first, parity in every byte). Differences to the
-  Shelly firmware: it sends the address byte `0xE1` (Shelly's I2C hardware sends `0xE0`), it needs an ACK for every byte
-  (the chip may not send one), and it relies on the ESP32's internal pull-ups at about 250 kHz (Shelly: 100 kHz). If the light
-  stays dark, those three points are the first suspects.
+  (esphome/esphome#7685) was closed. The config uses the separate component
+  [oxynatOr/esphome-kp18058](https://github.com/oxynatOr/esphome-kp18058) (2-wire bit-bang on two pins, frame as above), pinned to a
+  commit. Differences to the Shelly firmware: it sends the address byte `0xE1` (Shelly's I2C hardware sends `0xE0`), and it needs
+  an ACK for every byte unless `ignore_ack: true` is set (the chip may not send one). If the light stays dark, try `ignore_ack`
+  first. The first build on the bulb used an earlier version of the component than the pinned one.
 - The current codes (5 for RGB and 11 for white, read from the constants), the channel order and the behaviour at full
   brightness are unverified.
 - A Duo Bulb (`DuoBulbG3`) is a different design: its firmware has no I2C code, it uses PWM (LEDC).
