@@ -1,0 +1,100 @@
+name: Device report
+description: You flashed (or tried to flash) a Shelly with this tool. Tell us how it went, also when it worked.
+title: "[Device report] <device>: <short result>"
+labels: ["device-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing. Reports of **successful** flashes are as useful as failures: they are how a device gets its check mark in the table.
+
+        **Before you paste anything:** remove Wi-Fi names and passwords, API keys, public IP addresses and MAC addresses. The device log of some models prints the **cloud key** of the device (`key=...`): delete that line. Never upload a built ZIP, it can contain your Wi-Fi password.
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      description: The profile you used (`python ota.py list`).
+      options:
+        - PlugMG3 (Plug M Gen3)
+        - PlugSG3 (Plug S Gen3)
+        - HTG3 (H&T Gen3)
+        - RGBCCTBulbG3 (Multicolor Bulb Gen3)
+        - DuoBulbG3 (Duo Bulb Gen3)
+        - PowerStrip (Power Strip 4 Gen4)
+        - PowerStripZB (Power Strip 4 Gen4, Zigbee)
+        - PlusPlugS (Plus Plug S, Gen2)
+        - Cury
+        - Pill (The Pill)
+        - Mini1PMG3 (Mini 1PM Gen3)
+        - Mini1PMG4 (Mini 1PM Gen4)
+        - Mini1PMG4ZB (Mini 1PM Gen4, Zigbee)
+        - Other (a profile made with add-device)
+    validations:
+      required: true
+  - type: input
+    id: tool_version
+    attributes:
+      label: Tool version
+      description: Output of `python ota.py --version`.
+      placeholder: "0.3.1 (main, v0.3.1, 2026-10-06)"
+    validations:
+      required: true
+  - type: input
+    id: stock_version
+    attributes:
+      label: Shelly firmware on the device before flashing
+      description: For example `1.8.99` or `2.0.1` (web UI, or the first lines of `send`).
+    validations:
+      required: true
+  - type: dropdown
+    id: method
+    attributes:
+      label: How did you build the package?
+      options:
+        - build with --esphome-factory (ESPHome's bootloader in the package)
+        - build without --esphome-factory (plain package)
+        - restore (official firmware)
+        - UART / esptool
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Worked - ESPHome runs and a later ESPHome OTA took effect
+        - ESPHome runs, but I did not try a second OTA
+        - Shelly firmware came back (old app started again)
+        - The device does not start (needs UART)
+        - send was refused or stopped (see the log)
+        - build was refused (see the log)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Output of `send --watch 120`
+      description: "Paste the whole output, also when everything worked. The lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot` matter most."
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened afterwards
+      description: Did it boot, join Wi-Fi, switch, measure? Did you need a power cycle? Anything unexpected?
+  - type: textarea
+    id: config
+    attributes:
+      label: ESPHome config (the `esphome:` and `esp32:` blocks only)
+      description: Without secrets. Shows the partition table, offset and flash options you used.
+      render: yaml
+  - type: checkboxes
+    id: uart
+    attributes:
+      label: Safety net
+      options:
+        - label: I have UART (or USB) access to this device in case it does not start
+        - label: I removed passwords, keys, the cloud key and MAC addresses from everything I pasted
+          required: true

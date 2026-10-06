@@ -1,0 +1,44 @@
+name: Bug or wrong message
+description: The tool crashed, a message is wrong, or the documentation does not match what you saw.
+title: "[Bug] <short summary>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a flash that went wrong on a device, please use **Device report** instead; it asks for the details we need.
+
+        Remove Wi-Fi names and passwords, API keys, the device cloud key (`key=...`) and MAC addresses from everything you paste.
+  - type: input
+    id: tool_version
+    attributes:
+      label: Tool version
+      description: Output of `python ota.py --version`.
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System
+      description: Operating system and Python version.
+      placeholder: "Windows 11, Python 3.12"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: The command you ran
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected and what happened
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Full output or traceback
+      render: shell

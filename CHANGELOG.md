@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- GitHub issue forms: **Device report** (device, tool and Shelly version, method, result, `send --watch` output, with a reminder to remove
+  secrets and the device cloud key) and **Bug or wrong message**. The README links to the device report.
+
 ## [0.3.1] - 2026-10-06
 
 ### Added
