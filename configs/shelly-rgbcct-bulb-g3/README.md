@@ -1,9 +1,9 @@
-# Shelly Multicolor Bulb E27 Gen3 (RGBCCT) - ESPHome notes and config skeleton
+# Shelly Multicolor Bulb E27 Gen3 (RGBCCT) - ESPHome notes and config
 
-Status: **hardware notes and a skeleton only.** There is no working light yet; nothing in this folder has been compiled or run
-on the bulb. The OTA side (`RGBCCTBulbG3` profile, `RGBCCTBulbG3-stock.csv`) is prepared but also not tested on hardware.
+Status: **the OTA works, the light is unconfirmed.** `ota.py send` with `--esphome-factory` ran through on a real bulb and ESPHome runs
+(reported by the owner, 2026-10-06). The LED driver component, the channel order and the colours have not been checked yet. 
 
-Files: `shelly-rgbcct-bulb-g3.yaml` (skeleton with the I2C bus), `RGBCCTBulbG3-stock.csv` (Shelly's partition table from the
+Files: `shelly-rgbcct-bulb-g3.yaml` (config with an RGBW light and per-channel test lights), `components/kp18058/` (LED driver component, see below), `RGBCCTBulbG3-stock.csv` (Shelly's partition table from the
 official 2.0.1 package), `secrets.yaml.example`.
 
 ## What is known
@@ -30,8 +30,14 @@ bytes 3..12  five channels, two bytes each, in this order of bytes: high part, t
              high = ((v >> 5) & 0x1F) << 1 | parity      low = (v & 0x1F) << 1 | parity     (v = 10-bit value, 0..1023)
 ```
 
-Every byte carries an even-parity bit in bit 0. Which of the five channels is R, G, B, cold white, warm white is not decoded
-here. The 13-byte length, the standby bytes `0x00 0x03`, the parity bits and the 5-bit halves all match the KP18058/KP18068
+Every byte carries an even-parity bit in bit 0.
+
+**Channel order** (read from two places in the firmware: the function that builds the frame from the colour parameters, and
+the start-up routine that lights the three colours one after the other; both put the first colour value on OUT2, the second on
+OUT3 and the third on OUT1): **OUT1 = blue, OUT2 = red, OUT3 = green.** That the three values are R, G, B in this order is
+inferred from the start-up order, not proven. In the colour-temperature path **OUT4 and OUT5 get the same value**, so the bulb
+looks like RGB plus one white level (colour temperature is mixed from the RGB channels). The config therefore uses an `rgbw` light
+that drives OUT4 and OUT5 together. It also contains one test light per channel to confirm this on the bulb. The 13-byte length, the standby bytes `0x00 0x03`, the parity bits and the 5-bit halves all match the KP18058/KP18068
 protocol as implemented by the OpenBeken project (which sends the low half first and a slightly different third byte; the
 differences may be a chip variant, they were not checked).
 
@@ -39,11 +45,13 @@ Correction of an earlier note: the I2C **addresses are `0x70` and `0x40`** (7-bi
 
 ## What is missing
 
-- **No official ESPHome component.** There is no `kp18058` page in the ESPHome documentation; a pull request
-  (esphome/esphome#7685) for KP18058/KP18068 was closed, and that driver bit-bangs two pins. This bulb uses the I2C
-  peripheral, so a small external component (an `I2CDevice` that writes the frame above, with the address switched between
-  `0x70` and `0x40`) would be the way. It does not exist here yet.
-- The channel order, the current codes (5 for RGB and 11 for white were read from the constants) and the behaviour at full
+- **No official ESPHome component.** There is no `kp18058` page in the ESPHome documentation; the pull request
+  (esphome/esphome#7685) was closed. `components/kp18058/` is a separate, own component (2-wire bit-bang on two pins, a frame
+  that matches the one above: 14 bytes with the address byte, high half first, parity in every byte). Differences to the
+  Shelly firmware: it sends the address byte `0xE1` (Shelly's I2C hardware sends `0xE0`), it needs an ACK for every byte
+  (the chip may not send one), and it relies on the ESP32's internal pull-ups at about 250 kHz (Shelly: 100 kHz). If the light
+  stays dark, those three points are the first suspects.
+- The current codes (5 for RGB and 11 for white, read from the constants), the channel order and the behaviour at full
   brightness are unverified.
 - A Duo Bulb (`DuoBulbG3`) is a different design: its firmware has no I2C code, it uses PWM (LEDC).
 
@@ -51,5 +59,10 @@ Correction of an earlier note: the I2C **addresses are `0x70` and `0x40`** (7-bi
 
 Use ShellyOTA as for the other devices: build with the partition table from `RGBCCTBulbG3-stock.csv` and
 `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`, then `ota.py build RGBCCTBulbG3 ... --esphome-factory ...`, `ota.py send` (it
-checks that the installer writes to slot 0 and tells you when to run `ota.py restore` first). Not tested on this device.
+checks that the installer writes to slot 0 and tells you when to run `ota.py restore` first). Confirmed on this device (the first build used the config of this folder).
 Keep UART or USB access as your way back.
+
+## Duo Bulb
+
+The owner reports that the Duo Bulb has the same main board with a different lamp module. Its stock firmware has no I2C code and drives
+PWM (LEDC), so this config's LED driver does not apply to it. The OTA part (`DuoBulbG3` profile) should work the same way but has not been run.
