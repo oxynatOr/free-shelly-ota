@@ -1,0 +1,74 @@
+name: Request a new device
+description: Ask for support for a Shelly that has no profile yet, or offer to test one.
+title: "[New device] <Shelly model>"
+labels: ["new-device"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A device needs a **profile**, which is made from the official OTA package (`python ota.py add-device <official.zip>`) and takes a few minutes. What takes time is a **hardware test**: nobody can say a device works until someone has flashed one. So the most useful thing you can offer is to test.
+
+        **Do not upload flash dumps, built ZIPs or ESPHome binaries.** Dumps contain per-device secrets (cloud key, Matter data). Remove MAC addresses, device IDs and the cloud key (`key=...`) from everything you paste.
+  - type: input
+    id: model
+    attributes:
+      label: Device
+      description: Name on the box or in the Shelly app, with the generation.
+      placeholder: "Shelly Plus 1PM, Gen2"
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: App name of the device
+      description: "The `app` value from `http://<device IP>/rpc/Shelly.GetDeviceInfo`, for example `PlugMG3`. The official package is at `https://updates.shelly.cloud/update/<app>`."
+      placeholder: "Plus1PM"
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Shelly firmware version on the device
+      description: The `ver` value from the same reply.
+    validations:
+      required: true
+  - type: dropdown
+    id: chip
+    attributes:
+      label: Chip (if you know it)
+      options:
+        - "Not sure"
+        - "ESP32 (Gen2)"
+        - "ESP32-C3 (Gen3)"
+        - "ESP32-C6 (Gen4)"
+        - "ESP32-S3 or other"
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you already tried
+      description: Did `python ota.py add-device` work with the official ZIP? Did `build` or `send --dry-run` complain? Paste the output (without secrets).
+      render: shell
+  - type: dropdown
+    id: help
+    attributes:
+      label: Can you test it?
+      options:
+        - "Yes, I have the device and UART (or USB) access"
+        - "Yes, I have the device but no UART access"
+        - "No, I only want the device supported"
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Hardware notes, photos of the board (no serial numbers), what the device is for.
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Before you send
+      options:
+        - label: I did not paste or upload dumps, MAC addresses, device IDs or cloud keys
+          required: true

@@ -49,7 +49,8 @@ Click the profile for the device page: ESPHome config, the exact commands and wh
 | Mini 1PM Gen4 | [`Mini1PMG4`](docs/devices/Mini1PMG4.md) | ESP32-C6 | 🧪 |
 | Mini 1PM Gen4 (Zigbee) | [`Mini1PMG4ZB`](docs/devices/Mini1PMG4.md#zigbee-variant) | ESP32-C6 | 🧪 |
 
-Another device? `python ota.py add-device <official.zip>` creates a profile from an official package
+Another device? [Request it](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml), or run
+`python ota.py add-device <official.zip>` to create a profile from an official package
 (`--parent <base device>` for a variant, e.g. the Zigbee version). Reports are welcome, also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 
