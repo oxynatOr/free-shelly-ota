@@ -6,3 +6,4 @@ app_ptn: app_0
 app_slot_size: 0x280000   # app_0 @0x20000
 pt_offset: 0xf000   # partition table address (default 0x10000)
 boot_min_version: "1.0.9"   # the installer reports an installed loader 1.0.3, so 1.0.3 is skipped (see README)
+revision: 2   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)

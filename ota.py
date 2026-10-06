@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
-from shelly_ota import (MODULE_DIR, __version__, builder, devicegen, firmware, lint, logwatch, profile, secrets_check,
+from shelly_ota import (MODULE_DIR, buildinfo, builder, devicegen, firmware, lint, logwatch, profile, secrets_check,
                         sender, ui)
 
 EPILOG = """\
@@ -39,11 +40,38 @@ Details per command: python ota.py <command> -h
 def cmd_list(args) -> None:
     for name in profile.list_devices():
         p = profile.load_profile(name)
-        ui.say(f"{name:12s} {p.display_name:24s} app size=0x{p.app_slot_size:x}")
+        ui.say(f"{name:12s} {p.display_name:24s} app size=0x{p.app_slot_size:x}  profile rev {p.revision}")
         for ver in firmware.list_versions(name):
             meta_path = firmware.FW_DIR / name / ver / "meta.json"
             build_id = json.loads(meta_path.read_text(encoding="utf-8")).get("build_id") if meta_path.is_file() else None
             ui.say(f"    fw {ver}  {build_id or ''}")
+
+
+def cmd_colors(args) -> None:
+    reason = ui.why_off(args.color, sys.stdout.isatty(), os.environ)
+    ui.say(f"Colors are {'OFF: ' + reason if reason else 'ON'} (--color {args.color}). Every line below is one level:")
+    ui.say("OK: success")
+    ui.say("NOTE: information")
+    ui.say("WARNING: a warning")
+    ui.say("WARNING: critical warning (for example: this package replaces Shelly's bootloader)")
+    ui.say("Error: something failed")
+    ui.say("  log| a line of the device's debug log")
+    ui.say("plain text, no level")
+    ui.say("If raw codes such as [32m show up in front of the words, this console does not understand ANSI "
+           "colors: use Windows Terminal, or --color never.")
+
+
+def cmd_profiles(args) -> None:
+    if args.update_lock:
+        lock = profile.write_lock()
+        ui.say(f"Wrote devices/{profile.LOCK_FILE} ({len(lock)} profiles)")
+    for name in profile.list_devices():
+        ui.say(f"{name:12s} revision {profile.load_profile(name).revision:<3d} content {profile.content_hash(name)}")
+    problems = profile.check_lock()
+    for problem in problems:
+        ui.say(f"WARNING: {problem}")
+    if problems:
+        raise builder.OtaError(f"{len(problems)} profile problem(s); see above.")
 
 
 def _fetch_official(p, *, refresh=False, version=None, insecure=False):
@@ -215,10 +243,19 @@ def send_options() -> argparse.ArgumentParser:
     return o
 
 
+class _VersionAction(argparse.Action):
+    def __init__(self, option_strings, dest, **kwargs):
+        super().__init__(option_strings, dest, nargs=0, default=argparse.SUPPRESS, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(f"{parser.prog} {buildinfo.current().short()}")
+        parser.exit()
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(prog="ota.py", description=__doc__, epilog=EPILOG,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    ap.add_argument("--version", action=_VersionAction, help="show the version and, in a git checkout, branch, commit and date")
     ap.add_argument("--color", choices=["auto", "always", "never"], default="auto",
                     help="colored messages: yellow warning, orange critical, red error, green ok (default: auto = only in "
                          "a terminal, and not with NO_COLOR set). Put it before the command.")
@@ -313,6 +350,14 @@ def main() -> None:
     c.add_argument("--yes", action="store_true", help="really delete")
     c.set_defaults(func=cmd_clean)
 
+    co = sub.add_parser("colors", help="show every message color once, and whether colors are on")
+    co.set_defaults(func=cmd_colors)
+
+    pr = sub.add_parser("profiles", help="list the device profiles with their revision and check devices/profiles.lock")
+    pr.add_argument("--update-lock", action="store_true",
+                    help="record the current revision and content of every profile (after raising a revision)")
+    pr.set_defaults(func=cmd_profiles)
+
     i = sub.add_parser("inspect", help="show and verify an OTA ZIP")
     i.add_argument("zip", type=Path, metavar="ZIP")
     i.add_argument("--device", metavar="DEVICE", help="also show how full the app slot is")
@@ -320,6 +365,8 @@ def main() -> None:
 
     args = ap.parse_args()
     ui.configure(args.color)
+    if not (args.func is cmd_partition_csv and not args.output):   # that command prints data to stdout
+        ui.say(f"free-shelly-ota {buildinfo.current().short()}")
     try:
         args.func(args)
     except (builder.OtaError, profile.ProfileError, FileNotFoundError) as e:

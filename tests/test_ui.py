@@ -72,5 +72,43 @@ class PaintTests(unittest.TestCase):
         self.assertEqual(ui.error("boom"), "Error: boom")   # stderr is not a terminal under the test runner
 
 
+class ColorsCommandTests(unittest.TestCase):
+    ROOT = Path(__file__).resolve().parent.parent
+
+    def _run(self, *args):
+        import os
+        import subprocess
+        env = {k: v for k, v in os.environ.items() if k not in ("NO_COLOR", "TERM")}   # do not depend on the caller's setup
+        return subprocess.run([sys.executable, str(self.ROOT / "ota.py"), *args], capture_output=True, text=True,
+                              encoding="utf-8", cwd=self.ROOT, env=env)
+
+    def test_forced_colors_show_every_level(self):
+        done = self._run("--color", "always", "colors")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        for code in (ui.GREEN, ui.CYAN, ui.YELLOW, ui.ORANGE, ui.RED, ui.DIM):
+            self.assertIn(code, done.stdout)
+        self.assertIn("Colors are ON", done.stdout)
+
+    def test_piped_output_has_no_codes_and_says_why(self):
+        done = self._run("colors")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertNotIn("\x1b", done.stdout)
+        self.assertIn("Colors are OFF: the output is not a terminal", done.stdout)
+
+    def test_why_off_names_the_reason(self):
+        self.assertEqual(ui.why_off("never", True, {}), "--color never")
+        self.assertIn("NO_COLOR", ui.why_off("auto", True, {"NO_COLOR": "1"}))
+        self.assertIn("TERM=dumb", ui.why_off("auto", True, {"TERM": "dumb"}))
+        self.assertIn("not a terminal", ui.why_off("auto", False, {}))
+
+    def test_the_sources_are_plain_ascii(self):
+        """A Windows console (cp1252) cannot print characters like arrows; a message with one would crash the command."""
+        for path in [self.ROOT / "ota.py", *sorted((self.ROOT / "shelly_ota").glob("*.py"))]:
+            try:
+                path.read_bytes().decode("ascii")
+            except UnicodeDecodeError as e:
+                self.fail(f"{path.name} contains a non-ASCII character at byte {e.start}")
+
+
 if __name__ == "__main__":
     unittest.main()

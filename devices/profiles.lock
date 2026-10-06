@@ -1,0 +1,34 @@
+{
+  "DuoBulbG3": {
+    "revision": 1,
+    "hash": "00165f5fa7e5"
+  },
+  "HTG3": {
+    "revision": 2,
+    "hash": "fa7fee3e6280"
+  },
+  "PlugMG3": {
+    "revision": 1,
+    "hash": "126dae8879f6"
+  },
+  "PlugSG3": {
+    "revision": 1,
+    "hash": "0288ea47f16b"
+  },
+  "PlusPlugS": {
+    "revision": 1,
+    "hash": "984fb1da55ce"
+  },
+  "PowerStrip": {
+    "revision": 2,
+    "hash": "7ca7d0c0d4b2"
+  },
+  "PowerStripZB": {
+    "revision": 1,
+    "hash": "df6be0d10ec0"
+  },
+  "RGBCCTBulbG3": {
+    "revision": 1,
+    "hash": "8103c0e98f50"
+  }
+}

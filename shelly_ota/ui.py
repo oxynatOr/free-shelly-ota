@@ -39,6 +39,25 @@ def should_color(mode: str, isatty: bool, env: Mapping[str, str]) -> bool:
     return isatty
 
 
+def is_enabled() -> bool:
+    return _enabled
+
+
+def why_off(mode: str, isatty: bool, env: Mapping[str, str]) -> str | None:
+    """Why colors are off for this mode and environment, or None if they are on."""
+    if mode == "never":
+        return "--color never"
+    if mode == "always":
+        return None if _enabled else "the console could not be switched to ANSI colors"
+    if env.get("NO_COLOR"):
+        return "the NO_COLOR environment variable is set"
+    if env.get("TERM") == "dumb":
+        return "TERM=dumb"
+    if not isatty:
+        return "the output is not a terminal (redirected or piped)"
+    return None if _enabled else "the console could not be switched to ANSI colors (use Windows Terminal, or --color never)"
+
+
 def _enable_windows_vt() -> bool:
     """Switch on ANSI escape processing in the Windows console (Windows 10 and newer). False if it is not available."""
     try:
@@ -74,7 +93,7 @@ def color_for(line: str) -> str | None:
     s = line.lstrip()
     if s.startswith(("Error:", "ERROR")):
         return RED
-    if s.startswith("log|"):
+    if s.startswith(("log|", "free-shelly-ota ")):
         return DIM
     if s.startswith("WARNING"):
         low = s.lower()
