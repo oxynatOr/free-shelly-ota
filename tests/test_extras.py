@@ -22,10 +22,11 @@ from shelly_ota import builder, devicegen, firmware, lint, logwatch, profile, rp
 class FakeRpcShelly:
     """Shelly simulator with RPC, optional digest auth (SHA-256) and UDP debug log."""
 
-    def __init__(self, password=None, slot=1, app="DuoBulbG3"):
+    def __init__(self, password=None, slot=1, app="DuoBulbG3", target_slot=None):
         self.app = app
         self.password = password
         self.slot = slot
+        self.target_slot = target_slot  # if set, the debug log announces "Storing core dumps to app_<n>" like a real updater
         self.udp_addr = None
         self.updates = []
         outer = self
@@ -80,8 +81,12 @@ class FakeRpcShelly:
                     outer.udp_addr = req["params"]["config"]["debug"]["udp"]["addr"]
                     if outer.udp_addr:
                         host, port = outer.udp_addr.rsplit(":", 1)
-                        socket.socket(socket.AF_INET, socket.SOCK_DGRAM).sendto(
-                            b"OTA: hello from fake shelly\n", (host, int(port)))
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        sock.sendto(b"OTA: hello from fake shelly\n", (host, int(port)))
+                        if outer.target_slot is not None:
+                            sock.sendto(f"shos_ota_esp32_back:949 Storing core dumps to app_{outer.target_slot} "
+                                        f"(0x200000)\n".encode(), (host, int(port)))
+                        sock.close()
                     return self._reply({"id": 1, "result": {"restart_required": False}})
                 self._reply({"id": 1, "error": {"code": -105, "message": "unknown"}})
 
@@ -109,20 +114,19 @@ class SlotAndChipTests(unittest.TestCase):
         with self.assertRaises(builder.OtaError):
             builder.check_app_image(img, "esp32c3", 1 << 20, "app_0")
 
-    def test_send_warns_on_slot_0(self):
+    def test_send_shows_the_reported_slot_without_warning_about_it(self):
+        """The old 'device runs from slot 0' warning was wrong for H&T and Plus Plug S; the target slot is probed instead."""
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         z = tmp / "t.zip"
         shutil.copy(firmware.cached_zip("DuoBulbG3"), z)
-        s = FakeRpcShelly(slot=0)
-        self.addCleanup(s.close)
-        lines = []
-        sender.send(profile.load_profile("DuoBulbG3"), z, s.addr, port=0, dry_run=True, out=lines.append)
-        self.assertTrue(any("slot 0" in l and "WARNING" in l for l in lines), lines)
-        s.slot = 1
-        lines.clear()
-        sender.send(profile.load_profile("DuoBulbG3"), z, s.addr, port=0, dry_run=True, out=lines.append)
-        self.assertFalse(any("WARNING" in l for l in lines), lines)
+        for slot in (0, 1):
+            s = FakeRpcShelly(slot=slot)
+            self.addCleanup(s.close)
+            lines = []
+            sender.send(profile.load_profile("DuoBulbG3"), z, s.addr, port=0, dry_run=True, out=lines.append)
+            self.assertTrue(any(f"reported slot={slot}" in l for l in lines), lines)
+            self.assertFalse(any("WARNING" in l for l in lines), lines)
 
 
 class VariantTests(unittest.TestCase):
@@ -170,7 +174,7 @@ class RestoreNoteTests(unittest.TestCase):
         import ota
         args = argparse.Namespace(device="PlugMG3", version=None, ip="127.0.0.1:1", host=None, port=0, timeout=2,
                                   yes=True, dry_run=False, force=False, user="admin", password=None, watch=0,
-                                  log_port=0)
+                                  log_port=0, ignore_slot=False)
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             with self.assertRaises(builder.OtaError) as cm:
@@ -240,6 +244,17 @@ class OfflineTests(unittest.TestCase):
             written = profile.load_profile(name, self.tmp)
             self.assertEqual(written.app_slot_size, profile.load_profile(name).app_slot_size)
             self.assertEqual(info["ptn"], "app_0")
+
+    def test_lint_accepts_the_esp_idf_default_offset_for_the_classic_esp32(self):
+        prof = profile.load_profile("PlusPlugS")
+        self.assertEqual(prof.pt_offset, 0x8000)
+        csv = "app_0, app, ota_0, 0x10000, 0x190000\n"
+        unset = self._yaml("esp32:\n  partitions: p.csv\n  framework:\n    type: esp-idf\n", csv)
+        self.assertEqual(lint.lint_esphome(unset, prof), [])      # option not set = ESP-IDF default 0x8000
+        # Gen3 still needs the option: offset unset (0x8000) is wrong there, and the slot size differs as well
+        self.assertEqual(len(lint.lint_esphome(unset, profile.load_profile("PlugMG3"))), 2)
+        wrong = self._yaml(self.GOOD, csv)                        # 0x10000 would be wrong on this device
+        self.assertEqual(len(lint.lint_esphome(wrong, prof)), 1)
 
     def test_partition_csv_matches_the_files_in_partitions_dir(self):
         for name in profile.list_devices():
@@ -314,7 +329,7 @@ class OfflineTests(unittest.TestCase):
         lines = []
         sender.send(profile.load_profile("DuoBulbG3"), zip_path, s.addr, port=0, assume_yes=True, timeout=10,
                     out=lines.append)
-        self.assertTrue(any("update the bootloader" in l for l in lines), lines)
+        self.assertTrue(any("--esphome-factory" in l and "Shelly's bootloader" in l for l in lines), lines)
 
 
 if __name__ == "__main__":

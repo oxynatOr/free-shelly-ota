@@ -46,7 +46,8 @@ def partition_csv(zip_path: Path) -> str:
     lines = [f"# {manifest['name']} stock partition table (read from the official {manifest['version']} package, "
              f"partition-table.bin at 0x{pt_addr:x}).",
              "# Only used so ESPHome builds against the same layout the device really has; the table in flash stays Shelly's.",
-             f"# Set CONFIG_PARTITION_TABLE_OFFSET: \"0x{pt_addr:x}\" in the ESPHome config (ESP-IDF's default is 0x8000).",
+             ("# The table is at ESP-IDF's default 0x8000: leave CONFIG_PARTITION_TABLE_OFFSET unset." if pt_addr == 0x8000 else
+              f"# Set CONFIG_PARTITION_TABLE_OFFSET: \"0x{pt_addr:x}\" in the ESPHome config (ESP-IDF's default is 0x8000)."),
              "# Name,    Type, SubType, Offset,   Size,     Flags"]
     for e in table:
         kind = {0: "app", 1: "data"}.get(e["type"], f"0x{e['type']:x}")

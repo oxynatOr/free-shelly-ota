@@ -1,4 +1,4 @@
-"""Shelly Gen3 OTA packaging: wrap an ESPHome app image into an official-style OTA ZIP."""
+"""Shelly OTA packaging (Gen2/Gen3/Gen4): wrap an ESPHome app image into an official-style OTA ZIP."""
 
 from pathlib import Path
 

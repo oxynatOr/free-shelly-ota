@@ -11,12 +11,12 @@ import time
 from contextlib import contextmanager
 from typing import Callable
 
-from . import rpc
+from . import rpc, ui
 from .builder import OtaError
 
 
 @contextmanager
-def udp_log(addr: str, host: str, port: int, out: Callable[[str], None] = print, **auth):
+def udp_log(addr: str, host: str, port: int, out: Callable[[str], None] = ui.say, **auth):
     """Context manager: forward the device's debug log to out() while the block runs."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -56,7 +56,7 @@ def udp_log(addr: str, host: str, port: int, out: Callable[[str], None] = print,
         sock.close()
 
 
-def watch(addr: str, host: str, port: int, seconds: float | None, out: Callable[[str], None] = print,
+def watch(addr: str, host: str, port: int, seconds: float | None, out: Callable[[str], None] = ui.say,
           **auth) -> None:
     """Print the device log for `seconds` (until Ctrl+C if None)."""
     with udp_log(addr, host, port, out, **auth):

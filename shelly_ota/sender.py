@@ -10,6 +10,7 @@ import contextlib
 import fnmatch
 import http.server
 import json
+import re
 import socket
 import threading
 import time
@@ -19,7 +20,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable
 
-from . import firmware, logwatch, rpc, secrets_check
+from . import firmware, logwatch, rpc, secrets_check, ui
 from .builder import OtaError, read_official_manifest
 from .profile import Profile
 
@@ -102,22 +103,41 @@ class FileServer:
         return f"http://{host}:{self.port}/{urllib.parse.quote(self.name)}"
 
 
+# The updater logs the slot it will write to as soon as the debug log is switched on, e.g.
+# "shos_ota_esp32_back:949 Storing core dumps to app_1 (0x200000)". In six runs (H&T, Power Strip, Plus Plug S x4) it matched the
+# later "Will write to slot 1" line. That is the slot the stock firmware is NOT running from.
+TARGET_SLOT_RE = re.compile(r"Storing core dumps to app_(\d)\b")
+
+
+def probe_target_slot(addr: str, host: str, log_port: int, *, wait: float = 4.0, **auth) -> int | None:
+    """Ask the device which slot its updater would write to, without updating. None if no answer arrived."""
+    found: list[int] = []
+
+    def sink(text: str) -> None:
+        m = TARGET_SLOT_RE.search(text)
+        if m:
+            found.append(int(m.group(1)))
+
+    with logwatch.udp_log(addr, host, log_port, sink, **auth):
+        deadline = time.monotonic() + wait
+        while not found and time.monotonic() < deadline:
+            time.sleep(0.1)
+    return found[0] if found else None
+
+
 def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str | None = None,
          port: int = 8000, timeout: float = 300, assume_yes: bool = False, dry_run: bool = False,
          force: bool = False, user: str | None = None, password: str | None = None,
-         watch: float = 0, log_port: int = 9514, ask: Callable[[str], str] = input, out: Callable[[str], None] = print) -> bool:
+         watch: float = 0, log_port: int = 9514, ignore_slot: bool = False, probe_wait: float = 4.0,
+         ask: Callable[[str], str] = input, out: Callable[[str], None] = ui.say) -> bool:
     """Returns True if the device downloaded the whole ZIP (or on a successful dry run)."""
     with zipfile.ZipFile(zip_path) as zf:
         manifest = read_official_manifest(zf, profile.name)
 
     info = device_info(addr)
     app = str(info.get("app", "?"))
-    out(f"Device {addr}: app={app} model={info.get('model')} fw={info.get('ver')} id={info.get('id')} "
-        f"slot={info.get('slot', 'n/a')}")
-    if info.get("slot") == 0:
-        out("WARNING: the device runs from slot 0. The stock updater writes to the other slot, and for Gen4 it is "
-            "reported to skip the app and stall at 87% when started from slot 0 (not verified for Gen3). "
-            "If nothing changes, install one normal stock update first so the device moves to slot 1.")
+    out(f"Device {addr}: app={app} model={info.get('model') or 'n/a'} fw={info.get('ver')} id={info.get('id')} "
+        f"reported slot={info.get('slot', 'n/a')} (not the update target; that is read separately)")
     auth = {"user": user, "password": password}
     if info.get("auth_en") and not (user and password):
         raise OtaError("The device has a password set: use --user and --password (user is usually 'admin').")
@@ -145,9 +165,28 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
         if boot_replaced:
             out("WARNING: this package replaces Shelly's bootloader. If it does not suit the device, only UART can "
                 "bring it back. Do not interrupt the power during the update.")
-            out("NOTE: ESPHome's bootloader starts app_0 (the installer overwrites otadata). With --watch, the log must "
-                "say 'Will write to slot 0'; on 'slot 1' the old app in app_0 starts instead (seen on the Power Strip "
-                "Gen4 running 1.7.99). Then install one official update first (ota.py restore), and send again.")
+            out("NOTE: ESPHome's bootloader starts app_0 (the installer overwrites otadata), so the installer must write "
+                "to slot 0; otherwise the old app in app_0 starts instead (seen on the Power Strip Gen4 and the Plus Plug S).")
+            target = None
+            try:
+                target = probe_target_slot(addr, host, log_port, wait=probe_wait, **auth)
+            except OtaError as e:
+                out(f"NOTE: could not ask the device for its update target slot ({e}).")
+            if target is None:
+                out("WARNING: the update target slot could not be read (UDP log blocked? allow UDP port "
+                    f"{log_port} in the firewall). If the installer writes to slot 1, the old app starts instead.")
+            elif target == 0:
+                out("Update target slot: 0 (the slot ESPHome's bootloader starts).")
+            elif ignore_slot:
+                out(f"WARNING: the installer will write to slot {target}, but ESPHome's bootloader starts app_0 "
+                    "(sending anyway because of --ignore-slot).")
+            else:
+                server.httpd.server_close()
+                raise OtaError(
+                    f"The installer would write to slot {target}, but ESPHome's bootloader starts app_0, so the old "
+                    f"firmware would start again. Install the official firmware first (python ota.py restore "
+                    f"{profile.name}); that also puts Shelly's bootloader back and moves the stock firmware to the "
+                    "other slot. Then send again. Use --ignore-slot to send anyway.")
     else:
         out(f"NOTE: no official {profile.name} ZIP cached, so it was not checked whether this package replaces "
             f"Shelly's bootloader (run 'ota.py inspect' on it, or 'ota.py fetch {profile.name}').")
@@ -185,8 +224,9 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
                     "expected. The package carried ESPHome's bootloader, so no separate bootloader update is needed.")
             else:
                 out("After the first ESPHome boot: the log line 'ota data invalid, no current app. Assuming factory' is "
-                    "expected. Before relying on later ESPHome OTA updates, update the bootloader (see README, "
-                    "'After the first boot'); keep UART ready.")
+                    "expected. This package keeps Shelly's bootloader, which counts uncommitted boots and may switch back "
+                    "to the old firmware after a few restarts. For a lasting install build with --esphome-factory "
+                    "(README, 'After the first boot').")
             if watch > 0:
                 out(f"Still listening to the device log for {watch:.0f}s ...")
                 time.sleep(watch)

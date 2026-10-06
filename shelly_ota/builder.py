@@ -1,4 +1,4 @@
-"""Build a Shelly Gen3 OTA ZIP around an ESPHome app image.
+"""Build a Shelly OTA ZIP (Gen2/Gen3/Gen4) around an ESPHome app image.
 
 Only the "app" part is replaced (size + cs_sha256 + file content). All other
 parts are taken 1:1 from the official ZIP unless explicitly dropped.
@@ -18,7 +18,7 @@ from . import __version__, secrets_check
 from .profile import Profile
 
 DROPPABLE_PARTS = ("boot", "pt", "otadata", "nvs", "fs")
-CHIP_IDS = {"esp32c3": 0x0005, "esp32c6": 0x000D}  # esp_chip_id_t in the ESP image header
+CHIP_IDS = {"esp32": 0x0000, "esp32c3": 0x0005, "esp32c6": 0x000D}  # esp_chip_id_t in the ESP image header
 
 
 APP_DESC_MAGIC = bytes.fromhex("3254cdab")  # esp_app_desc_t.magic_word 0xABCD5432, little endian
@@ -194,8 +194,8 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
                 warnings.append(f"boot min_version raised from {old} to {target}, so that the Shelly installer "
                                 f"writes the new bootloader (use --boot-min-version keep to leave it).")
             warnings.append("BOOTLOADER REPLACED: the package carries ESPHome's bootloader and a clean otadata. If the "
-                            "bootloader does not suit the device, only UART can bring it back. Worked on the Plug M "
-                            "Gen3 and the H&T Gen3; untested on other models.")
+                            "bootloader does not suit the device, only UART can bring it back. The installer must also write the "
+                            "app to slot 0 (send checks that). Confirmed devices are marked in the README.")
 
         if "nvs" in parts:
             warnings.append("NVS part is included: applying this package wipes NVS (Wi-Fi credentials, settings).")

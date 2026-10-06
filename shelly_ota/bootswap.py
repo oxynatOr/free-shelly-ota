@@ -65,11 +65,12 @@ def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: byte
     shelly_boot = official.read(parts["boot"]["src"])
     shelly_pt = official.read(parts["pt"]["src"])
     pt_offset = parts["pt"].get("addr", 0x10000)
+    boot_addr = parts["boot"].get("addr", 0)  # 0 on ESP32-C3/C6, 0x1000 on the classic ESP32
     if len(factory) < pt_offset + 4096:
         raise OtaError("The factory image is too small (it must contain the bootloader and the partition table).")
 
-    boot = verify_image(factory[:pt_offset], "Bootloader in the factory image")
-    if len(boot) > pt_offset:
+    boot = verify_image(factory[boot_addr:pt_offset], "Bootloader in the factory image")
+    if boot_addr + len(boot) > pt_offset:
         raise OtaError("Bootloader does not fit in front of the partition table.")
 
     # The fields a wrong bootloader would get wrong first: flash mode, size/frequency, chip, minimum revision.
