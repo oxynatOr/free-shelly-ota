@@ -20,7 +20,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable
 
-from . import firmware, logwatch, rpc, secrets_check, ui
+from . import buildinfo, firmware, logwatch, rpc, secrets_check, ui
 from .builder import OtaError, read_official_manifest
 from .profile import Profile
 
@@ -125,6 +125,26 @@ def probe_target_slot(addr: str, host: str, log_port: int, *, wait: float = 4.0,
     return found[0] if found else None
 
 
+def package_info(zip_path: Path, profile: Profile) -> list[str]:
+    """What the package's report says about its origin: when, by which tool state, from which profile revision."""
+    try:
+        data = json.loads(Path(str(zip_path) + ".report.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    try:
+        tool = buildinfo.BuildInfo(**data["tool_build"]).short()
+    except (KeyError, TypeError):
+        tool = str(data.get("tool_version", "unknown version"))
+    built = str(data.get("built", "")).replace("T", " ").replace("+00:00", " UTC")
+    prof = data.get("profile") or {}
+    lines = [f"Package: built {built or 'at an unknown time'} by free-shelly-ota {tool}"
+             + (f", profile {prof['name']} revision {prof['revision']}" if prof.get("name") else "")]
+    if prof.get("revision") and prof["revision"] != profile.revision:
+        lines.append(f"NOTE: the {profile.name} profile has changed since this package was built (revision "
+                     f"{prof['revision']}, now {profile.revision}); rebuild it if that change matters (see CHANGELOG).")
+    return lines
+
+
 def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str | None = None,
          port: int = 8000, timeout: float = 300, assume_yes: bool = False, dry_run: bool = False,
          force: bool = False, user: str | None = None, password: str | None = None,
@@ -155,6 +175,8 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     server = FileServer(zip_path, port)
     url = server.url(host)
     out(f"ZIP: {zip_path.name} ({manifest['version']}, parts: {', '.join(manifest['parts'])})")
+    for line in package_info(zip_path, profile):
+        out(line)
     out(f"Download URL for the device: {url}")
     official_zip = firmware.cached_zip(profile.name)
     boot_replaced: bool | None = None  # None: cannot tell (no cached official ZIP to compare with)

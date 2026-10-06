@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `RGBCCTBulbG3` (Multicolor Bulb Gen3): `send` with `--esphome-factory` ran through and ESPHome runs. The light itself is not confirmed.
 - `PowerStrip` is hardware-confirmed (ESPHome boots with ESPHome's bootloader). Its profile sets `boot_min_version: 1.0.9`.
 
 ### Changed
@@ -32,6 +33,13 @@ All notable changes to this project are documented here. The format follows
 - Colored messages (`shelly_ota/ui.py`): yellow warnings, orange critical warnings, red errors, green success, cyan notes, dimmed
   device log lines. Only in a terminal; `NO_COLOR` and `--color auto|always|never` (before the command) control it. The
   words WARNING/NOTE/Error/OK stay in the text.
+
+- Versions you can tell apart (`shelly_ota/buildinfo.py`): `--version` and a first line `free-shelly-ota <version (branch, git
+  describe, date)>` on every command; the build report records the tool state, the profile name and revision and the build options
+  (flags only); `send` prints the package's origin and notes a profile that changed since the build.
+- Profile revisions: each `devices/*.yaml` has a `revision:`; `devices/profiles.lock` and the new `ota.py profiles` command (with
+  `--update-lock`) guard against changing a profile without raising it; `list` shows the revision; `add-device` writes
+  `revision: 1`.
 
 ### Changed
 - `build` errors about the ESPHome bootloader header, the partition layout, a `.factory.bin` from another build, a wrong chip and

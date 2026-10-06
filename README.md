@@ -18,7 +18,7 @@ the manifest, and can hand the result to the Shelly: it checks the device, serve
 update over RPC. Optionally it shows the device's debug log while that happens.
 
 > **Status: experimental.** Packaging is covered by tests. The whole chain (`build` and `send`) has been confirmed on
-> real devices only where the table below says so (Plug M Gen3, H&T Gen3, Power Strip 4 Gen4, Plus Plug S); everything else is
+> real devices only where the table below says so (Plug M Gen3, H&T Gen3, Power Strip 4 Gen4, Plus Plug S, Multicolor Bulb Gen3); everything else is
 > untested on hardware. Keep UART access as your way back.
 
 
@@ -37,8 +37,8 @@ Tested devices
 | Manufacturer | Device                       | Profile       | Chip     | Package | Tested on hardware |
 | ---          | ---                          | ---           | ---      | ---     | --- |
 | Shelly       | Plug M Gen3                  | `PlugMG3`     | ESP32-C3 | 2.0.1   | ✅ `send` from stock 1.8.99, then two ESPHome OTAs |
-| Shelly       | Duo Bulb Gen3                | `DuoBulbG3`   | ESP32-C3 | 2.0.1   | not yet |
-| Shelly       | Multicolor Bulb E27 Gen3     | `RGBCCTBulbG3`| ESP32-C3 | 2.0.1   | not yet |
+| Shelly       | Duo Bulb Gen3                | `DuoBulbG3`   | ESP32-C3 | 2.0.1   | not yet. The owner reports the same main board as the Multicolor Bulb with a different lamp module; its stock firmware has no I2C code (LED PWM instead), so the LED driver config of the Multicolor Bulb does not apply. The OTA chain should be the same, but it has not been run |
+| Shelly       | Multicolor Bulb E27 Gen3     | `RGBCCTBulbG3`| ESP32-C3 | 2.0.1   | ✅ `send` with `--esphome-factory` (installed loader 1.0.2, profile default raises it to 1.0.3) ran through and ESPHome runs (reported by the owner). The LED driver (KP18068, own component, config in the device branch) and the channel order were not confirmed yet |
 | Shelly       | Plug S Gen3                  | `PlugSG3`     | ESP32-C3 | 2.0.1   | not yet |
 | Shelly       | H&T Gen3                     | `HTG3`        | ESP32-C3 | 2.0.1   | ✅ `send` from stock 2.0.1 (slot 0) with `--esphome-factory`: ESPHome's bootloader is written (profile sets `boot_min_version 1.0.9`, the default 1.0.3 was skipped), ESPHome boots and ESPHome OTAs take effect. Partition table at `0xf000`, so `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"` |
 | Shelly       | Power Strip 4 Gen4           | `PowerStrip`  | ESP32-C6 | 2.0.1   | ✅ ESPHome boots and joins Wi-Fi/Home Assistant (UART log) with ESPHome's bootloader (`boot_min_version 1.0.9`). From stock 1.7.99 a direct `send` did not work (app landed in slot 1, old app started); it worked after one official update to 2.0.1, see [Notes](#notes--troubleshooting). Outlets and metering not checked here |
@@ -106,6 +106,7 @@ python ota.py send  PlugMG3 out/<file>.zip --watch 60   # 3. send it to the devi
 | Deploy | `log` | Show the device's live debug log |
 | Tools | `inspect` | Show and verify a ZIP |
 | Tools | `list` | Show devices and cached firmware |
+| Tools | `profiles` | List the profiles with their revision, check `devices/profiles.lock` (`--update-lock` writes it) |
 | Tools | `clean` | Delete old ZIPs in `out/` (needs `--yes`) |
 
 `python ota.py <command> -h` shows the options of any command.
@@ -113,7 +114,8 @@ python ota.py send  PlugMG3 out/<file>.zip --watch 60   # 3. send it to the devi
 In a terminal the messages are colored: yellow for warnings, orange for critical ones (bootloader replaced, data wiped,
 wrong update target), red for errors, green for success. The words `WARNING:`, `NOTE:`, `Error:` and `OK:` stay in the text, so
 logs and pipes read the same. No colors when the output is not a terminal or `NO_COLOR` is set; `python ota.py --color never
-<command>` (or `always`) overrides that. The option goes before the command.
+<command>` (or `always`) overrides that. The option goes before the command. `python ota.py colors` shows every level once and says
+whether colors are on (and if not, why); use it to check your console.
 
 ### fetch
 
@@ -199,6 +201,26 @@ Shows the live debug log of a Shelly without sending anything: `python ota.py lo
 Takes `--ip`, `--user`, `--password`, `--host`, `--log-port` and `--seconds` (default: until Ctrl+C).
 
 
+Versions: what, how, where, when
+--------------------------------
+
+Everything that can end up in a log, a package or a bug report says which state of the tool made it.
+
+- **The tool.** `python ota.py --version` prints for example `0.2.0 (feature/x, v0.2.0-4-gb225e1f-dirty, 2026-10-06)`: the
+  version, in a git checkout also the branch, `git describe` (last tag, commits since it, commit, `-dirty` = uncommitted
+  changes) and the commit date. Outside a git checkout it is just the version number (SemVer, see CHANGELOG). Every command
+  starts with a line `free-shelly-ota <that>`, so a pasted log shows which state produced it (`partition-csv` without `-o`
+  leaves it out, its output is data).
+- **The package.** `build` writes `<zip>.report.json` with the same tool information, the profile name and revision, the options
+  used (ESPHome bootloader or not, resulting `boot_min_version`, dropped parts, tag; flags only, no paths) and the build time.
+  `send` reads it and prints `Package: built ... by free-shelly-ota ..., profile ... revision N`, and a note if the profile has
+  changed since.
+- **The profiles.** Each `devices/<Device>.yaml` has a `revision:` that counts its changes. Raise it whenever you change anything
+  else in the file, then run `python ota.py profiles --update-lock`; `devices/profiles.lock` stores revision and content hash,
+  and the test suite fails if a profile changed without a higher revision. `python ota.py profiles` lists them and checks
+  the lock; `list` shows the revision too.
+
+
 Credits
 -------
 
@@ -223,8 +245,8 @@ ESP-IDF cannot read. It does not stop ESPHome from booting.
 
 With Shelly's own bootloader, later ESPHome OTAs behave oddly (see "Without it" below). The recommended way avoids that.
 
-**Recommended: ship ESPHome's bootloader in the package (confirmed on the Plug M Gen3, H&T Gen3, Power Strip 4 Gen4 and
-Plus Plug S, see the table).** Build with
+**Recommended: ship ESPHome's bootloader in the package (confirmed on the Plug M Gen3, H&T Gen3, Power Strip 4 Gen4,
+Plus Plug S and Multicolor Bulb Gen3, see the table).** Build with
 `--esphome-factory firmware.factory.bin`. The tool takes ESPHome's bootloader and a clean `otadata` out of the factory
 image and puts them into the Shelly package instead of Shelly's; the partition table and everything else stay as
 shipped. It also raises the bootloader's `min_version` in the manifest by one patch level (1.0.2 to 1.0.3). That is
@@ -255,7 +277,7 @@ Untested: a later `restore` of the official package, whose `min_version` is lowe
 bootloader in place.
 
 `send` warns again when a package replaces the bootloader, and it checks that the installer will write the app to slot 0
-(see Notes). It worked on the four confirmed devices; on other models the
+(see Notes). It worked on the five confirmed devices; on other models the
 installer's rule may differ, and a bootloader that does not suit the device can only be fixed with UART. The Plug US
 project advises against replacing the bootloader in the initial package; this goes beyond its findings.
 `--boot-min-version VER` sets the value yourself, `keep` leaves Shelly's.

@@ -4,3 +4,4 @@ platform: esp32c3
 update_id: PlugSG3        # name used by https://updates.shelly.cloud/update/<update_id>
 app_ptn: app_0
 app_slot_size: 0x2a0000   # app_0 @0x20000
+revision: 1   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)

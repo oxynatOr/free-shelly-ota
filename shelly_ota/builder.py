@@ -14,7 +14,7 @@ import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import __version__, secrets_check
+from . import __version__, buildinfo, secrets_check
 from .profile import Profile
 
 DROPPABLE_PARTS = ("boot", "pt", "otadata", "nvs", "fs")
@@ -42,6 +42,9 @@ class BuildResult:
     warnings: list[str] = field(default_factory=list)
     replaced: list[str] = field(default_factory=list)  # parts taken from an ESPHome factory image (boot, otadata)
     secrets_found: list[str] | None = None  # names of credentials found in the image; None = not checked
+    profile_name: str | None = None
+    profile_revision: int | None = None
+    options: dict = field(default_factory=dict)  # how it was built (flags only, no paths)
 
 
 def check_app_image(app: bytes, platform: str, slot_size: int, slot_name: str) -> list[str]:
@@ -231,6 +234,10 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
         parts=list(written["parts"]), dropped=dropped,
         official_version=manifest["version"], official_build_id=manifest.get("build_id"), tag=tag, warnings=warnings,
         replaced=replaced, secrets_found=secrets_found,
+        profile_name=profile.name, profile_revision=profile.revision,
+        options={"esphome_factory": "boot" in replaced,
+                 "boot_min_version": written["parts"]["boot"].get("min_version") if "boot" in replaced else None,
+                 "dropped": dropped, "tag": tag},
     )
 
 
@@ -246,6 +253,9 @@ def write_report(result: BuildResult) -> None:
         "contains_secrets": result.secrets_found,  # names only (never values); null = not checked
         "warnings": result.warnings,
         "tool_version": __version__,
+        "tool_build": buildinfo.current().as_dict(),   # branch, commit, tag distance, date, dirty
+        "profile": {"name": result.profile_name, "revision": result.profile_revision},
+        "options": result.options,
         "built": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
     }
     Path(str(out) + ".report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
