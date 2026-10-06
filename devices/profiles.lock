@@ -11,6 +11,10 @@
     "revision": 2,
     "hash": "fa7fee3e6280"
   },
+  "Pill": {
+    "revision": 1,
+    "hash": "cba4d5a12023"
+  },
   "PlugMG3": {
     "revision": 1,
     "hash": "126dae8879f6"
