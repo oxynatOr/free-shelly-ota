@@ -43,6 +43,7 @@ Click the profile for the device page: ESPHome config, the exact commands and wh
 | Power Strip 4 Gen4 | [`PowerStrip`](docs/devices/PowerStrip.md) | ESP32-C6 | ✅ boots, outlets not checked |
 | Power Strip 4 Gen4 (Zigbee) | [`PowerStripZB`](docs/devices/PowerStripZB.md) | ESP32-C6 | 🧪 |
 | Plus Plug S (V2 hardware, Gen2) | [`PlusPlugS`](docs/devices/PlusPlugS.md) | ESP32 | ✅ without UART |
+| Shelly Cury | [`Cury`](docs/devices/Cury.md) | ESP32-C6 | 🧪 |
 
 Another device? `python ota.py add-device <official.zip>` creates a profile from an official package
 (`--parent <base device>` for a variant, e.g. the Zigbee version). Reports are welcome.
