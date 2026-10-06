@@ -44,12 +44,11 @@ ota:
     id: my_ota
     allow_partition_access: true   # lets ESPHome update the bootloader later; not needed for plain app OTAs
 
-# The KP18068 LED driver. The component in components/kp18058 bit-bangs the two pins (no i2c: block, GPIO4/5 belong to it).
+# The KP18068 LED driver. The component (https://github.com/oxynatOr/esphome-kp18058) bit-bangs the two pins (no i2c: block, GPIO4/5 belong to it).
 # Values as the Shelly firmware sends them: RGB current code 5 (= 9 mA), white current code 11 (= 27.5 mA), analog dimming, 4 kHz.
 external_components:
-  - source:
-      type: local
-      path: components
+  - source: github://oxynatOr/esphome-kp18058@2e6d1beb956f16c679a617f33a24e5bbd57b5c03   # pinned commit; for local work: type: local, path: <your clone>/components
+    components: [kp18058]
 
 kp18058:
   id: led_driver
