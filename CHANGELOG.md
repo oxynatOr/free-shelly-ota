@@ -5,19 +5,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-06
+
 ### Added
 - `PlugSG3` (Plug S Gen3) is hardware-confirmed: `send` with `--esphome-factory`, ESPHome runs (base config without relay or metering).
 - `RGBCCTBulbG3` (Multicolor Bulb Gen3): `send` with `--esphome-factory` ran through and ESPHome runs. The light itself is not confirmed.
 - `PowerStrip` is hardware-confirmed (ESPHome boots with ESPHome's bootloader). Its profile sets `boot_min_version: 1.0.9`.
-
-### Changed
-- `send` notes that ESPHome's bootloader starts `app_0`, so the installer must write to slot 0 (`Will write to slot 0` in the
-  `--watch` log); README documents the failure seen on the Power Strip Gen4 (stock 1.7.99 wrote to slot 1) and the fix (one
-  official update first).
-
-## [Unreleased]
-
-### Added
 - Profile `PlusPlugS` (Shelly Plus Plug S, classic ESP32, Gen2) with partition CSV. Support for the classic ESP32: chip id 0,
   bootloader at `0x1000` (from the manifest), partition table at ESP-IDF's default `0x8000` (the ESPHome offset option may stay
   unset). Hardware-confirmed on a Plus Plug S V2 without UART: `restore`, then `send` (target slot 0), ESPHome booted and an
@@ -30,23 +23,27 @@ All notable changes to this project are documented here. The format follows
   `ota.py restore` (official package) put Shelly's bootloader back over OTA, after which the next `send` targeted slot 0. A UART
   `otadata` entry that selects `app_1` is documented as a fallback. Also: the ESPHome build must use the 80 MHz flash header
   (`CONFIG_ESPTOOLPY_FLASHFREQ_80M`), otherwise `build` refuses to replace the bootloader.
-
 - Colored messages (`shelly_ota/ui.py`): yellow warnings, orange critical warnings, red errors, green success, cyan notes, dimmed
   device log lines. Only in a terminal; `NO_COLOR` and `--color auto|always|never` (before the command) control it. The
   words WARNING/NOTE/Error/OK stay in the text.
-
 - Versions you can tell apart (`shelly_ota/buildinfo.py`): `--version` and a first line `free-shelly-ota <version (branch, git
   describe, date)>` on every command; the build report records the tool state, the profile name and revision and the build options
   (flags only); `send` prints the package's origin and notes a profile that changed since the build.
 - Profile revisions: each `devices/*.yaml` has a `revision:`; `devices/profiles.lock` and the new `ota.py profiles` command (with
   `--update-lock`) guard against changing a profile without raising it; `list` shows the revision; `add-device` writes
   `revision: 1`.
+- Documentation: the README is short now (device table, quick start, links); the rest moved to `docs/` with one page per
+  device (`docs/devices/<Profile>.md`: ESPHome config, commands, log lines, pitfalls) and pages for commands, bootloader and
+  slots, troubleshooting, recovery over UART, credential check and versions.
 
 ### Changed
+- `send` notes that ESPHome's bootloader starts `app_0`, so the installer must write to slot 0 (`Will write to slot 0` in the
+  `--watch` log); README documents the failure seen on the Power Strip Gen4 (stock 1.7.99 wrote to slot 1) and the fix (one
+  official update first).
 - `build` errors about the ESPHome bootloader header, the partition layout, a `.factory.bin` from another build, a wrong chip and
   an app that is too big now show both values in plain words (for example "4 MB, 40 MHz (0x20)" against "4 MB, 80 MHz (0x2f)")
   and a "Fix:" line naming the ESPHome setting that worked on the tested devices.
-- README status paragraph lists the four hardware-confirmed devices.
+- README status lists the six hardware-confirmed devices.
 - Messages checked for Gen2/Gen3/Gen4: removed the `slot 0` warning in `send` (it was wrong for H&T and Plus Plug S and clashed
   with the target-slot check; `send` now prints "reported slot" instead); the bootloader notes no longer say "confirmed on the
   Plug M Gen3 only"; the plain-package hint explains Shelly's uncommitted-boot counter instead of "keep UART ready";
