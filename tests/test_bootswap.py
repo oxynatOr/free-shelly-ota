@@ -132,6 +132,70 @@ class BootswapTests(unittest.TestCase):
         self.assertEqual(profile.load_profile("HTG3").boot_min_version, "1.0.9")
         self.assertIsNone(profile.load_profile("PlugMG3").boot_min_version)
 
+    def _error_for(self, **factory_kw) -> str:
+        with self.assertRaises(builder.OtaError) as cm:
+            self._build(make_factory(self.official, self.app, **factory_kw))
+        return str(cm.exception)
+
+    def test_header_errors_say_what_differs_and_how_to_fix_it(self):
+        def set_byte(i, v):
+            return lambda img: img.__setitem__(i, v)
+
+        msg = self._error_for(boot_tweak=set_byte(3, 0x20))                  # 4 MB / 40 MHz instead of Shelly's value
+        self.assertIn("flash size/frequency", msg)
+        self.assertIn("40 MHz", msg)
+        self.assertIn("board_build.f_flash", msg)
+        self.assertIn("Fix:", msg)
+
+        msg = self._error_for(boot_tweak=set_byte(14, 1))                    # Shelly's Plug M loader has 3 here
+        self.assertIn("minimum chip revision", msg)
+        self.assertIn("minimum_chip_revision", msg)
+        self.assertIn("sram1_as_iram", msg)
+
+        msg = self._error_for(boot_tweak=set_byte(2, 3))                     # DOUT
+        self.assertIn("DOUT", msg)
+        self.assertIn("flash_mode", msg)
+
+        def other_chip(img):
+            img[12:14] = (0x000D).to_bytes(2, "little")
+        msg = self._error_for(boot_tweak=other_chip)
+        self.assertIn("ESP32-C6", msg)
+        self.assertIn("variant", msg)
+
+    def test_esp32_frequency_hint_names_the_sdkconfig_option(self):
+        prof = profile.load_profile("PlusPlugS")
+        official = firmware.cached_zip("PlusPlugS")
+        app = bytearray(fake_app(100_000))
+        app[12:14] = (0).to_bytes(2, "little")
+        (self.tmp / "app.bin").write_bytes(bytes(app))
+        (self.tmp / "factory.bin").write_bytes(make_factory(official, bytes(app), boot_tweak=lambda img: img.__setitem__(3, 0x20)))
+        with self.assertRaises(builder.OtaError) as cm:
+            builder.build(prof, self.tmp / "app.bin", official, self.tmp / "o.zip", factory=self.tmp / "factory.bin")
+        msg = str(cm.exception)
+        self.assertIn("4 MB, 40 MHz", msg)
+        self.assertIn("4 MB, 80 MHz", msg)
+        self.assertIn("CONFIG_ESPTOOLPY_FLASHFREQ_80M", msg)
+
+    def test_partition_layout_and_other_build_errors_come_with_a_fix(self):
+        def move_app0(pt):
+            pt[2 * 32 + 8:2 * 32 + 12] = (0x30000).to_bytes(4, "little")
+        msg = self._error_for(pt_mod=move_app0)
+        self.assertIn("partitions: PlugMG3-stock.csv", msg)
+        self.assertIn("partition-csv", msg)
+        with self.assertRaises(builder.OtaError) as cm:
+            self._build(make_factory(self.official, fake_app(100_000)[:-1] + b"\x01"))
+        self.assertIn("same build", str(cm.exception))
+        self.assertIn("Fix:", str(cm.exception))
+
+    def test_app_checks_name_the_fix(self):
+        with self.assertRaises(builder.OtaError) as cm:
+            builder.check_app_image(fake_app(100_000), "esp32c6", 1 << 20, "app_0")   # fake_app has the C3 chip id
+        self.assertIn("variant", str(cm.exception))
+        self.assertIn("ESP32C6", str(cm.exception))
+        with self.assertRaises(builder.OtaError) as cm:
+            builder.check_app_image(fake_app(100_000), "esp32c3", 50_000, "app_0")
+        self.assertIn("COMPILER_OPTIMIZATION_SIZE", str(cm.exception))
+
     def _send_dry(self, target_slot, **kw):
         res = self._build(make_factory(self.official, self.app))        # a package that replaces the bootloader
         shelly = FakeRpcShelly(app="PlugMG3", target_slot=target_slot)
