@@ -20,6 +20,10 @@ update over RPC. Optionally it shows the device's debug log while that happens.
 > **Status: experimental.** Packaging is covered by tests. The whole chain (`build` and `send`) has been confirmed on
 > real devices only where the table below says so (Plug M Gen3, H&T Gen3, Power Strip 4 Gen4, Plus Plug S, Multicolor Bulb Gen3, Plug S Gen3); everything else is
 > untested on hardware. Keep UART access as your way back.
+>
+> **What is not in this project:** no ESPHome binaries and no Shelly firmware. You compile your own ESPHome image, and the
+> tool downloads the official package from Shelly when you build. **Way back:** if a flash goes wrong, only UART brings the device
+> back (see [Recovery over UART](#recovery-over-uart)); have it ready before you start.
 
 
 ⚠️ Disclaimer
@@ -204,7 +208,9 @@ Takes `--ip`, `--user`, `--password`, `--host`, `--log-port` and `--seconds` (de
 Versions: what, how, where, when
 --------------------------------
 
-Everything that can end up in a log, a package or a bug report says which state of the tool made it.
+Everything that can end up in a log, a package or a bug report says which state of the tool made it. The version numbers follow
+[Semantic Versioning](https://semver.org); while the version is 0.x the tool is experimental and minor releases may change
+behaviour. Changes are listed in [CHANGELOG.md](CHANGELOG.md); the build report records the tool version as `tool_version`.
 
 - **The tool.** `python ota.py --version` prints for example `0.2.0 (feature/x, v0.2.0-4-gb225e1f-dirty, 2026-10-06)`: the
   version, in a git checkout also the branch, `git describe` (last tag, commits since it, commit, `-dirty` = uncommitted
@@ -413,13 +419,6 @@ it. `build` therefore compares the image (and the `--esphome-factory` image) wit
 `--fail-on-secrets` turns the warning into an error. Without `--esphome-yaml`/`--secrets` nothing can be compared; the build says so.
 `build` also warns if the output file lies in a git work tree where it is not ignored. Never share, upload or commit such a ZIP; a package
 for others should come from a config without credentials (e.g. a Wi-Fi setup config).
-
-
-Versioning
-----------
-
-[Semantic Versioning](https://semver.org); while the version is 0.x the tool is experimental and minor releases may change behaviour.
-`python ota.py --version` shows it, the build report records it as `tool_version`, and changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 
 <!-- LICENSE -->
