@@ -126,7 +126,7 @@ def _send(args, zip_path: Path) -> None:
     p = profile.load_profile(args.device)
     sender.send(p, zip_path, args.ip, host=args.host, port=args.port, timeout=args.timeout,
                 assume_yes=args.yes, dry_run=args.dry_run, force=args.force, user=args.user,
-                password=args.password, watch=args.watch, log_port=args.log_port)
+                password=args.password, watch=args.watch, log_port=args.log_port, ignore_slot=args.ignore_slot)
 
 
 def cmd_send(args) -> None:
@@ -200,6 +200,8 @@ def send_options() -> argparse.ArgumentParser:
     o.add_argument("--yes", action="store_true", help="do not ask before flashing")
     o.add_argument("--dry-run", action="store_true", help="check the device, send nothing")
     o.add_argument("--force", action="store_true", help="send even if the device model does not match")
+    o.add_argument("--ignore-slot", action="store_true",
+                   help="send even if the installer would write to a slot that ESPHome's bootloader does not start")
     o.add_argument("--watch", type=float, default=0, metavar="SEC",
                    help="show the device log, and keep listening SEC seconds after the download")
     o.add_argument("--port", type=int, default=8000, help="local web server port (default: %(default)s)")

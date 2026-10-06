@@ -1,0 +1,7 @@
+# OTA profile for PlusPlugS, generated from the official 1.7.5 package.
+display_name: "Shelly Plus Plug S"
+platform: esp32
+update_id: PlusPlugS        # name used by https://updates.shelly.cloud/update/<update_id>
+app_ptn: app_0
+app_slot_size: 0x190000   # app_0 @0x10000
+pt_offset: 0x8000   # partition table address (default 0x10000)

@@ -18,7 +18,7 @@ from . import __version__, secrets_check
 from .profile import Profile
 
 DROPPABLE_PARTS = ("boot", "pt", "otadata", "nvs", "fs")
-CHIP_IDS = {"esp32c3": 0x0005, "esp32c6": 0x000D}  # esp_chip_id_t in the ESP image header
+CHIP_IDS = {"esp32": 0x0000, "esp32c3": 0x0005, "esp32c6": 0x000D}  # esp_chip_id_t in the ESP image header
 
 
 APP_DESC_MAGIC = bytes.fromhex("3254cdab")  # esp_app_desc_t.magic_word 0xABCD5432, little endian

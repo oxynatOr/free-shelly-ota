@@ -11,14 +11,15 @@
   Pack your own ESPHome firmware into an official-style Shelly OTA package — and send it to the device.
 </p>
 
-`free-shelly-ota` is a small command-line tool for **Shelly Gen3 (ESP32-C3)** and **Gen4 (ESP32-C6)** devices. It takes the
+`free-shelly-ota` is a small command-line tool for **Shelly Gen3 (ESP32-C3)** and **Gen4 (ESP32-C6)** devices, and with an
+experimental profile for **Gen2 (classic ESP32)**. It takes the
 official OTA package for your device, replaces only the `app` part with your ESPHome image, fixes size and SHA-256 in
 the manifest, and can hand the result to the Shelly: it checks the device, serves the ZIP from this PC and triggers the
 update over RPC. Optionally it shows the device's debug log while that happens.
 
 > **Status: experimental.** Packaging is covered by tests. The whole chain (`build` and `send`) has been confirmed on
-> one real device so far, the Shelly Plug M Gen3; everything else is untested on hardware. Keep UART access as your
-> way back.
+> real devices only where the table below says so (Plug M Gen3, H&T Gen3, Power Strip 4 Gen4, Plus Plug S); everything else is
+> untested on hardware. Keep UART access as your way back.
 
 
 ⚠️ Disclaimer
@@ -42,6 +43,7 @@ Tested devices
 | Shelly       | H&T Gen3                     | `HTG3`        | ESP32-C3 | 2.0.1   | ✅ `send` from stock 2.0.1 (slot 0) with `--esphome-factory`: ESPHome's bootloader is written (profile sets `boot_min_version 1.0.9`, the default 1.0.3 was skipped), ESPHome boots and ESPHome OTAs take effect. Partition table at `0xf000`, so `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"` |
 | Shelly       | Power Strip 4 Gen4           | `PowerStrip`  | ESP32-C6 | 2.0.1   | ✅ ESPHome boots and joins Wi-Fi/Home Assistant (UART log) with ESPHome's bootloader (`boot_min_version 1.0.9`). From stock 1.7.99 a direct `send` did not work (app landed in slot 1, old app started); it worked after one official update to 2.0.1, see [Notes](#notes--troubleshooting). Outlets and metering not checked here |
 | Shelly       | Power Strip 4 Gen4 (Zigbee)  | `PowerStripZB`| ESP32-C6 | 2.0.1   | not yet |
+| Shelly       | Plus Plug S (V2 hardware, Gen2) | `PlusPlugS` | ESP32 | 1.7.5   | ✅ Without UART: `send` with `--esphome-factory` wrote ESPHome's bootloader (installed loader was 1.0.2; the ESPHome build needs the 80 MHz flash header, otherwise `build` refuses). The installer first targeted slot 1, so `ota.py restore` came first (it put Shelly's bootloader back), then `send` targeted slot 0, ESPHome booted, and an ESPHome OTA took effect (0.2.0 to 0.2.11); see Notes. A bricked unit was brought back to Shelly OS over UART first ([Recovery over UART](#recovery-over-uart)) |
 
 > "Not yet" means the package builds, every part hash verifies and the image checks pass, but flashing a real device
 > has not been confirmed in this repo. Reports welcome.
@@ -280,8 +282,34 @@ Notes & troubleshooting
   slot 1 (`app_1`), and the old stock app in `app_0` started again, although the update reported success and ESPHome's
   bootloader was in place (UART log: `ESP-IDF ... 2nd stage bootloader`, `Loaded app from partition at offset 0x20000`,
   `PowerStrip 1.7.99`). After one official update to 2.0.1 and a new `send`, ESPHome started. The same 1.7.99 installer also
-  left the old partition table (no `scratch`); after 2.0.1 it was the new one. The `slot=` value `send` shows is not a
-  reliable predictor of the target (H&T: `slot=0`, target 0; Plug M Gen3: `slot=1` and it worked), so read the log line.
+  left the old partition table (no `scratch`); after 2.0.1 it was the new one.
+
+  **How `send` helps:** the installer writes to the slot the stock firmware is *not* running from. Right after the debug log
+  is switched on, the device prints `Storing core dumps to app_N`, and N was the same as the later `Will write to slot N` in all
+  six runs seen so far (H&T, Power Strip, Plus Plug S four times). When the package replaces the bootloader, `send` reads that
+  line first (briefly switching on the UDP log, so allow UDP port 9514) and **refuses to send if N is not 0**, telling you to run
+  `ota.py restore <Device>` first. `--ignore-slot` sends anyway. The `slot=` value in the first output line is not a reliable
+  predictor (Plus Plug S: `slot=1` and the target was 1; H&T: `slot=0`, target 0), so the check uses the log line.
+- **Plus Plug S (Gen2), without UART:** the first `send` of the ESPHome package wrote to slot 1 (`Will write to slot 1`), so
+  ESPHome's image sat in `app_1` (read back over UART: its header at `0x200000`) while ESPHome's bootloader started the old
+  app in `app_0`; sending the same package again changed nothing. Then `ota.py restore PlusPlugS` (the official package) showed
+  `Boot: cur 00000000, ... update? 1` (ESPHome's bootloader reports no version) and put **Shelly's bootloader back over OTA**;
+  the stock firmware then ran from slot 1, and the next `send` of the ESPHome package said `Will write to slot 0` and succeeded.
+  ESPHome then booted (project version 0.2.0), and a following ESPHome OTA changed the version to 0.2.11 (reported by the
+  device's owner; the boot log of that step was not reviewed here). So the whole chain worked without UART, once the target
+  slot was 0.
+
+  If you are already stuck (ESPHome in `app_1`, old app in `app_0`, no way to run `restore`), a UART step also works: write an
+  ESP-IDF `otadata` entry that selects `app_1` (sequence number 2: partition `(2-1) % 2 = 1`) at the `otadata` offset (`0xd000`
+  on this device). The 8 KB file can be made with:
+
+  ```
+  python -c "import struct,zlib;e=struct.pack('<I20sII',2,b'\xff'*20,0xFFFFFFFF,zlib.crc32(struct.pack('<I',2),0xFFFFFFFF));open('otadata_app1.bin','wb').write(e.ljust(4096,b'\xff')+b'\xff'*4096)"
+  esptool --chip esp32 --port COM4 write-flash 0xd000 otadata_app1.bin
+  ```
+
+  Undo: `esptool erase-region 0xd000 0x2000` makes the bootloader start `app_0` again. After that, ESPHome's own OTA switches
+  between the two slots (confirmed for the OTA path above: 0.2.0 to 0.2.11; not checked after the UART variant).
 - **Empty `--watch` log:** the log arrives as UDP datagrams on port 9514 (`--log-port`). A firewall that blocks incoming UDP
   on that port (on Windows, the Python program in Windows Defender Firewall) leaves the log empty; the update itself still
   works. With the log you see the installer's `ota_progress` events (0 to 95 %, then `ota_success`) and, for a package with
@@ -311,6 +339,32 @@ Notes & troubleshooting
   without it was not tested).
 - **Safety:** nothing is downloaded unless you run `fetch` (or pass `--download`). Shelly firmware is not part of this
   repository (`fw/` and `out/` are git-ignored; `out/` can contain credentials, see [Credential check](#credential-check)); you download it yourself.
+
+
+Recovery over UART
+------------------
+
+The official package is also a way back for a device that no longer boots (or runs something else). Its `manifest.json` says
+where every part goes; the parts can be written over UART with `esptool`. This brought a Shelly Plus Plug S (V2 hardware, ESP32)
+that ran ESPHome back to Shelly OS (done by hand, as described here; the log was not reviewed by this project).
+
+1. **Disconnect the device from mains** and power it from the adapter (3.3 V). Put the chip into download mode (GPIO0 to GND at reset).
+2. **Back up the whole flash first**: `esptool read-flash 0x0 <size> backup.bin` (size from `esptool flash-id`).
+3. **Read the eFuses, do not burn anything**: `espefuse summary`. Continue only if flash encryption is off (`FLASH_CRYPT_CNT = 0`) and
+   secure boot is off (`ABS_DONE_0`/`ABS_DONE_1 = False`); otherwise a plain image will not boot.
+4. Take the official ZIP (`ota.py fetch <Device>`), unpack it, and read the addresses in `manifest.json`: `boot` and `pt` have an `addr`,
+   the other parts sit in the partition named by `ptn` (offsets in the package's partition table, see `partitions/<Device>-stock.csv`).
+5. Erase the NVS area, then write all parts in one command, for example for the Plus Plug S (classic ESP32):
+
+   ```
+   esptool --chip esp32 --port COM4 --baud 460800 erase-region 0x9000 0x4000
+   esptool --chip esp32 --port COM4 --baud 460800 write-flash --flash-mode keep --flash-size keep --flash-freq keep 0x1000 bootloader.bin 0x8000 partition-table.bin 0xd000 boot_state.bin 0x10000 PlusPlugS.bin 0x1a0000 fs.img
+   ```
+
+6. Do **not** write the device-specific partitions (`shelly`, and `aux` on Gen2): they hold the model name and per-device data, and
+   no package contains them. If they are blank, the firmware may start without calibration or identity (the MAC lives in the eFuses).
+
+Keep the backup: writing it back (`write-flash 0x0 backup.bin`) restores the previous state.
 
 
 Credential check

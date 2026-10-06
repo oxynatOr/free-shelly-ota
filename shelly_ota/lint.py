@@ -39,8 +39,9 @@ def lint_esphome(yaml_path: Path, profile: Profile) -> list[str]:
     if framework.get("type") != "esp-idf":
         problems.append("esp32.framework.type should be 'esp-idf'.")
     value = (framework.get("sdkconfig_options") or {}).get("CONFIG_PARTITION_TABLE_OFFSET")
-    offset = int(str(value), 0) if value is not None and str(value).strip() else None
-    if offset != profile.pt_offset:  # ESP-IDF's default is 0x8000, Shelly keeps its table elsewhere
+    # Not set means ESP-IDF's default 0x8000, which is right for devices that keep their table there (classic ESP32).
+    offset = int(str(value), 0) if value is not None and str(value).strip() else 0x8000
+    if offset != profile.pt_offset:  # Gen3/Gen4 keep their table elsewhere (0x10000, H&T 0xf000)
         problems.append("esp32.framework.sdkconfig_options.CONFIG_PARTITION_TABLE_OFFSET must be "
                         f"\"0x{profile.pt_offset:x}\" (found: {value!r}). "
                         "Without it the app looks for its partitions at 0x8000.")

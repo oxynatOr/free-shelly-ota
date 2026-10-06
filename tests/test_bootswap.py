@@ -12,6 +12,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from shelly_ota import bootswap, builder, firmware, profile, sender  # noqa: E402
+from shelly_ota.devicegen import parse_partitions  # noqa: E402
+from test_extras import FakeRpcShelly, free_udp_port  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 
 
@@ -33,15 +35,21 @@ def make_esphome_bootloader(shelly_boot: bytes, tweak=None) -> bytes:
 
 
 def make_factory(official: Path, app: bytes, *, boot_tweak=None, otadata=b"\xff" * 8192, pt_mod=None) -> bytes:
+    """A merged ESPHome-style image whose addresses come from the official package (bootloader, table, otadata, app_0)."""
     with zipfile.ZipFile(official) as z:
+        manifest = json.loads(z.read("manifest.json"))
         shelly_boot, pt = z.read("bootloader.bin"), bytearray(z.read("partition-table.bin"))
+    boot_addr = manifest["parts"]["boot"].get("addr", 0)
+    pt_addr = manifest["parts"]["pt"].get("addr", 0x10000)
+    entries = {e["name"]: e for e in parse_partitions(bytes(pt))}
     if pt_mod:
         pt_mod(pt)
     boot = make_esphome_bootloader(shelly_boot, boot_tweak)
-    f = bytearray(b"\xff" * 0x20000)
-    f[0:len(boot)] = boot
-    f[0x10000:0x10000 + len(pt)] = pt
-    f[0x11000:0x11000 + len(otadata)] = otadata
+    ota_off, app_off = entries["otadata"]["offset"], entries["app_0"]["offset"]
+    f = bytearray(b"\xff" * app_off)
+    f[boot_addr:boot_addr + len(boot)] = boot
+    f[pt_addr:pt_addr + len(pt)] = pt
+    f[ota_off:ota_off + len(otadata)] = otadata
     return bytes(f) + app
 
 
@@ -123,6 +131,63 @@ class BootswapTests(unittest.TestCase):
         self.assertEqual(self._min_version(boot_min_version="2.0.0")[0], "2.0.0")
         self.assertEqual(profile.load_profile("HTG3").boot_min_version, "1.0.9")
         self.assertIsNone(profile.load_profile("PlugMG3").boot_min_version)
+
+    def _send_dry(self, target_slot, **kw):
+        res = self._build(make_factory(self.official, self.app))        # a package that replaces the bootloader
+        shelly = FakeRpcShelly(app="PlugMG3", target_slot=target_slot)
+        self.addCleanup(shelly.close)
+        lines = []
+        try:
+            sender.send(self.profile, res.output, shelly.addr, port=0, dry_run=True, log_port=free_udp_port(),
+                        probe_wait=1.5, out=lines.append, **kw)
+            error = None
+        except builder.OtaError as e:
+            error = str(e)
+        return lines, error, shelly
+
+    def test_send_refuses_when_the_installer_would_write_to_slot_1(self):
+        lines, error, shelly = self._send_dry(target_slot=1)
+        self.assertIsNotNone(error)
+        self.assertIn("slot 1", error)
+        self.assertIn("restore", error)
+        self.assertEqual(shelly.updates, [])
+        self.assertIsNone(shelly.udp_addr)                  # the debug log setting was put back
+
+    def test_send_accepts_slot_0_and_reports_it(self):
+        lines, error, _ = self._send_dry(target_slot=0)
+        self.assertIsNone(error)
+        self.assertTrue(any("Update target slot: 0" in l for l in lines), lines)
+
+    def test_ignore_slot_sends_with_a_warning(self):
+        lines, error, _ = self._send_dry(target_slot=1, ignore_slot=True)
+        self.assertIsNone(error)
+        self.assertTrue(any("--ignore-slot" in l and "WARNING" in l for l in lines), lines)
+
+    def test_unreadable_target_slot_only_warns(self):
+        lines, error, _ = self._send_dry(target_slot=None)
+        self.assertIsNone(error)
+        self.assertTrue(any("could not be read" in l for l in lines), lines)
+
+    def test_classic_esp32_bootloader_at_0x1000_is_swapped(self):
+        """Gen2 (ESP32): bootloader at 0x1000, partition table at 0x8000, otadata at 0xd000, chip id 0."""
+        prof = profile.load_profile("PlusPlugS")
+        official = firmware.cached_zip("PlusPlugS")
+        self.assertEqual(prof.platform, "esp32")
+        app = bytearray(fake_app(100_000))
+        app[12:14] = (0).to_bytes(2, "little")          # chip id of the classic ESP32
+        app = bytes(app)
+        (self.tmp / "app.bin").write_bytes(app)
+        (self.tmp / "factory.bin").write_bytes(make_factory(official, app))
+        res = builder.build(prof, self.tmp / "app.bin", official, self.tmp / "esp32.zip",
+                            factory=self.tmp / "factory.bin")
+        self.assertIn("boot", res.replaced)
+        with zipfile.ZipFile(res.output) as z:
+            m = json.loads(z.read("manifest.json"))
+            self.assertEqual(m["parts"]["boot"]["addr"], 0x1000)
+            self.assertNotEqual(z.read(m["parts"]["boot"]["src"]), zipfile.ZipFile(official).read("bootloader.bin"))
+        with self.assertRaises(builder.OtaError):         # a C3 chip id must be refused for an ESP32 profile
+            (self.tmp / "bad.bin").write_bytes(fake_app(100_000))
+            builder.build(prof, self.tmp / "bad.bin", official, self.tmp / "bad.zip")
 
     def test_boot_min_version_needs_factory_and_valid_format(self):
         with self.assertRaises(builder.OtaError):
