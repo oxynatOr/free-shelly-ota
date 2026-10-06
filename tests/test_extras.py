@@ -114,20 +114,19 @@ class SlotAndChipTests(unittest.TestCase):
         with self.assertRaises(builder.OtaError):
             builder.check_app_image(img, "esp32c3", 1 << 20, "app_0")
 
-    def test_send_warns_on_slot_0(self):
+    def test_send_shows_the_reported_slot_without_warning_about_it(self):
+        """The old 'device runs from slot 0' warning was wrong for H&T and Plus Plug S; the target slot is probed instead."""
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         z = tmp / "t.zip"
         shutil.copy(firmware.cached_zip("DuoBulbG3"), z)
-        s = FakeRpcShelly(slot=0)
-        self.addCleanup(s.close)
-        lines = []
-        sender.send(profile.load_profile("DuoBulbG3"), z, s.addr, port=0, dry_run=True, out=lines.append)
-        self.assertTrue(any("slot 0" in l and "WARNING" in l for l in lines), lines)
-        s.slot = 1
-        lines.clear()
-        sender.send(profile.load_profile("DuoBulbG3"), z, s.addr, port=0, dry_run=True, out=lines.append)
-        self.assertFalse(any("WARNING" in l for l in lines), lines)
+        for slot in (0, 1):
+            s = FakeRpcShelly(slot=slot)
+            self.addCleanup(s.close)
+            lines = []
+            sender.send(profile.load_profile("DuoBulbG3"), z, s.addr, port=0, dry_run=True, out=lines.append)
+            self.assertTrue(any(f"reported slot={slot}" in l for l in lines), lines)
+            self.assertFalse(any("WARNING" in l for l in lines), lines)
 
 
 class VariantTests(unittest.TestCase):
@@ -330,7 +329,7 @@ class OfflineTests(unittest.TestCase):
         lines = []
         sender.send(profile.load_profile("DuoBulbG3"), zip_path, s.addr, port=0, assume_yes=True, timeout=10,
                     out=lines.append)
-        self.assertTrue(any("update the bootloader" in l for l in lines), lines)
+        self.assertTrue(any("--esphome-factory" in l and "Shelly's bootloader" in l for l in lines), lines)
 
 
 if __name__ == "__main__":

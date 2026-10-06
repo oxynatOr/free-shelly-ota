@@ -11,8 +11,8 @@
   Pack your own ESPHome firmware into an official-style Shelly OTA package — and send it to the device.
 </p>
 
-`free-shelly-ota` is a small command-line tool for **Shelly Gen3 (ESP32-C3)** and **Gen4 (ESP32-C6)** devices, and with an
-experimental profile for **Gen2 (classic ESP32)**. It takes the
+`free-shelly-ota` is a small command-line tool for **Shelly Gen2 (classic ESP32)**, **Gen3 (ESP32-C3)** and **Gen4 (ESP32-C6)**
+devices (one Gen2 device so far, see the table). It takes the
 official OTA package for your device, replaces only the `app` part with your ESPHome image, fixes size and SHA-256 in
 the manifest, and can hand the result to the Shelly: it checks the device, serves the ZIP from this PC and triggers the
 update over RPC. Optionally it shows the device's debug log while that happens.
@@ -109,6 +109,11 @@ python ota.py send  PlugMG3 out/<file>.zip --watch 60   # 3. send it to the devi
 | Tools | `clean` | Delete old ZIPs in `out/` (needs `--yes`) |
 
 `python ota.py <command> -h` shows the options of any command.
+
+In a terminal the messages are colored: yellow for warnings, orange for critical ones (bootloader replaced, data wiped,
+wrong update target), red for errors, green for success. The words `WARNING:`, `NOTE:`, `Error:` and `OK:` stay in the text, so
+logs and pipes read the same. No colors when the output is not a terminal or `NO_COLOR` is set; `python ota.py --color never
+<command>` (or `always`) overrides that. The option goes before the command.
 
 ### fetch
 
@@ -213,12 +218,13 @@ After the first boot
 --------------------
 
 With Shelly's bootloader still in place, the ESPHome log shows `esp_ota_ops: ota data invalid, no current app. Assuming factory`. This is
-expected (seen on the Plug M Gen3 here and in the Plug US project): Shelly keeps its own boot state in `otadata`, which
+expected (seen on the Plug M Gen3, H&T Gen3 and Power Strip here, and in the Plug US project): Shelly keeps its own boot state in `otadata`, which
 ESP-IDF cannot read. It does not stop ESPHome from booting.
 
 With Shelly's own bootloader, later ESPHome OTAs behave oddly (see "Without it" below). The recommended way avoids that.
 
-**Recommended: ship ESPHome's bootloader in the package (confirmed on the Plug M Gen3).** Build with
+**Recommended: ship ESPHome's bootloader in the package (confirmed on the Plug M Gen3, H&T Gen3, Power Strip 4 Gen4 and
+Plus Plug S, see the table).** Build with
 `--esphome-factory firmware.factory.bin`. The tool takes ESPHome's bootloader and a clean `otadata` out of the factory
 image and puts them into the Shelly package instead of Shelly's; the partition table and everything else stay as
 shipped. It also raises the bootloader's `min_version` in the manifest by one patch level (1.0.2 to 1.0.3). That is
@@ -248,7 +254,8 @@ read `Boot: cur ...` in the `--watch` log and pass a higher `--boot-min-version`
 Untested: a later `restore` of the official package, whose `min_version` is lower than 1.0.9, may then leave ESPHome's
 bootloader in place.
 
-`send` warns again when a package replaces the bootloader. It worked on the Plug M Gen3 and the H&T Gen3; on other models the
+`send` warns again when a package replaces the bootloader, and it checks that the installer will write the app to slot 0
+(see Notes). It worked on the four confirmed devices; on other models the
 installer's rule may differ, and a bootloader that does not suit the device can only be fixed with UART. The Plug US
 project advises against replacing the bootloader in the initial package; this goes beyond its findings.
 `--boot-min-version VER` sets the value yourself, `keep` leaves Shelly's.
@@ -264,7 +271,7 @@ not been checked. The Plug US project handles this differently, in two steps:
 2. Run ESPHome Builder's **Update bootloader** action. It replaces the bootloader and keeps Shelly's partition table.
 
 **Do not interrupt power while the bootloader updates.** If it fails you need UART to recover. This step was documented
-for the Shelly Plus Plug US (ESP32); on Gen3 (ESP32-C3) it has **not been tested here yet**. Thanks to
+for the Shelly Plus Plug US (ESP32); it has **not been tested here on any device** (the package route above avoids it). Thanks to
 [inventor7777](https://github.com/inventor7777/ESPHome-Shelly-Plus-Plug-US) for working this out.
 
 
@@ -272,9 +279,9 @@ Notes & troubleshooting
 -----------------------
 
 - **Applying a package wipes NVS** (Wi-Fi, settings) and rewrites `otadata`.
-- **Slot:** the stock updater writes to the slot it is not running from. `send` shows the device's `slot` and warns on
-  slot 0: for Gen4 the installer is reported to skip the app there (not verified for Gen3). If nothing changes, install
-  one normal stock update first.
+- **Slot:** the stock updater writes to the slot it is not running from. The `slot` in the first line of `send` is only what
+  the device reports; the real target is read from the log (next note). A third-party report says Gen4 devices skip the
+  app and stall at 87 % when updated from slot 0; that was not seen here (Power Strip, H&T and Plus Plug S all updated).
 - **ESPHome must land in slot 0 (packages with ESPHome's bootloader):** after the update the installer writes its own boot
   state into `otadata`, which ESPHome's bootloader cannot read (`ota data partition invalid and no factory, will try all
   partitions`); it then starts the first valid app in the table, `app_0`. So the app only runs if the installer wrote it

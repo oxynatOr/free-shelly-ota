@@ -29,8 +29,17 @@ All notable changes to this project are documented here. The format follows
   `otadata` entry that selects `app_1` is documented as a fallback. Also: the ESPHome build must use the 80 MHz flash header
   (`CONFIG_ESPTOOLPY_FLASHFREQ_80M`), otherwise `build` refuses to replace the bootloader.
 
+- Colored messages (`shelly_ota/ui.py`): yellow warnings, orange critical warnings, red errors, green success, cyan notes, dimmed
+  device log lines. Only in a terminal; `NO_COLOR` and `--color auto|always|never` (before the command) control it. The
+  words WARNING/NOTE/Error/OK stay in the text.
+
 ### Changed
-- README status paragraph lists the three hardware-confirmed devices.
+- README status paragraph lists the four hardware-confirmed devices.
+- Messages checked for Gen2/Gen3/Gen4: removed the `slot 0` warning in `send` (it was wrong for H&T and Plus Plug S and clashed
+  with the target-slot check; `send` now prints "reported slot" instead); the bootloader notes no longer say "confirmed on the
+  Plug M Gen3 only"; the plain-package hint explains Shelly's uncommitted-boot counter instead of "keep UART ready";
+  `--boot-min-version` help names the profile default and the `Boot: cur ... update?` log line; `list` says `app size`
+  (it printed `slot=` for a size); `model=None` is shown as `n/a`; docstrings and README intro name Gen2/3/4.
 
 ## [0.2.0] - 2026-10-05
 

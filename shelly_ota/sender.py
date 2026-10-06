@@ -20,7 +20,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable
 
-from . import firmware, logwatch, rpc, secrets_check
+from . import firmware, logwatch, rpc, secrets_check, ui
 from .builder import OtaError, read_official_manifest
 from .profile import Profile
 
@@ -129,19 +129,15 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
          port: int = 8000, timeout: float = 300, assume_yes: bool = False, dry_run: bool = False,
          force: bool = False, user: str | None = None, password: str | None = None,
          watch: float = 0, log_port: int = 9514, ignore_slot: bool = False, probe_wait: float = 4.0,
-         ask: Callable[[str], str] = input, out: Callable[[str], None] = print) -> bool:
+         ask: Callable[[str], str] = input, out: Callable[[str], None] = ui.say) -> bool:
     """Returns True if the device downloaded the whole ZIP (or on a successful dry run)."""
     with zipfile.ZipFile(zip_path) as zf:
         manifest = read_official_manifest(zf, profile.name)
 
     info = device_info(addr)
     app = str(info.get("app", "?"))
-    out(f"Device {addr}: app={app} model={info.get('model')} fw={info.get('ver')} id={info.get('id')} "
-        f"slot={info.get('slot', 'n/a')}")
-    if info.get("slot") == 0:
-        out("WARNING: the device runs from slot 0. The stock updater writes to the other slot, and for Gen4 it is "
-            "reported to skip the app and stall at 87% when started from slot 0 (not verified for Gen3). "
-            "If nothing changes, install one normal stock update first so the device moves to slot 1.")
+    out(f"Device {addr}: app={app} model={info.get('model') or 'n/a'} fw={info.get('ver')} id={info.get('id')} "
+        f"reported slot={info.get('slot', 'n/a')} (not the update target; that is read separately)")
     auth = {"user": user, "password": password}
     if info.get("auth_en") and not (user and password):
         raise OtaError("The device has a password set: use --user and --password (user is usually 'admin').")
@@ -228,8 +224,9 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
                     "expected. The package carried ESPHome's bootloader, so no separate bootloader update is needed.")
             else:
                 out("After the first ESPHome boot: the log line 'ota data invalid, no current app. Assuming factory' is "
-                    "expected. Before relying on later ESPHome OTA updates, update the bootloader (see README, "
-                    "'After the first boot'); keep UART ready.")
+                    "expected. This package keeps Shelly's bootloader, which counts uncommitted boots and may switch back "
+                    "to the old firmware after a few restarts. For a lasting install build with --esphome-factory "
+                    "(README, 'After the first boot').")
             if watch > 0:
                 out(f"Still listening to the device log for {watch:.0f}s ...")
                 time.sleep(watch)

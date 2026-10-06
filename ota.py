@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Pack an ESPHome app image into a Shelly Gen3 OTA ZIP.
+"""Pack an ESPHome app image into an official-style Shelly OTA ZIP (Gen2 ESP32, Gen3 ESP32-C3, Gen4 ESP32-C6).
 
-Only the app part is replaced; the rest comes from the official Shelly ZIP.
+The app part is replaced; the rest comes from the official Shelly ZIP. With --esphome-factory the bootloader and otadata
+are replaced as well.
 """
 
 from __future__ import annotations
@@ -11,7 +12,8 @@ import json
 import sys
 from pathlib import Path
 
-from shelly_ota import MODULE_DIR, __version__, builder, devicegen, firmware, lint, logwatch, profile, secrets_check, sender
+from shelly_ota import (MODULE_DIR, __version__, builder, devicegen, firmware, lint, logwatch, profile, secrets_check,
+                        sender, ui)
 
 EPILOG = """\
 examples:
@@ -26,7 +28,9 @@ A built package contains your Wi-Fi/API credentials in plain text if the config 
 --esphome-yaml/secrets.yaml and warns (--fail-on-secrets stops); never share such a ZIP.
 Applying a built ZIP wipes NVS (Wi-Fi, settings) unless you --drop nvs.
 Bootloader: by default Shelly's bootloader stays. --esphome-factory swaps in ESPHome's (and a clean otadata) so later
-ESPHome OTAs work; confirmed on the Plug M Gen3 only, and if it does not suit a device only UART can recover it.
+ESPHome OTAs work. It worked on the devices marked as confirmed in the README; if it does not suit a device only UART can
+recover it. The installer must also write the app to slot 0: send checks the target slot first and tells you to run
+restore (the official firmware) before sending again if it would write to slot 1.
 restore only works while the Shelly firmware still runs; a device already on ESPHome needs UART.
 Details per command: python ota.py <command> -h
 """
@@ -35,11 +39,11 @@ Details per command: python ota.py <command> -h
 def cmd_list(args) -> None:
     for name in profile.list_devices():
         p = profile.load_profile(name)
-        print(f"{name:12s} {p.display_name:24s} slot=0x{p.app_slot_size:x}")
+        ui.say(f"{name:12s} {p.display_name:24s} app size=0x{p.app_slot_size:x}")
         for ver in firmware.list_versions(name):
             meta_path = firmware.FW_DIR / name / ver / "meta.json"
             build_id = json.loads(meta_path.read_text(encoding="utf-8")).get("build_id") if meta_path.is_file() else None
-            print(f"    fw {ver}  {build_id or ''}")
+            ui.say(f"    fw {ver}  {build_id or ''}")
 
 
 def _fetch_official(p, *, refresh=False, version=None, insecure=False):
@@ -54,14 +58,14 @@ def _fetch_official(p, *, refresh=False, version=None, insecure=False):
 def cmd_fetch(args) -> None:
     p = profile.load_profile(args.device)
     path = _fetch_official(p, refresh=args.refresh, version=args.version, insecure=args.insecure)
-    print(f"Official firmware: {path}")
+    ui.say(f"Official firmware: {path}")
 
 
 def cmd_add_device(args) -> None:
     path, info = devicegen.create_profile(args.zip, name=args.name, force=args.force, parent=args.parent)
     firmware.store_zip(info["name"], args.zip.read_bytes(), source=f"local file: {args.zip.name}")
-    print(f"Wrote {path.name}: {info['ptn']} @0x{info['slot_offset']:x}, slot 0x{info['slot_size']:x}")
-    print(f"Stored the ZIP in {firmware.FW_DIR / info['name']}")
+    ui.say(f"Wrote {path.name}: {info['ptn']} @0x{info['slot_offset']:x}, slot 0x{info['slot_size']:x}")
+    ui.say(f"Stored the ZIP in {firmware.FW_DIR / info['name']}")
 
 
 def cmd_partition_csv(args) -> None:
@@ -74,7 +78,7 @@ def cmd_partition_csv(args) -> None:
         if args.output.exists() and not args.force:
             raise builder.OtaError(f"{args.output} already exists (use --force to overwrite).")
         args.output.write_text(text, encoding="utf-8")
-        print(f"Wrote {args.output}")
+        ui.say(f"Wrote {args.output}")
     else:
         print(text, end="")
 
@@ -85,9 +89,9 @@ def cmd_build(args) -> None:
         problems = lint.lint_esphome(args.esphome_yaml, p)
         if problems:
             raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
-        print(f"ESPHome config check OK ({args.esphome_yaml.name})")
+        ui.say(f"ESPHome config check OK ({args.esphome_yaml.name})")
         for w in lint.lint_warnings(args.esphome_yaml, bootloader_shipped=bool(args.esphome_factory)):
-            print(f"  WARNING: {w}")
+            ui.say(f"  WARNING: {w}")
     secrets = None
     if args.esphome_yaml or args.secrets:
         secrets, problem = secrets_check.collect(args.esphome_yaml, args.secrets)
@@ -111,15 +115,15 @@ def cmd_build(args) -> None:
         builder.write_report(result)
     else:
         output.unlink()
-    print(f"{'DRY RUN, removed: ' if args.dry_run else 'OK: '}{result.output}")
-    print(f"  base firmware {result.official_version} ({result.official_build_id}), "
+    ui.say(f"{'DRY RUN, removed: ' if args.dry_run else 'OK: '}{result.output}")
+    ui.say(f"  base firmware {result.official_version} ({result.official_build_id}), "
           f"app {result.app_size} bytes, parts {result.parts}")
     if result.secrets_found == []:
-        print(f"  Credential check OK: none of {len(secrets)} known values found in the image")
+        ui.say(f"  Credential check OK: none of {len(secrets)} known values found in the image")
     for w in result.warnings:
-        print(f"  {'WARNING' if w.startswith(('CREDENTIALS', 'BOOTLOADER', 'Credentials were not')) else 'NOTE'}: {w}")
+        ui.say(f"  {'WARNING' if w.startswith(('CREDENTIALS', 'BOOTLOADER', 'Credentials were not')) else 'NOTE'}: {w}")
     if not args.dry_run and result.secrets_found != [] and secrets_check.git_would_track(output):
-        print(f"  WARNING: {output} is inside a git work tree and not ignored there; git add would pick up this package.")
+        ui.say(f"  WARNING: {output} is inside a git work tree and not ignored there; git add would pick up this package.")
 
 
 def _send(args, zip_path: Path) -> None:
@@ -133,19 +137,21 @@ def cmd_send(args) -> None:
     _send(args, args.zip)
 
 
-RESTORE_NOTE = """NOTE: Bootloader: by default Shelly's bootloader stays. --esphome-factory swaps in ESPHome's (and a clean otadata) so later
-ESPHome OTAs work; confirmed on the Plug M Gen3 only, and if it does not suit a device only UART can recover it.
-restore only works while the Shelly firmware is still running (only it understands Shelly.Update).
-      A device that already runs ESPHome does not answer; the way back is then UART with a flash backup.
-      The official package also resets NVS and otadata: Wi-Fi credentials and settings are lost."""
+RESTORE_NOTE = """NOTE: restore sends the cached official package. It only works while the Shelly firmware is still running (only it
+      understands Shelly.Update); a device that already runs ESPHome does not answer, and the way back is then UART with a
+      flash backup.
+      The official package resets NVS and otadata: Wi-Fi credentials and settings are lost.
+      If ESPHome's bootloader is installed, the installer puts Shelly's back (seen once, on the Plus Plug S:
+      'Boot: cur 00000000 ... update? 1'). It also moves the stock firmware to the other slot, which is what the next send of an
+      ESPHome package needs when send reports that the installer would write to slot 1."""
 
 
 def cmd_restore(args) -> None:
     zip_path = firmware.cached_zip(args.device, args.version)
     if zip_path is None:
         raise builder.OtaError(f"No official {args.device} ZIP cached. Run 'ota.py fetch {args.device}' first.")
-    print(f"Restoring the official firmware from {zip_path}")
-    print(RESTORE_NOTE)
+    ui.say(f"Restoring the official firmware from {zip_path}")
+    ui.say(RESTORE_NOTE)
     try:
         _send(args, zip_path)
     except builder.OtaError as e:
@@ -165,23 +171,23 @@ def cmd_clean(args) -> None:
     zips = sorted(out_dir.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
     old = zips[args.keep:]
     if not old:
-        print(f"Nothing to remove ({len(zips)} ZIP(s) in out/, keeping {args.keep}).")
+        ui.say(f"Nothing to remove ({len(zips)} ZIP(s) in out/, keeping {args.keep}).")
         return
     for z in old:
         for f in [z, *out_dir.glob(z.name + ".*")]:
-            print(f"{'removing' if args.yes else 'would remove'}: {f.name}")
+            ui.say(f"{'removing' if args.yes else 'would remove'}: {f.name}")
             if args.yes:
                 f.unlink()
     if not args.yes:
-        print("Nothing deleted. Add --yes to delete.")
+        ui.say("Nothing deleted. Add --yes to delete.")
 
 
 def cmd_inspect(args) -> None:
     p = profile.load_profile(args.device) if args.device else None
-    print(builder.inspect_zip(args.zip, p))
+    ui.say(builder.inspect_zip(args.zip, p))
     note = secrets_check.report_note(args.zip)
     if note:
-        print(f"  {note[0]}: {note[1]}")
+        ui.say(f"  {note[0]}: {note[1]}")
 
 
 def device_options() -> argparse.ArgumentParser:
@@ -213,6 +219,9 @@ def main() -> None:
     ap = argparse.ArgumentParser(prog="ota.py", description=__doc__, epilog=EPILOG,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    ap.add_argument("--color", choices=["auto", "always", "never"], default="auto",
+                    help="colored messages: yellow warning, orange critical, red error, green ok (default: auto = only in "
+                         "a terminal, and not with NO_COLOR set). Put it before the command.")
     sub = ap.add_subparsers(dest="cmd", required=True, title="commands", metavar="<command>")
     fmt = argparse.RawDescriptionHelpFormatter
     dev_help = f"device name ({', '.join(profile.list_devices())})"
@@ -255,13 +264,16 @@ def main() -> None:
     b.add_argument("--esphome-factory", type=Path, metavar="FACTORY.bin",
                    help="also replace Shelly's bootloader and otadata with ESPHome's, taken from this factory image "
                         "(must be the same build as APP.bin; checked first). Later ESPHome OTAs then work without a "
-                        "separate bootloader update. Confirmed on the Plug M Gen3 only; if the bootloader does not "
-                        "suit a device, only UART can recover it")
+                        "separate bootloader update. Confirmed devices are marked in the README; if the bootloader "
+                        "does not suit a device, only UART can recover it. The installer must write the app to slot 0 "
+                        "(send checks that first)")
     b.add_argument("--boot-min-version", metavar="VER",
                    help="with --esphome-factory: bootloader min_version in the manifest. The Shelly installer only "
-                        "writes a bootloader newer than the installed one, so the default is one patch level above "
-                        "the official one (1.0.2 -> 1.0.3). 'keep' leaves it unchanged, which probably makes the "
-                        "installer skip the bootloader (then the old one stays)")
+                        "writes a bootloader newer than the installed one. Default: the profile's boot_min_version "
+                        "if it has one (H&T, Power Strip: 1.0.9), otherwise one patch level above the official one "
+                        "(1.0.2 -> 1.0.3). The update log line 'Boot: cur ... min ... update?' shows whether it was "
+                        "written; with 'update? 0' use a higher value. 'keep' leaves it unchanged, which probably "
+                        "makes the installer skip the bootloader (then the old one stays)")
     b.add_argument("--secrets", type=Path, metavar="FILE",
                    help="secrets.yaml to compare the image with (default: secrets.yaml next to --esphome-yaml)")
     b.add_argument("--fail-on-secrets", action="store_true",
@@ -307,10 +319,11 @@ def main() -> None:
     i.set_defaults(func=cmd_inspect)
 
     args = ap.parse_args()
+    ui.configure(args.color)
     try:
         args.func(args)
     except (builder.OtaError, profile.ProfileError, FileNotFoundError) as e:
-        sys.exit(f"Error: {e}")
+        sys.exit(ui.error(e))
 
 
 if __name__ == "__main__":

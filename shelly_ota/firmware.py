@@ -16,6 +16,7 @@ import zipfile
 from pathlib import Path
 
 from . import MODULE_DIR
+from . import ui
 from .builder import OtaError, read_official_manifest
 
 FW_DIR = MODULE_DIR / "fw" / "shelly"
@@ -120,7 +121,7 @@ def fetch(device: str, update_id: str, *, refresh: bool = False, version: str | 
             raise OtaError(f"Version {version} of {device} is not cached; the update API only serves the latest "
                            f"release. Put the ZIP under {fw_dir / device / version} manually.")
     if insecure:
-        print("WARNING: TLS certificate verification is OFF for this download.")
+        ui.say("WARNING: TLS certificate verification is OFF for this download.")
     reply = query_update_api(update_id, insecure)
     # Observed reply: {"stable": {"version", "build_id", "url"}, "time": <unix>}
     if alt:
@@ -138,7 +139,7 @@ def fetch(device: str, update_id: str, *, refresh: bool = False, version: str | 
         raise OtaError(f"Update API offers {api_version}, not the requested {version}.")
     if not version and api_version and cached_zip(device, str(api_version), fw_dir):
         return cached_zip(device, str(api_version), fw_dir)  # already have the newest
-    print(f"Downloading {url}")
+    ui.say(f"Downloading {url}")
     data = _http_get(url, timeout=300, insecure=insecure)
     # The last URL path component is the SHA-256 of the whole ZIP.
     expected = url.rsplit("/", 1)[-1].lower()
@@ -148,5 +149,5 @@ def fetch(device: str, update_id: str, *, refresh: bool = False, version: str | 
     build_id = release.get("build_id")
     with zipfile.ZipFile(path) as zf:
         if build_id and json.loads(zf.read("manifest.json")).get("build_id") != build_id:
-            print(f"WARNING: build_id in manifest differs from update API ({build_id}).")
+            ui.say(f"WARNING: build_id in manifest differs from update API ({build_id}).")
     return path
