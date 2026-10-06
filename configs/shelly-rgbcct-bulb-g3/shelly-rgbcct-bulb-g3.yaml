@@ -1,0 +1,54 @@
+# Shelly Multicolor Bulb E27 Gen3 (ESP32-C3): SKELETON. It has no light yet, only the I2C bus the LED driver sits on.
+# LED driver: KP18068 on I2C SDA = GPIO4, SCL = GPIO5, 100 kHz, 7-bit addresses 0x70 (on) and 0x40 (standby).
+# See README.md in this folder. Copy secrets.yaml.example to secrets.yaml and fill it in.
+
+substitutions:
+  devicename: shelly-rgbcct-bulb-g3
+  friendly_name: "Shelly Multicolor Bulb Gen3"
+
+esphome:
+  name: ${devicename}
+  friendly_name: ${friendly_name}
+
+esp32:
+  variant: ESP32C3
+  board: esp32-c3-devkitm-1
+  flash_size: 8MB
+  partitions: RGBCCTBulbG3-stock.csv   # Shelly's partition table, so the app sees the layout the device really has
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      COMPILER_OPTIMIZATION_SIZE: y
+      CONFIG_PARTITION_TABLE_OFFSET: "0x10000"   # Shelly keeps its table at 0x10000 on this model (ESP-IDF default: 0x8000)
+    advanced:
+      enable_ota_rollback: false   # as in the builds confirmed on other devices; not isolated as a requirement
+
+logger:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Shelly-RGBCCT-Bulb"
+    password: !secret ap_password
+
+captive_portal:
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    id: my_ota
+    allow_partition_access: true   # lets ESPHome update the bootloader later; not needed for plain app OTAs
+
+# The bus the KP18068 LED driver is on (values from the Shelly firmware's boot log).
+i2c:
+  sda: GPIO4
+  scl: GPIO5
+  frequency: 100kHz
+  scan: true   # shows which addresses answer; the firmware writes to 0x70 and 0x40
+
+# TODO light: not available yet. The bulb needs a component that writes the 13-byte frame described in README.md to the
+# address 0x70 (on) or 0x40 (standby) with a parity bit in every byte. There is no official ESPHome driver for this chip.
