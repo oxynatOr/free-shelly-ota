@@ -1,0 +1,7 @@
+# OTA profile for Cury, generated from the official 2.0.1 package.
+display_name: "Shelly Cury"
+platform: esp32c6
+update_id: Cury        # name used by https://updates.shelly.cloud/update/<update_id>
+app_ptn: app_0
+app_slot_size: 0x280000   # app_0 @0x20000
+revision: 1   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)
