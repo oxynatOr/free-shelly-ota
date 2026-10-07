@@ -34,6 +34,23 @@ ota:
   - platform: esphome
 ```
 
+## Pins
+
+| GPIO | Function |
+| --- | --- |
+| GPIO0 | Button (external pull-up, deep-sleep wake-up) |
+| GPIO1 / GPIO3 | I2C SDA / SCL (100 kHz): SHT31 at `0x44`, UC8119 e-paper segment display at `0x50` |
+| GPIO2 | Power rail ADC (regulated 3.3 V rail, not the battery) |
+| GPIO4 | Battery ADC (voltage divider, enabled with GPIO18) |
+| GPIO5 | Battery presence (HIGH when batteries are connected) |
+| GPIO6 / GPIO7 | UC8119 BUSY_N / RESET_N |
+| GPIO8 | USB detect (HIGH = USB) |
+| GPIO10 | UC8119 enable (display power gate) |
+| GPIO18 | Battery power enable |
+
+Source: the owner's [Shelly H&T Gen3 page](https://devices.esphome.io/devices/Shelly-HT-Gen3/) in the ESPHome device database, with a full config. The UART pads
+on the board are bare test points: pogo pins or test clips work, or solder temporary wires.
+
 ## Flash it
 
 ```
