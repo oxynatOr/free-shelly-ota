@@ -2,7 +2,7 @@
 
 [Back to the README](../../README.md) · [All commands](../commands.md)
 
-Not tested on hardware. The owner reports the same main board as the Multicolor Bulb with a different lamp module. The Duo's stock firmware has no I2C code: it drives the LEDs with PWM (LEDC), so the LED driver config of the [Multicolor Bulb](RGBCCTBulbG3.md) does not apply. The LED pins are not decoded yet.
+The OTA package is not tested on hardware. The owner reports the same main board as the Multicolor Bulb with a different lamp module. The Duo's stock firmware has no I2C code: it drives the LEDs with PWM (LEDC), so the LED driver config of the [Multicolor Bulb](RGBCCTBulbG3.md) does not apply. The pins are known (below) from the owner's UART-flashed config.
 
 | | |
 | --- | --- |
@@ -11,7 +11,7 @@ Not tested on hardware. The owner reports the same main board as the Multicolor 
 | Official package | 2.0.1 |
 | Partition table | `0x10000` |
 | App slot size | `0x280000` |
-| State | 🧪 builds and verifies; not flashed |
+| State | 🧪 the OTA package builds and verifies, but this tool has not flashed it. The ESPHome config itself runs on the owner's bulb (flashed over UART) |
 
 ## ESPHome config
 
@@ -32,6 +32,21 @@ esp32:
 ota:
   - platform: esphome
 ```
+
+## Pins
+
+| Function | Pin |
+| --- | --- |
+| Warm white (LEDC PWM) | GPIO4 (module pad `MTMS`) |
+| Cold white (LEDC PWM) | GPIO5 (module pad `MTDI`) |
+| BOOT (download mode, low-active) | GPIO9 |
+
+Source: the owner's Shelly Duo Bulb E27 Gen3 page, prepared for the ESPHome device database (not published there yet), flashed over UART, with a
+`cwww` light and `constant_brightness: true`. The pins also match the stock firmware (two LEDC channels, warm on GPIO4, cold on GPIO5). No energy meter
+chip is known.
+
+> [!WARNING]
+> The bulb has a **non-isolated mains supply**. Never connect a serial adapter while it is in the socket; take it out and power it from the adapter's 3.3 V.
 
 ## Flash it
 

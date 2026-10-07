@@ -2,7 +2,7 @@
 
 [Back to the README](../../README.md) · [All commands](../commands.md)
 
-Confirmed with a minimal config: Wi-Fi, API and OTA only. The pins for relay, power meter and LED are not decoded yet.
+The package route was confirmed with a minimal config (Wi-Fi, API and OTA only). The owner also runs the full ESPHome device-database config with relay, metering and LED on these plugs; the pins are below.
 
 | | |
 | --- | --- |
@@ -11,7 +11,7 @@ Confirmed with a minimal config: Wi-Fi, API and OTA only. The pins for relay, po
 | Official package | 2.0.1 |
 | Partition table | `0x10000` |
 | App slot size | `0x2a0000` |
-| State | ✅ `send` with `--esphome-factory` ran and ESPHome runs (owner report). The build was a base config without relay or metering |
+| State | ✅ `send` with `--esphome-factory` ran and ESPHome runs. The owner runs the ESPHome device-database config (relay, metering, LED) on these plugs |
 
 ## ESPHome config
 
@@ -32,6 +32,20 @@ esp32:
 ota:
   - platform: esphome
 ```
+
+## Pins
+
+| Function | Pin |
+| --- | --- |
+| Relay | GPIO4 |
+| Button (pull-up, inverted) | GPIO18 |
+| BL0942 power meter (UART1, 9600 baud) | ESP **RX GPIO6**, ESP **TX GPIO7** |
+| Internal temperature (NTC) | GPIO3 |
+| LED: addressable, WS2812, 4 pixels | GPIO5 |
+
+Source: the owner's [Shelly Plug S Gen3 page](https://devices.esphome.io/devices/Shelly-Plug-S-Gen3/) in the ESPHome device database and the config behind it, which the owner runs on
+real plugs. The firmware agrees: it sets up UART1 with RX 6 / TX 7, a button on GPIO18 and an RMT LED on GPIO5 with 4 pixels. The device database
+labels GPIO6 "BL0942 TX" and GPIO7 "BL0942 RX": that is the BL0942's point of view, so in ESPHome `rx_pin` is GPIO6 and `tx_pin` is GPIO7.
 
 ## Flash it
 
@@ -62,7 +76,7 @@ If nothing comes up, power-cycle the device ([Troubleshooting](../troubleshootin
 
 - The profile uses the default `boot_min_version` (one patch level above the official loader, 1.0.2 to 1.0.3). If your log says
   `update? 0`, use `--boot-min-version 1.0.9`.
-- A flash dump of the plug would let the pins be read; ask in an issue.
+- The ESPHome config in the device database for this plug (relay, BL0942 metering, temperature, LED, button) is the one to start from: its `esp32:` block needs Shelly's partition table and `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"` (as above) before `build` accepts it.
 
 ## Way back
 

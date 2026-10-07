@@ -33,6 +33,20 @@ ota:
   - platform: esphome
 ```
 
+## Pins
+
+| GPIO | Function |
+| --- | --- |
+| GPIO4 | `pin0`, primary I/O on the Micro-USB sensor port (ADC, 1-Wire, DHT22, I2C SDA) |
+| GPIO3 | `pin1`, secondary I/O (ADC, I2C SCL) |
+| GPIO6 | `pin2`, digital I/O only |
+| GPIO10 | Reset button (back of the PCB; hold more than 10 s for a factory reset) |
+| GPIO8 | Status LED (active low) |
+| GPIO18 / GPIO19 | USB Serial/JTAG on the USB-C port, for flashing and the console |
+
+Source: the owner's [The Pill page](https://devices.esphome.io/devices/Shelly-The-Pill/) in the ESPHome device database. USB-C is the flashing path, so no soldering is
+needed. The sensor port takes Shelly's add-ons (5-terminal, SSR, analog 0 to 30 V, DS18B20).
+
 ## Flash it
 
 ```
