@@ -27,6 +27,10 @@
     "revision": 1,
     "hash": "126dae8879f6"
   },
+  "PlugPMG3": {
+    "revision": 2,
+    "hash": "367eeacbe6e6"
+  },
   "PlugSG3": {
     "revision": 1,
     "hash": "0288ea47f16b"
