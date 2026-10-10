@@ -79,4 +79,9 @@ If nothing comes up, power-cycle the device ([Troubleshooting](../troubleshootin
 
 `python ota.py restore PlugMG3` sends the official firmware back while Shelly firmware still runs. Once ESPHome with
 ESPHome's bootloader is running, `restore` gets no answer and only UART brings Shelly OS back
-([Recovery over UART](../recovery-uart.md)): take a flash backup first if you can.
+([Recovery over UART](../recovery-uart.md)): take a flash backup first if you can. Done once on a real plug: Shelly OS 2.0.1 with
+loader 1.0.3 came back. Pushing the official app image through ESPHome OTA instead does not work (same page).
+
+A Plug M restored this way has loader 1.0.3, which is why the profile sets `boot_min_version: 1.0.9`: a later `send` with
+`--esphome-factory` still replaces the bootloader. Because Shelly then runs from slot 0, run `python ota.py restore PlugMG3`
+first, otherwise `send` refuses (the installer would write to slot 1).

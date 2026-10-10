@@ -118,6 +118,8 @@ class BootswapTests(unittest.TestCase):
             return json.loads(z.read("manifest.json"))["parts"]["boot"]["min_version"], res
 
     def test_boot_min_version_is_raised_by_default_and_overridable(self):
+        import dataclasses
+        self.profile = dataclasses.replace(self.profile, boot_min_version=None)   # profile sets nothing: official + one patch
         v, res = self._min_version()
         self.assertEqual(v, "1.0.3")                       # official 1.0.2 + one patch level
         self.assertTrue(any("min_version raised" in w for w in res.warnings))
@@ -130,7 +132,7 @@ class BootswapTests(unittest.TestCase):
         self.assertEqual(self._min_version()[0], "1.0.9")
         self.assertEqual(self._min_version(boot_min_version="2.0.0")[0], "2.0.0")
         self.assertEqual(profile.load_profile("HTG3").boot_min_version, "1.0.9")
-        self.assertIsNone(profile.load_profile("PlugMG3").boot_min_version)
+        self.assertEqual(profile.load_profile("PlugMG3").boot_min_version, "1.0.9")   # restored Plug M runs loader 1.0.3
 
     def _error_for(self, **factory_kw) -> str:
         with self.assertRaises(builder.OtaError) as cm:
