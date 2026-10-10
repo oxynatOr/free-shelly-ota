@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `shelly_ota/esphome_ota.py`: a client for ESPHome's OTA protocol (TCP 3232, app image only, SHA-256 and MD5 password authentication,
+  no compression, no Noise encryption) with tests against a simulated device. No command uses it yet. Not run against a real ESPHome device
+  as a tool; the one use tried (pushing the official Shelly app back) is accepted by the device but the Shelly app cannot start without its own
+  boot state, see the module docstring.
+
 ### Changed
 - Device pages: pin tables for Plug S Gen3, Duo Bulb Gen3, H&T Gen3, The Pill and Plus Plug S, taken from the ESPHome device database pages of the owner
   (and bobkersten for the Plus Plug S) and checked against the firmware where possible. The Plug S Gen3 state is plain ✅ now; the Duo Bulb pages say
