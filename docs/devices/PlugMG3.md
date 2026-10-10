@@ -31,6 +31,7 @@ esp32:
 
 ota:
   - platform: esphome
+    allow_partition_access: true
 ```
 
 Pins read from the stock firmware and tested on a real plug:
