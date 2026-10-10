@@ -33,7 +33,8 @@ raises it by one patch level over the official one (1.0.2 to 1.0.3). That was en
 Plug S and the Multicolor Bulb (installed loader 1.0.2), but **not** on the H&T Gen3, whose installed loader is 1.0.3: the
 update log showed `Boot: cur 010003ff, ... min ..., update? 0`, ESPHome started, but later ESPHome OTAs silently did not take
 effect and `otadata` stayed in Shelly's format (`SH0S`). The H&T and Power Strip profiles therefore set
-`boot_min_version: 1.0.9`.
+`boot_min_version: 1.0.9`. The Plug M Gen3 profile sets it too: the official 2.0.1 package carries loader 1.0.3, so a Plug M restored
+from it (for example over UART) reports 1.0.3 and would skip a package with 1.0.3.
 
 - **Check it:** the update log (`send --watch`) shows `Boot: cur ... min ... update? 0/1` and, when written,
   `Installing BL ... -> boot(0)`. Shelly's loader prints only ROM lines over UART on some models (the Multicolor Bulb prints
