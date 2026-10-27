@@ -147,15 +147,22 @@ class DevicePageTests(unittest.TestCase):
             else:
                 self.assertIn(self.SAFETY_BACK, box, page.name)
 
-    def test_the_checklist_is_one_line_with_the_four_standard_checks(self):
+    def test_the_checklist_is_a_task_list_with_the_four_standard_checks(self):
         for page in self.pages:
             text = page.read_text(encoding="utf-8")
             section = text.split("## Before you start\n\n", 1)[1].split("\n## ", 1)[0]
-            line = section.splitlines()[0]
-            self.assertTrue(line.startswith("Check first: ☐ "), page.name)
+            lines = section.splitlines()
+            self.assertEqual(lines[:2], ["Check first:", ""], page.name)
+            items = []
+            for line in lines[2:]:
+                if not line.startswith("- [ ] "):
+                    break
+                items.append(line)
+            self.assertGreaterEqual(len(items), 4, page.name)
+            checks = "\n".join(items)
             for part in ("Shelly's own firmware", "you know its IP address", "port 8000", "partition table below"):
-                self.assertIn(part, line, page.name)
-            if "Recovery over UART" not in line:           # a page with its own UART item says it under "Also:"
+                self.assertIn(part, checks, page.name)
+            if "Recovery over UART" not in checks:         # a page with its own UART item says it under "Also:"
                 self.assertIn("UART", section, page.name)
 
     def test_state_badge_matches_the_readme(self):

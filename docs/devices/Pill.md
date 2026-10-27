@@ -21,7 +21,12 @@ Reported: the USB-C port exposes the chip's USB Serial/JTAG, so this device can 
 
 ## Before you start
 
-Check first: ☐ the device runs Shelly's own firmware, not ESPHome yet · ☐ you know its IP address (`--ip`), or this PC is on the device's own access point (default `192.168.33.1`) · ☐ the device can reach this PC: same network, port 8000 (`--port`) not blocked · ☐ your ESPHome config uses the partition table below and is compiled
+Check first:
+
+- [ ] the device runs Shelly's own firmware, not ESPHome yet
+- [ ] you know its IP address (`--ip`), or this PC is on the device's own access point (default `192.168.33.1`)
+- [ ] the device can reach this PC: same network, port 8000 (`--port`) not blocked
+- [ ] your ESPHome config uses the partition table below and is compiled
 
 Also:
 
