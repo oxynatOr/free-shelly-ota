@@ -188,7 +188,7 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
                         "ESPHome images contain Wi-Fi data in plain text if the config has it: do not share this package.")
 
     with zipfile.ZipFile(require_zip(official_zip, "official ZIP")) as original:
-        manifest = read_official_manifest(original, profile.name)
+        manifest = read_official_manifest(original, profile.package_name)
         if manifest.get("platform") and manifest["platform"] != profile.platform:
             raise OtaError(f"Package platform {manifest['platform']!r} != profile {profile.platform!r}.")
         layout = package_layout_problems(profile, original, manifest)
@@ -263,7 +263,7 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
 
     # Read back and verify what was actually written.
     with zipfile.ZipFile(output) as check:
-        written = read_official_manifest(check, profile.name)
+        written = read_official_manifest(check, profile.package_name)
         assert check.read(app_name) == app
     zip_sha = hashlib.sha256(output.read_bytes()).hexdigest()
     return BuildResult(

@@ -16,6 +16,7 @@ body:
       description: The profile you used (`python ota.py list`).
       options:
         - PlugMG3 (Plug M Gen3)
+        - PlugMG3-beta (Plug M Gen3, beta layout)
         - PlugSG3 (Plug S Gen3)
         - HTG3 (H&T Gen3)
         - RGBCCTBulbG3 (Multicolor Bulb Gen3)

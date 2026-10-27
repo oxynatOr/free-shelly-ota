@@ -90,14 +90,15 @@ class CachedPackagesMatchStockCsvTests(unittest.TestCase):
     def test_every_cached_package_matches_its_profile_and_csv(self):
         checked = 0
         for name in profile.list_devices():
-            zip_path = firmware.cached_zip(name)
+            prof = profile.load_profile(name)
+            zip_path = firmware.cached_zip(prof.package_name, prerelease=prof.channel == "beta")
             if zip_path is None:
                 continue
             checked += 1
             with zipfile.ZipFile(zip_path) as zf:
                 manifest = builder.read_official_manifest(zf)
                 with self.subTest(device=name, check="profile"):
-                    self.assertEqual(builder.package_layout_problems(profile.load_profile(name), zf, manifest), [])
+                    self.assertEqual(builder.package_layout_problems(prof, zf, manifest), [])
             csv = PARTITIONS_DIR / f"{name}-stock.csv"
             if csv.is_file():
                 with self.subTest(device=name, check="stock csv"):

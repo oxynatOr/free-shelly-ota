@@ -83,6 +83,10 @@
     "revision": 2,
     "hash": "3d2ebea809d3"
   },
+  "PlugMG3-beta": {
+    "revision": 1,
+    "hash": "702a028b348b"
+  },
   "PlugPMG3": {
     "revision": 2,
     "hash": "367eeacbe6e6"

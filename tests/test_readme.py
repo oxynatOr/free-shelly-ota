@@ -38,8 +38,8 @@ def _table_states(path: Path, state_cell: str) -> dict:
     """{profile: state symbol} from the rows that link a profile as [`Name`](...)."""
     states = {}
     for line in path.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"\|[^|]*\|\s*\[`(\w+)`\]\([^)]*\)\s*\|", line) \
-            or re.match(r"\|\s*\[[^\]]+\]\([^)]*\)\s*\|\s*`(\w+)`\s*\|", line)    # the profile linked, or the device linked
+        m = re.match(r"\|[^|]*\|\s*\[`([\w-]+)`\]\([^)]*\)\s*\|", line) \
+            or re.match(r"\|\s*\[[^\]]+\]\([^)]*\)\s*\|\s*`([\w-]+)`\s*\|", line)    # the profile linked, or the device linked
         if not m:
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
@@ -109,7 +109,7 @@ class DevicePageTests(unittest.TestCase):
     def _profiles(self, text):
         m = re.search(r"(?m)^\| Profile \| (.+) \|$", text)
         self.assertIsNotNone(m, "no Profile row")
-        return re.findall(r"`(\w+)`", m.group(1))
+        return re.findall(r"`([\w-]+)`", m.group(1))
 
     def test_every_profile_has_a_page(self):
         named = set()

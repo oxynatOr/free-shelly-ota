@@ -29,7 +29,7 @@ class BuilderTests(unittest.TestCase):
 
     def _build(self, device, app_bytes, **kw):
         p = profile.load_profile(device)
-        official = firmware.cached_zip(device)
+        official = firmware.cached_zip(p.package_name, prerelease=p.channel == "beta")
         self.assertIsNotNone(official, "seed ZIP missing in fw/shelly")
         app = self.tmp / "app.bin"
         app.write_bytes(app_bytes)
@@ -37,7 +37,8 @@ class BuilderTests(unittest.TestCase):
 
     def test_golden_official_app_reproduces_manifest(self):
         for device in profile.list_devices():
-            official = firmware.cached_zip(device)
+            p = profile.load_profile(device)
+            official = firmware.cached_zip(p.package_name, prerelease=p.channel == "beta")
             with zipfile.ZipFile(official) as z:
                 manifest = json.loads(z.read("manifest.json"))
                 app = z.read(manifest["parts"]["app"]["src"])

@@ -33,6 +33,12 @@ class Profile:
     pt_offset: int = 0x10000  # where the device keeps its partition table (HTG3: 0xf000)
     boot_min_version: str | None = None  # default for --boot-min-version with --esphome-factory (HTG3: 1.0.9)
     revision: int = 1  # counts changes of this profile; bump it when anything else in the file changes
+    package: str | None = None  # name of the official package and of its folder in fw/ when it is not the profile's name (-beta profiles)
+    channel: str = "stable"  # "beta": the profile is for pre-releases, so the newest pre-release is the default package
+
+    @property
+    def package_name(self) -> str:
+        return self.package or self.name
 
 
 def _to_int(value, key: str) -> int:
@@ -64,6 +70,8 @@ def load_profile(name: str, devices_dir: Path = DEVICES_DIR) -> Profile:
         pt_offset=_to_int(raw.get("pt_offset", 0x10000), "pt_offset"),
         boot_min_version=str(raw["boot_min_version"]) if raw.get("boot_min_version") else None,
         revision=_to_int(raw.get("revision", 1), "revision"),
+        package=str(raw["package"]) if raw.get("package") else None,
+        channel=str(raw.get("channel", "stable")),
     )
 
 

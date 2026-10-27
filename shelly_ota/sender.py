@@ -428,7 +428,7 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     say = session.say
     zip_path = require_zip(zip_path)
     with zipfile.ZipFile(zip_path) as zf:
-        manifest = read_official_manifest(zf, profile.name)
+        manifest = read_official_manifest(zf, profile.package_name)
 
     info = device_info(addr)
     session.device_id = session.device_id or info.get("id")
@@ -457,7 +457,7 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     for line in package_info(zip_path, profile):
         say(Level.normal if line.startswith(("NOTE", "WARNING")) else Level.verbose, line)
     say(Level.verbose, f"Download URL for the device: {url}")
-    official_zip = firmware.cached_zip(profile.name)
+    official_zip = firmware.cached_zip(profile.package_name, prerelease=profile.channel == "beta")
     boot_replaced: bool | None = None  # None: cannot tell (no cached official ZIP to compare with)
     keeps_loader = False  # an ESPHome app in a package that leaves Shelly's bootloader in place (no --esphome-factory)
     if official_zip:
