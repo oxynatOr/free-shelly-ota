@@ -33,9 +33,6 @@ checked yet, 🔬 = the OTA ran through on a dev board with the [DevKit image](.
 | [Plus Uni (Gen2)](PlusUni.md) | `PlusUni` | **ESP32** | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
 | [Pro 3EM (Gen2)](Pro3EM.md) | `Pro3EM` | **ESP32** | **`0x8000`** | `0x200000` | 🧪 |  |
 | [1 Gen3](S1G3.md) | `S1G3` | ESP32-C3 | **`0xf000`** | `0x2b0000` | ✅ |  |
-| [1PM Gen3](S1PMG3.md) | `S1PMG3` | ESP32-C3 | **`0xf000`** | `0x2c0000` | 🧪 |  |
-| [2PM Gen3](S2PMG3.md) | `S2PMG3` | ESP32-C3 | `0x10000` | `0x2c0000` | 🧪 |  |
-| [1 Gen3](S1G3.md) | `S1G3` | ESP32-C3 | **`0xf000`** | `0x2b0000` | 🧪 |  |
 | [1PM Gen3](S1PMG3.md) | `S1PMG3` | ESP32-C3 | **`0xf000`** | `0x2c0000` | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
 | [2PM Gen3](S2PMG3.md) | `S2PMG3` | ESP32-C3 | `0x10000` | `0x2c0000` | ✅ | Relays and meter not reported |
 | [1L Gen3](S1LG3.md) | `S1LG3` | ESP32-C3 | `0x10000` | `0x2b0000` | 🧪 |  |
