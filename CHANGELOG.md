@@ -5,6 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- `S1G3` (Shelly 1 Gen3) goes from 🧪 to ✅ on the device page, in the README table and in the credits: a device report ([#98](https://github.com/oxynatOr/free-shelly-ota/issues/98), thanks to chusovich) with two devices flashed over OTA from stock 1.4.0 (loader 1.0.1) and a later ESPHome OTA. Documentation only, not a breaking change: no profile, package or command changed.
+
 ## [0.6.0] - 2026-10-24
 
 This is a pre-release: 23 of the 43 profiles are only built and verified (🧪), and seven more have been through the update on a dev board but not on the device.
