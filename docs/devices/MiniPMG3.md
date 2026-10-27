@@ -25,7 +25,13 @@ The first device that was flashed and reported by someone else: thanks to [imsan
 
 ## Before you start
 
-Check first: ☐ the device runs Shelly's own firmware, not ESPHome yet · ☐ you know its IP address (`--ip`), or this PC is on the device's own access point (default `192.168.33.1`) · ☐ the device can reach this PC: same network, port 8000 (`--port`) not blocked · ☐ your ESPHome config uses the partition table below and is compiled · ☐ a UART adapter is at hand as your way back ([Recovery over UART](../recovery-uart.md))
+Check first:
+
+- [ ] the device runs Shelly's own firmware, not ESPHome yet
+- [ ] you know its IP address (`--ip`), or this PC is on the device's own access point (default `192.168.33.1`)
+- [ ] the device can reach this PC: same network, port 8000 (`--port`) not blocked
+- [ ] your ESPHome config uses the partition table below and is compiled
+- [ ] a UART adapter is at hand as your way back ([Recovery over UART](../recovery-uart.md))
 
 Also:
 

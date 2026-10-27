@@ -8,6 +8,7 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 - `S1PMG3` (1PM Gen3) is partly checked (🟡) and `S2PMG3` has two more units (thanks to [WulffTech](https://github.com/WulffTech)): one 1PM and two 2PM Gen3 went from Shelly 2.0.1 to ESPHome 2026.9.0 over OTA without UART, stable across reboots, relays stay off, ESPHome OTA afterwards works. They used their own tooling with the same package mechanism, not `ota.py`, so the 1PM stays 🟡. The report also shows that Shelly's installer writes the `pt` part of a package unconditionally. Documentation only, not breaking.
 - `S2PMG3` (2PM Gen3) is confirmed on a real device ([#92](https://github.com/oxynatOr/free-shelly-ota/issues/92), thanks to [majoto85](https://github.com/majoto85)): OTA from Shelly 1.4.99 with ESPHome's bootloader, then a regular ESPHome OTA. Relays and meter not reported.
+- Device pages: the "Before you start" checklist is a real task list (`- [ ]`, one item per line) instead of one line with `☐` signs. Documentation only, not a breaking change; `tests/test_readme.py` guards the new format.
 - `S1G3` (Shelly 1 Gen3) goes from 🧪 to ✅ on the device page, in the README table and in the credits: a device report ([#98](https://github.com/oxynatOr/free-shelly-ota/issues/98), thanks to chusovich) with two devices flashed over OTA from stock 1.4.0 (loader 1.0.1) and a later ESPHome OTA. Documentation only, not a breaking change: no profile, package or command changed.
 
 ## [0.6.0] - 2026-10-24
