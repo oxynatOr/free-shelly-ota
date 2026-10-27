@@ -9,6 +9,8 @@
 
 The first device this tool was confirmed on. A second plug, reported by [815rx1](https://github.com/815rx1) (October 2026, thanks), went through the same chain with the 2.1.0 package.
 
+> **Not supported: 2.2.0-beta2.** Its partition table differs (app slots of `0x300000` instead of `0x2a0000`), found by [onkelfarmor](https://github.com/onkelfarmor) ([#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), thanks). `build` refuses a package with another layout; nothing was tested with it on a plug.
+
 | Fact | Value |
 | --- | --- |
 | Profile | `PlugMG3` |

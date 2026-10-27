@@ -5,6 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `build` refuses an official package whose partition table differs from the profile (app slot size or table address), also with `--drop pt`; `inspect` and `fetch` warn about it. Found with PlugMG3 2.2.0-beta2, whose app slots are 0x300000 instead of 0x2a0000 ([#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), thanks to [onkelfarmor](https://github.com/onkelfarmor)). Visible effect: a build with such a package now stops with an error instead of finishing. Not breaking for any cached package of the 43 profiles: a test checks each against its profile and stock CSV.
+
 ### Changed
 - `S1PMG3` (1PM Gen3) is partly checked (🟡) and `S2PMG3` has two more units (thanks to [WulffTech](https://github.com/WulffTech)): one 1PM and two 2PM Gen3 went from Shelly 2.0.1 to ESPHome 2026.9.0 over OTA without UART, stable across reboots, relays stay off, ESPHome OTA afterwards works. They used their own tooling with the same package mechanism, not `ota.py`, so the 1PM stays 🟡. The report also shows that Shelly's installer writes the `pt` part of a package unconditionally. Documentation only, not breaking.
 - `S2PMG3` (2PM Gen3) is confirmed on a real device ([#92](https://github.com/oxynatOr/free-shelly-ota/issues/92), thanks to [majoto85](https://github.com/majoto85)): OTA from Shelly 1.4.99 with ESPHome's bootloader, then a regular ESPHome OTA. Relays and meter not reported.

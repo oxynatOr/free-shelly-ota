@@ -107,6 +107,24 @@ def read_official_manifest(zf: zipfile.ZipFile, expected_name: str | None = None
     return manifest
 
 
+def package_layout_problems(profile: Profile, zf: zipfile.ZipFile, manifest: dict) -> list[str]:
+    """Where the package's partition table differs from what the profile says (empty = fits or no table in the package)."""
+    from .devicegen import parse_partitions  # imported here: devicegen itself needs OtaError from this module
+    pt = manifest["parts"].get("pt")
+    if not pt or "src" not in pt:
+        return []
+    problems = []
+    addr = pt.get("addr", 0x10000)
+    if addr != profile.pt_offset:
+        problems.append(f"the partition table is at 0x{addr:x}, the profile says 0x{profile.pt_offset:x}")
+    slot = next((e for e in parse_partitions(zf.read(pt["src"])) if e["name"] == profile.app_ptn), None)
+    if slot is None:
+        problems.append(f"the partition table has no {profile.app_ptn}")
+    elif slot["size"] != profile.app_slot_size:
+        problems.append(f"{profile.app_ptn} is 0x{slot['size']:x} bytes, the profile says 0x{profile.app_slot_size:x}")
+    return problems
+
+
 def _bump_patch(version: str | None) -> str | None:
     """1.0.2 -> 1.0.3; None if the value is not a plain x.y.z version."""
     m = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version or "")
@@ -173,6 +191,13 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
         manifest = read_official_manifest(original, profile.name)
         if manifest.get("platform") and manifest["platform"] != profile.platform:
             raise OtaError(f"Package platform {manifest['platform']!r} != profile {profile.platform!r}.")
+        layout = package_layout_problems(profile, original, manifest)
+        if layout:
+            raise OtaError(f"The official package {manifest['name']} {manifest['version']} has another flash layout than "
+                           f"the {profile.name} profile: {'; '.join(layout)}.\n"
+                           f"  Fix: use a package with the layout the profile describes (e.g. the stable release). A new layout "
+                           f"needs a new profile revision and a new stock CSV (`python ota.py partition-csv {profile.name} "
+                           f"--version {manifest['version']}` shows the table). Nothing was built.")
         parts = manifest["parts"]
         if parts["app"].get("ptn") != profile.app_ptn:
             warnings.append(f"Manifest app part targets ptn={parts['app'].get('ptn')!r}, profile says "
@@ -310,5 +335,7 @@ def inspect_zip(path: Path, profile: Profile | None = None) -> str:
         if profile:
             lines.append(f"  slot fit: {len(app)} / {profile.app_slot_size} bytes "
                          f"({100 * len(app) / profile.app_slot_size:.0f}%)")
+            for problem in package_layout_problems(profile, zf, manifest):
+                lines.append(f"  WARNING: another layout than the {profile.name} profile: {problem}. `build` refuses this package.")
         lines.append("  all part hashes OK")
     return "\n".join(lines)

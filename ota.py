@@ -152,6 +152,10 @@ def cmd_fetch(args) -> None:
     path = _fetch_official(p, refresh=args.refresh, version=args.version, insecure=args.insecure,
                            channel=args.channel, from_version=args.from_version)
     ui.say(f"Official firmware: {path}")
+    with zipfile.ZipFile(path) as zf:
+        for problem in builder.package_layout_problems(p, zf, builder.read_official_manifest(zf)):
+            ui.say(f"WARNING: this package has another flash layout than the {p.name} profile: {problem}. "
+                   f"`build` refuses it.")
 
 
 def cmd_add_device(args) -> None:
