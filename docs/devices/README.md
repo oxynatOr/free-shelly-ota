@@ -35,6 +35,9 @@ checked yet, 🔬 = the OTA ran through on a dev board with the [DevKit image](.
 | [1 Gen3](S1G3.md) | `S1G3` | ESP32-C3 | **`0xf000`** | `0x2b0000` | ✅ |  |
 | [1PM Gen3](S1PMG3.md) | `S1PMG3` | ESP32-C3 | **`0xf000`** | `0x2c0000` | 🧪 |  |
 | [2PM Gen3](S2PMG3.md) | `S2PMG3` | ESP32-C3 | `0x10000` | `0x2c0000` | 🧪 |  |
+| [1 Gen3](S1G3.md) | `S1G3` | ESP32-C3 | **`0xf000`** | `0x2b0000` | 🧪 |  |
+| [1PM Gen3](S1PMG3.md) | `S1PMG3` | ESP32-C3 | **`0xf000`** | `0x2c0000` | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
+| [2PM Gen3](S2PMG3.md) | `S2PMG3` | ESP32-C3 | `0x10000` | `0x2c0000` | ✅ | Relays and meter not reported |
 | [1L Gen3](S1LG3.md) | `S1LG3` | ESP32-C3 | `0x10000` | `0x2b0000` | 🧪 |  |
 | [2L Gen3](S2LG3.md) | `S2LG3` | ESP32-C3 | `0x10000` | `0x2b0000` | 🧪 |  |
 | [i4 Gen3](I4G3.md) | `I4G3` | ESP32-C3 | **`0xf000`** | `0x280000` | 🧪 |  |

@@ -2,7 +2,7 @@
 
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
-![State: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![State: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
 [🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
@@ -97,7 +97,9 @@ In the `--watch` log look for these lines, in this order:
 
 ## Notes for this device
 
-No device-specific findings yet. Please report the `--watch` log, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
+First report (thanks to [WulffTech](https://github.com/WulffTech)): one unit (`S3SW-001P16EU`) went from Shelly 2.0.1 to ESPHome 2026.9.0 over OTA without UART, using their own tooling with the same package mechanism, not `ota.py`. It ran stable across reboots, the relay stayed off after them, and a later ESPHome OTA worked. Their image checks match `ota.py`'s (header checksum and appended SHA-256) and the install went through without warnings. The meter and the relay under load were not reported.
+
+- **Not run with `ota.py`:** the slot check, the bootloader comparison and the `boot_min_version` step of this project are not confirmed on this device. Please report the `--watch` log, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
 
 The profile sets `boot_min_version: "1.0.9"`: devices of this family run Shelly's loader 1.0.3, which would otherwise skip ESPHome's bootloader (`update? 0`).
 
