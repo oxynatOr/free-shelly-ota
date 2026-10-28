@@ -32,8 +32,8 @@ class FakeShelly:
                 if self.rate:
                     time.sleep(0.1)
 
-    def __init__(self, app="DuoBulbG3", auth_en=False, reach=None, download=True, update_error=None, rate=None):
-        self.app, self.auth_en, self.reach = app, auth_en, reach
+    def __init__(self, app="DuoBulbG3", auth_en=False, reach=None, download=True, update_error=None, rate=None, ver="2.0.1"):
+        self.app, self.auth_en, self.reach, self.ver = app, auth_en, reach, ver
         self.download, self.update_error, self.rate = download, update_error, rate
         self.updates = []
         self.fetched = []
@@ -43,7 +43,7 @@ class FakeShelly:
             def do_GET(self):
                 u = urllib.parse.urlparse(self.path)
                 if u.path == "/rpc/Shelly.GetDeviceInfo":
-                    body = json.dumps({"app": outer.app, "model": "X", "ver": "2.0.1", "id": "fake",
+                    body = json.dumps({"app": outer.app, "model": "X", "ver": outer.ver, "id": "fake",
                                        "auth_en": outer.auth_en}).encode()
                 elif u.path == "/rpc/Shelly.Update" and outer.update_error:
                     body = json.dumps({"code": -109, "message": outer.update_error}).encode()
@@ -218,6 +218,52 @@ class SenderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OldLayoutTests(unittest.TestCase):
+    """The PlugMG3-beta package must not go to a plug with the old flash layout (seen on a real plug, 2026-10-28)."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.profile = profile.load_profile("PlugMG3-beta")
+        self.zip = self.tmp / "beta.zip"
+        shutil.copy(firmware.cached_zip("PlugMG3", prerelease=True), self.zip)
+
+    def _shelly(self, ver):
+        s = FakeShelly(app="PlugMG3", ver=ver)
+        self.addCleanup(s.addCleanup)
+        return s
+
+    def test_text_for_old_firmware_only(self):
+        for ver in ("1.8.99-plugmg3prod0", "2.0.1", "2.1.0", "", "garbage"):
+            self.assertIn("old flash layout", sender.old_layout_text(self.profile, ver), ver)
+        for ver in ("2.2.0-beta2", "2.2.0", "2.3.1", "3.0.0-beta1"):
+            self.assertIsNone(sender.old_layout_text(self.profile, ver), ver)
+        self.assertIsNone(sender.old_layout_text(profile.load_profile("PlugMG3"), "1.8.99"))   # a profile without the key is not affected
+
+    def test_send_refuses_old_firmware_before_anything_is_sent(self):
+        s = self._shelly("1.8.99-plugmg3prod0")
+        with self.assertRaises(builder.OtaError) as cm:
+            sender.send(self.profile, self.zip, s.addr, port=0, assume_yes=True, out=lambda m: None)
+        self.assertIn("restore PlugMG3-beta", str(cm.exception))
+        self.assertEqual(s.updates, [])
+
+    def test_dry_run_refuses_too(self):
+        s = self._shelly("2.1.0")
+        with self.assertRaises(builder.OtaError):
+            sender.send(self.profile, self.zip, s.addr, port=0, dry_run=True, out=lambda m: None)
+
+    def test_force_and_restore_go_through(self):
+        for kw in ({"force": True}, {"restoring": True}):
+            s = self._shelly("1.8.99-plugmg3prod0")
+            self.assertTrue(sender.send(self.profile, self.zip, s.addr, port=0, assume_yes=True, timeout=10, probe_wait=0.2,
+                                        out=lambda m: None, **kw), kw)
+            self.assertEqual(len(s.updates), 1, kw)
+
+    def test_a_device_with_the_beta_layout_is_fine(self):
+        s = self._shelly("2.2.0-beta2")
+        sender.send(self.profile, self.zip, s.addr, port=0, dry_run=True, probe_wait=0.2, out=lambda m: None)
 
 
 class DownloadWatchTests(unittest.TestCase):

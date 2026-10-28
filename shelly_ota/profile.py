@@ -35,6 +35,7 @@ class Profile:
     revision: int = 1  # counts changes of this profile; bump it when anything else in the file changes
     package: str | None = None  # name of the official package and of its folder in fw/ when it is not the profile's name (-beta profiles)
     channel: str = "stable"  # "beta": the profile is for pre-releases, so the newest pre-release is the default package
+    layout_since: str | None = None  # firmware version from which the device has this profile's flash layout; `send` refuses older ones
 
     @property
     def package_name(self) -> str:
@@ -72,6 +73,7 @@ def load_profile(name: str, devices_dir: Path = DEVICES_DIR) -> Profile:
         revision=_to_int(raw.get("revision", 1), "revision"),
         package=str(raw["package"]) if raw.get("package") else None,
         channel=str(raw.get("channel", "stable")),
+        layout_since=str(raw["layout_since"]) if raw.get("layout_since") else None,
     )
 
 

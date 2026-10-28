@@ -5,7 +5,8 @@ platform: esp32c3
 update_id: PlugMG3        # name used by https://updates.shelly.cloud/update/<update_id>
 package: PlugMG3          # the official package and its folder in fw/ are called PlugMG3
 channel: beta             # fetch asks for the beta channel; the newest cached pre-release is the default package
+layout_since: "2.2.0"     # firmware older than this (1.8.99, 2.0.1, 2.1.0) has the old layout: `send` refuses the package there
 app_ptn: app_0            # partition the manifest "app" part targets
 app_slot_size: 0x300000   # app_0 @0x20000, app_1 @0x400000
 boot_min_version: "1.0.9"   # same as the PlugMG3 profile; the beta package itself says 1.0.2
-revision: 1   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)
+revision: 2   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)

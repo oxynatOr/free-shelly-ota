@@ -149,7 +149,7 @@ Shelly's `2.2.0-beta2` for this plug (found by [onkelfarmor](https://github.com/
 > Relay and meter were not reported.
 
 > [!CAUTION]
-> **Do not send this package to a plug that still has the old layout** (Shelly 1.8.99, 2.0.1, 2.1.0). Tried on 2026-10-28 with stock 1.8.99: the installer replaced the bootloader with ESPHome's, but wrote neither the new partition table nor the app (`Skipping app`, `Skipping fs` in its log). The plug then started the old stock app from `app_0` by luck, because ESPHome's bootloader with an unset `otadata` tries all slots; with an empty `app_0` it would not have started and only UART brings it back. Take the step to Shelly's own beta package first and send this package only to a plug that already runs the beta layout.
+> **Do not send this package to a plug that still has the old layout** (Shelly 1.8.99, 2.0.1, 2.1.0). Tried on 2026-10-28 with stock 1.8.99: the installer replaced the bootloader with ESPHome's, but wrote neither the new partition table nor the app (`Skipping app`, `Skipping fs` in its log). The plug then started the old stock app from `app_0` by luck, because ESPHome's bootloader with an unset `otadata` tries all slots; with an empty `app_0` it would not have started and only UART brings it back. `send` refuses this package on a plug whose firmware is older than 2.2.0 (`--force` overrides, with UART at hand). Take the step to Shelly's own beta package first (`python ota.py restore PlugMG3-beta` sends it) and send this package only to a plug that already runs the beta layout.
 
 Shelly can pull the beta at any time (the 2.0.1 and 2.1.0 files are gone from the CDN since 2026-10-27): keep your copy in `fw/`.
 
