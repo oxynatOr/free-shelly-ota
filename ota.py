@@ -308,7 +308,8 @@ RESTORE_SLOT_NOTE = """NOTE: If ESPHome's bootloader is installed, the installer
 
 
 def cmd_restore(args) -> None:
-    zip_path = firmware.cached_zip(args.device, args.version)
+    p = profile.load_profile(args.device)
+    zip_path = firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
     if zip_path is None:
         raise builder.OtaError(f"No official {args.device} ZIP cached. Run 'ota.py fetch {args.device}' first.")
     ui.say(f"Restoring the official firmware from {zip_path}")
