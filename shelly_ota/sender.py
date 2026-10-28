@@ -12,6 +12,7 @@ import http.server
 import json
 import re
 import socket
+import socketserver
 import threading
 import time
 import urllib.parse
@@ -200,6 +201,19 @@ class DownloadWatch:
         return (self.size - b1) / ((b1 - b0) / (t1 - t0))
 
 
+class _QuickServer(http.server.ThreadingHTTPServer):
+    """ThreadingHTTPServer without the reverse lookup of its own address.
+
+    HTTPServer.server_bind calls socket.getfqdn() for a name nothing here uses; on a slow resolver (a VPN, an
+    unreachable DNS server) that held `send` up for many seconds before the server started.
+    """
+
+    def server_bind(self) -> None:
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name, self.server_port = str(host), port
+
+
 class FileServer:
     """Serves exactly one file; `served` is set once a client received all of it."""
 
@@ -242,7 +256,7 @@ class FileServer:
                 pass
 
         try:
-            self.httpd = http.server.ThreadingHTTPServer((bind, port), Handler)
+            self.httpd = _QuickServer((bind, port), Handler)
         except OSError as e:
             raise OtaError(f"Cannot start the web server on port {port}: {e}. Try --port.") from e
         self.port = self.httpd.server_address[1]
