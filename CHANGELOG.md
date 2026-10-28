@@ -5,6 +5,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-28
+
+Still 0.x, so still experimental: nobody has flashed 19 of the 43 profiles, and seven more went through the update on a dev board only.
+
+### Summary
+- **`ota.py build --compile my-plug.yaml`** goes from the ESPHome YAML to the package in one command. It runs the `esphome` command, or Docker if there is none. With Docker the toolchain stays in a volume, so only the first compile is slow (about a minute and a half on the test machine, then seconds). A YAML that gets its `esp32:` block from `packages:` or `!include` is checked on the config ESPHome puts together. `build APP.bin ...` works as before.
+- **Plug M Gen3 beta layout:** Shelly's 2.2.0-beta2 changes the flash table of 17 Gen3 devices. The new profile `PlugMG3-beta` covers the Plug M, and `build` and `send` now refuse a package or a device that does not fit a profile's layout.
+- **Reports:** Shelly 1 Gen3 (S1G3) and 2PM Gen3 (S2PMG3) are confirmed on real devices, the 1PM Gen3 is partly checked (thanks to chusovich, majoto85 and WulffTech).
+- **`send`** no longer waits for a reverse lookup of its own address before it starts (it could add 12 seconds and more behind a VPN).
+- **Breaking, for few:** the profile `BluGwG3` (BLU Gateway) is gone, because an ESPHome image makes no sense on a gateway. **Visible:** `build` stops with an error for an official package whose partition table differs from the profile, where it used to finish. Neither touches a profile that was flashed.
+
 ### Added
 - Documentation of which devices get another flash layout in Shelly's 2.2.0-beta2 (17 G3 devices plus BluGwG3; scanned 2026-10-28, see [bootloader and slots](docs/bootloader-and-slots.md#beta-firmware-with-another-flash-layout)). Documentation only, no profile changed; `build` refuses these betas through the layout check.
 - Profile `PlugMG3-beta` (🟡) for the Plug M Gen3 beta firmware layout (2.2.0-beta2: app slots of 0x300000, see the [device page](docs/devices/PlugMG3.md#beta-layout)), with its own stock CSV. Profiles got two optional keys: `package` (the official package and its `fw/` folder, when the profile has another name) and `channel: beta` (`fetch` asks for the beta channel, and the newest cached pre-release is the default package). Checked on one plug (2026-10-28): Shelly's beta written over UART, then `restore`, `send` with ESPHome's bootloader and a later ESPHome OTA all worked; the direct step from stock 1.8.99 does NOT work, not even with Shelly's own beta package (the installer replaced the bootloader but wrote neither the new table nor the app; documented as a warning). The way without UART works from Shelly 2.0.x: `restore PlugMG3-beta` (the installer converts the table), then `send PlugMG3-beta`; ESPHome started on the beta table. The profile key `layout_since` makes `send` refuse the package on a device with older firmware (not for `restore`, `--force` overrides). Not breaking: no existing profile changed, `PlugMG3` keeps refusing the beta; the profile list grows from 43 to 44.
@@ -20,7 +31,10 @@ All notable changes to this project are documented here. The format follows
 - `S1G3` (Shelly 1 Gen3) goes from 🧪 to ✅ on the device page, in the README table and in the credits: a device report ([#98](https://github.com/oxynatOr/free-shelly-ota/issues/98), thanks to chusovich) with two devices flashed over OTA from stock 1.4.0 (loader 1.0.1) and a later ESPHome OTA. Documentation only, not a breaking change: no profile, package or command changed.
 
 ### Removed
-- Profile `BluGwG3` (BLU Gateway Gen3), its stock CSV and device page. The BLU Gateway is a gateway: it connects Shelly BLU (Bluetooth) devices to the network and controls them, so an ESPHome image would take that job away and give nothing back. The profile had no report (🧪). **Breaking for anyone who used it:** `ota.py fetch`, `build`, `send`, `restore` and `devkit` no longer know `BluGwG3`, and the profile count goes from 44 to 43. A cached `fw/shelly/BluGwG3` folder can be deleted.
+- Profile `BluGwG3` (BLU Gateway Gen3), its stock CSV and device page. The BLU Gateway is a gateway: it connects Shelly BLU (Bluetooth) devices to the network and controls them, so an ESPHome image would take that job away and give nothing back. The profile had no report (🧪). **Breaking for anyone who used it:** `ota.py fetch`, `build`, `send`, `restore` and `devkit` no longer know `BluGwG3`. The profile count stays 43 (`PlugMG3-beta` was added). A cached `fw/shelly/BluGwG3` folder can be deleted.
+
+### Fixed
+- `send` no longer waits for a reverse lookup of its own address before it starts the web server: Python's `HTTPServer` calls `socket.getfqdn()` for a name nothing uses, and on a slow resolver (a VPN, an unreachable DNS server) that held `send` up for 12 seconds and more. Visible only as a shorter start; nothing else changes.
 
 ## [0.6.0] - 2026-10-24
 
