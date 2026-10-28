@@ -3,17 +3,20 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
+![State of the beta layout: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
 [🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [📍 Pins](#pins) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
 
 The first device this tool was confirmed on. A second plug, reported by [815rx1](https://github.com/815rx1) (October 2026, thanks), went through the same chain with the 2.1.0 package.
 
+> **Not supported: 2.2.0-beta2.** Its partition table differs (app slots of `0x300000` instead of `0x2a0000`), found by [onkelfarmor](https://github.com/onkelfarmor) ([#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), thanks). `build` refuses a package with another layout; nothing was tested with it on a plug.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `PlugMG3` |
+| Profile | `PlugMG3`, `PlugMG3-beta` (for Shelly's 2.2.0-beta2 layout, see [Beta layout](#beta-layout)) |
 | Flash | 8 MB |
-| Official package | 2.1.0 (stable since 2026-10-14; bootloader, partition table and filesystem are the same as in 2.0.1; flashed on a real plug with 2.1.0 and with 2.0.1) |
+| Official package | 2.1.0 (stable since 2026-10-14; on 2026-10-27 the update API lists no stable release for this device and the 2.0.1 and 2.1.0 files answer 404 on Shelly's CDN, so keep your cached package; bootloader, partition table and filesystem are the same as in 2.0.1; flashed on a real plug with 2.1.0 and with 2.0.1) |
 | Partition table | `0x10000` |
 | App slot size | `0x2a0000` |
 
@@ -135,6 +138,26 @@ No `EFUSE write error` line appeared, only the `FW signatures` one ([eFuse note]
 - That plug ran Shelly OS loader 1.0.2 (factory firmware 1.8.99, `Boot: cur 010002ff`). `boot_min_version: 1.0.9` was enough there: `update? 1`, and ESPHome's bootloader was written. A plug that came back from ESPHome through the official 2.0.1 package runs loader 1.0.3 ([why the profile uses 1.0.9](../bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version)).
 - Without `--esphome-factory` Shelly's loader stays: ESPHome runs for three starts, then the old firmware comes back unless an ESPHome OTA arrived in time, and only the first
   such OTA can take effect. `send` refuses such a package without `--force` ([details](../bootloader-and-slots.md#without-esphomes-bootloader-plain-package)).
+
+## Beta layout
+
+Shelly's `2.2.0-beta2` for this plug (found by [onkelfarmor](https://github.com/onkelfarmor), [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)) has a **different flash layout**: the app slots are `0x300000` instead of `0x2a0000`, and the filesystem and the second slot move up with them. The profile `PlugMG3-beta` describes it; `PlugMG3` does not fit it and `build` refuses the mix.
+
+> [!NOTE]
+> **Partly checked (2026-10-28, one plug):** Shelly's 2.2.0-beta2 was written over UART, then `restore` and `send PlugMG3-beta` with `--esphome-factory` (the installer wrote to slot 0 and replaced the loader 1.0.3), ESPHome started, and a second ESPHome OTA from the Home Assistant builder (ESPHome 2026.10.1) succeeded. ESPHome ran from `app_1` at `0x400000` and logged Shelly's beta table (`app_0` `0x20000` / `0x300000`, `app_1` `0x400000` / `0x300000`, `scratch` and `shelly` unchanged).
+>
+> **The way for a plug that runs Shelly's 2.0.x (2026-10-28, same plug, no UART):** stock 1.8.99, then `restore PlugMG3` (2.0.1), then `restore PlugMG3-beta` (the installer of 2.0.x writes the new table as `PT1` and the app to slot 1, the plug reported 2.2.0-beta2), then `send PlugMG3-beta` with the ESPHome package. ESPHome started with Shelly's beta table, joined the Wi-Fi and ran from `app_0` (`0x20000`) with the ESPHome bootloader.
+>
+> Relay and meter were not reported.
+
+> [!CAUTION]
+> **Do not send this package to a plug that still has the old layout** (Shelly 1.8.99, 2.0.1, 2.1.0). The step to Shelly's own beta works from 2.0.x but not from the old factory firmware 1.8.99: Shelly's own beta package behaves the same there (`Skipping app`, `Skipping fs`), so update 1.8.99 to 2.0.1 first. Tried on 2026-10-28 with stock 1.8.99: the installer replaced the bootloader with ESPHome's, but wrote neither the new partition table nor the app (`Skipping app`, `Skipping fs` in its log). The plug then started the old stock app from `app_0` by luck, because ESPHome's bootloader with an unset `otadata` tries all slots; with an empty `app_0` it would not have started and only UART brings it back. `send` refuses this package on a plug whose firmware is older than 2.2.0 (`--force` overrides, with UART at hand). Take the step to Shelly's own beta package first (`python ota.py restore PlugMG3-beta` sends it) and send this package only to a plug that already runs the beta layout.
+
+Shelly can pull the beta at any time (the 2.0.1 and 2.1.0 files are gone from the CDN since 2026-10-27): keep your copy in `fw/`.
+
+- Fetch the beta: `python ota.py fetch PlugMG3-beta --insecure` (the profile asks for the beta channel).
+- Build against its table: `python ota.py partition-csv PlugMG3-beta -o PlugMG3-beta-stock.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
+- Then `python ota.py build PlugMG3-beta app.ota.bin --esphome-factory factory.bin`, as above.
 
 ## Way back
 

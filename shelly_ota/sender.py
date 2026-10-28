@@ -404,6 +404,32 @@ def plain_package_text(name: str, forced: bool = False) -> str:
             f"  python ota.py build {name} app.ota.bin --esphome-factory app.factory.bin ...\n\n" + ending)
 
 
+def _core_version(version: str) -> tuple[int, int, int] | None:
+    """(2, 2, 0) from '2.2.0-beta2' or '1.8.99-plugmg3prod0'; None if the text does not start with x.y.z."""
+    m = re.match(r"(\d+)\.(\d+)\.(\d+)", version or "")
+    return (int(m[1]), int(m[2]), int(m[3])) if m else None
+
+
+def old_layout_text(profile: Profile, device_version: str, forced: bool = False) -> str | None:
+    """Why a package must not go to a device whose firmware still has the old flash layout (None: fine or not applicable).
+
+    Seen on a Plug M Gen3 with Shelly 1.8.99 and the PlugMG3-beta package (2026-10-28): the installer replaced the bootloader
+    but wrote neither the new partition table nor the app, so a plug without a valid app in app_0 would only start from UART.
+    """
+    if not profile.layout_since:
+        return None
+    have, need = _core_version(device_version), _core_version(profile.layout_since)
+    if have is not None and need is not None and have >= need:
+        return None
+    shown = device_version or "unknown"
+    return (f"The device runs Shelly {shown}, which has the old flash layout (or one that cannot be told), but this package is for the "
+            f"layout of {profile.layout_since} and later ({profile.name}).\n"
+            "  Shelly's installer would replace the bootloader with ESPHome's but skip the app and the partition table; the device "
+            "then only starts if the old app is still in app_0, otherwise only UART brings it back.\n"
+            f"  Fix: update to Shelly's own package of that layout first (`python ota.py restore {profile.name}`), then send this "
+            "package.\n" + ("  --force given: sending anyway." if forced else "  Only with UART at hand and a flash backup: add --force."))
+
+
 def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str | None = None,
          port: int = 8000, timeout: float = 300, max_wait: float = MAX_WAIT, assume_yes: bool = False, dry_run: bool = False,
          force: bool = False, user: str | None = None, password: str | None = None,
@@ -428,7 +454,7 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     say = session.say
     zip_path = require_zip(zip_path)
     with zipfile.ZipFile(zip_path) as zf:
-        manifest = read_official_manifest(zf, profile.name)
+        manifest = read_official_manifest(zf, profile.package_name)
 
     info = device_info(addr)
     session.device_id = session.device_id or info.get("id")
@@ -449,6 +475,13 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
         raise OtaError(f"Device reports app {app!r}, but this ZIP/profile is {profile.name!r}"
                        f"{f' (compatible: {pattern})' if pattern else ''}. Use --force only if you are sure.")
 
+    if not restoring:
+        old_layout = old_layout_text(profile, str(info.get("ver") or ""), forced=force)
+        if old_layout and not force:
+            raise OtaError(old_layout)
+        if old_layout:
+            say(Level.quiet, "WARNING: " + old_layout)
+
     host = host or local_ip_for(addr)
     server = FileServer(zip_path, port)
     url = server.url(host)
@@ -457,7 +490,7 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     for line in package_info(zip_path, profile):
         say(Level.normal if line.startswith(("NOTE", "WARNING")) else Level.verbose, line)
     say(Level.verbose, f"Download URL for the device: {url}")
-    official_zip = firmware.cached_zip(profile.name)
+    official_zip = firmware.cached_zip(profile.package_name, prerelease=profile.channel == "beta")
     boot_replaced: bool | None = None  # None: cannot tell (no cached official ZIP to compare with)
     keeps_loader = False  # an ESPHome app in a package that leaves Shelly's bootloader in place (no --esphome-factory)
     if official_zip:

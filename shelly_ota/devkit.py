@@ -58,7 +58,7 @@ def build_image(zip_path: Path, profile: Profile, *, flash_size: str | None = No
     if flash_size is not None and flash_size not in FLASH_SIZES:
         raise OtaError(f"--flash-size must be one of {', '.join(FLASH_SIZES)}.")
     with zipfile.ZipFile(require_zip(zip_path)) as zf:
-        manifest = read_official_manifest(zf, profile.name)
+        manifest = read_official_manifest(zf, profile.package_name)
         parts = manifest["parts"]
         if "pt" not in parts or "boot" not in parts:
             raise OtaError(f"{zip_path.name} has no boot or pt part: not a package for a whole device.")

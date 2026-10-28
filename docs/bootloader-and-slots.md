@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [Documentation](README.md) · [Device pages](devices/README.md) · [Troubleshooting](troubleshooting.md)
 
-[✅ Recommended](#recommended-ship-esphomes-bootloader) · [🔢 min_version](#is-the-new-bootloader-really-written-min_version) · [🎯 Slot 0](#the-app-must-land-in-slot-0) · [📦 Plain package](#without-esphomes-bootloader-plain-package)
+[✅ Recommended](#recommended-ship-esphomes-bootloader) · [🔢 min_version](#is-the-new-bootloader-really-written-min_version) · [🎯 Slot 0](#the-app-must-land-in-slot-0) · [📦 Plain package](#without-esphomes-bootloader-plain-package) · [🧩 Beta layout](#beta-firmware-with-another-flash-layout)
 
 Two things decide whether an ESPHome image started from a Shelly package keeps working: whose **bootloader** runs, and which
 **slot** the installer writes the app to. Every [device page](devices/README.md) repeats the commands; this page explains the why.
@@ -128,6 +128,16 @@ The Plug US project handles this in two steps:
 
 This step was documented for the Shelly Plus Plug US (ESP32); it has **not been tested here on any device** (the package route
 above avoids it). Thanks to [inventor7777](https://github.com/inventor7777/ESPHome-Shelly-Plus-Plug-US) for working this out.
+
+## Beta firmware with another flash layout
+
+Shelly's `2.2.0-beta2` (checked 2026-10-28, all profiles) changes the flash layout of 17 G3 devices to one common table with app slots of `0x300000` (the table the DimmerG3 already had): Dimmer0110VPMG3, DuoBulbG3, I4G3, Mini1G3, Mini1PMG3, MiniPMG3, OutdoorPlugSG3, Pill, PlugMG3, PlugPMG3, PlugSG3, RGBCCTBulbG3, S1G3, S1LG3, S1PMG3, S2LG3, S2PMG3. The BluGwG3 beta also has another table than its profile. Unchanged are all G4 devices, EMG3, S3EMG3, EMG4, MiniEMG4, Pro3EM, HTG3, PlusPlugIT, PlusUni and DimmerG3; PlusPlugS has no beta. The stable packages of the wave of 2026-10-26 (2.0.3, 2.1.1) kept bootloader and table (four samples checked).
+
+- `fetch` and `inspect` warn about such a package, `build` refuses it, so no image for the wrong layout can be made.
+- Only the Plug M Gen3 has a profile for it so far (`PlugMG3-beta`, [device page](devices/PlugMG3.md#beta-layout)). The others get one when someone needs the beta or when Shelly ships the layout as a stable release.
+- The installer of Shelly 1.8.99 cannot change the layout (`Skipping app`), the one of 2.0.x can. The bootloaders in the beta differ between device groups; their `boot_min_version` has not been compared yet.
+
+---
 
 ---
 

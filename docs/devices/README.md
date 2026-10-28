@@ -15,6 +15,7 @@ checked yet, 🔬 = the OTA ran through on a dev board with the [DevKit image](.
 | Device | Profile | Chip | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- | --- |
 | [Plug M Gen3](PlugMG3.md) | `PlugMG3` | ESP32-C3 | `0x10000` | `0x2a0000` | ✅ |  |
+| [Plug M Gen3, beta layout](PlugMG3.md#beta-layout) | `PlugMG3-beta` | ESP32-C3 | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0-beta2 only |
 | [Plug S Gen3](PlugSG3.md) | `PlugSG3` | ESP32-C3 | `0x10000` | `0x2a0000` | ✅ |  |
 | [Plug PM Gen3 (no relay)](PlugPMG3.md) | `PlugPMG3` | ESP32-C3 | `0x10000` | `0x280000` | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
 | [H&T Gen3](HTG3.md) | `HTG3` | ESP32-C3 | **`0xf000`** | `0x280000` | ✅ |  |

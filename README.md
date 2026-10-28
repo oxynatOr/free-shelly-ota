@@ -44,7 +44,7 @@ flowchart LR
 
 ## Supported devices
 
-**43 profiles:** ✅ 10 confirmed · 🟡 6 partly checked · 🔬 7 DevKit-tested · 🧪 20 untested
+**44 profiles:** ✅ 10 confirmed · 🟡 7 partly checked · 🔬 7 DevKit-tested · 🧪 20 untested
 
 Click the profile for the device page: ESPHome config, the exact commands and what to expect. This table shows the devices that ran on
 real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and the untested (🧪) ones, are on the
@@ -53,6 +53,7 @@ real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and th
 | Device | Profile | Chip | State | Note |
 | --- | --- | --- | --- | --- |
 | Plug M Gen3 | [`PlugMG3`](docs/devices/PlugMG3.md) | ESP32&#8209;C3 | ✅ | |
+| Plug M Gen3, beta layout | [`PlugMG3-beta`](docs/devices/PlugMG3.md#beta-layout) | ESP32&#8209;C3 | 🟡 | Shelly 2.2.0-beta2 only |
 | Plug S Gen3 | [`PlugSG3`](docs/devices/PlugSG3.md) | ESP32&#8209;C3 | ✅ | |
 | Plug PM Gen3 | [`PlugPMG3`](docs/devices/PlugPMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
 | H&T Gen3 | [`HTG3`](docs/devices/HTG3.md) | ESP32&#8209;C3 | ✅ | |

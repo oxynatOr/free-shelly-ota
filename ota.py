@@ -138,12 +138,13 @@ def cmd_profiles(args) -> None:
 
 def _fetch_official(p, *, refresh=False, version=None, insecure=False, channel="stable", from_version=None):
     """Fetch for a profile; variants (profile.parent) are looked up in their parent's update reply."""
+    channel = "beta" if p.channel == "beta" else channel  # a -beta profile is for the beta channel
     if p.parent:
         parent = profile.load_profile(p.parent)
-        return firmware.fetch(p.name, parent.update_id, refresh=refresh, version=version,
+        return firmware.fetch(p.package_name, parent.update_id, refresh=refresh, version=version,
                               insecure=insecure, alt=p.update_id, channel=channel,
                               from_version=from_version)
-    return firmware.fetch(p.name, p.update_id, refresh=refresh, version=version, insecure=insecure,
+    return firmware.fetch(p.package_name, p.update_id, refresh=refresh, version=version, insecure=insecure,
                           channel=channel, from_version=from_version)
 
 
@@ -152,6 +153,10 @@ def cmd_fetch(args) -> None:
     path = _fetch_official(p, refresh=args.refresh, version=args.version, insecure=args.insecure,
                            channel=args.channel, from_version=args.from_version)
     ui.say(f"Official firmware: {path}")
+    with zipfile.ZipFile(path) as zf:
+        for problem in builder.package_layout_problems(p, zf, builder.read_official_manifest(zf)):
+            ui.say(f"WARNING: this package has another flash layout than the {p.name} profile: {problem}. "
+                   f"`build` refuses it.")
 
 
 def cmd_add_device(args) -> None:
@@ -163,7 +168,7 @@ def cmd_add_device(args) -> None:
 
 def cmd_partition_csv(args) -> None:
     p = profile.load_profile(args.device)
-    official = args.official or firmware.cached_zip(p.name, args.version)
+    official = args.official or firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
     if official is None:
         raise builder.OtaError(f"No official {p.name} ZIP cached. Run 'ota.py fetch {p.name}' first, or pass --official <zip>.")
     text = devicegen.partition_csv(official)
@@ -178,7 +183,7 @@ def cmd_partition_csv(args) -> None:
 
 def cmd_devkit(args) -> None:
     p = profile.load_profile(args.device)
-    source = args.zip or firmware.cached_zip(p.name, args.version)
+    source = args.zip or firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
     if source is None:
         raise builder.OtaError(f"No official {p.name} ZIP cached. Run 'ota.py fetch {p.name}' first, or pass --zip <package>.")
     image = devkit.build_image(source, p, flash_size=args.flash_size)
@@ -217,7 +222,7 @@ def cmd_build(args) -> None:
     drop = tuple(x for x in args.drop.split(",") if x)
     if args.drop_fs:
         drop += ("fs",)
-    official = args.official or firmware.cached_zip(p.name, args.version)
+    official = args.official or firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
     if official is None:
         if not args.download:
             raise builder.OtaError(
@@ -303,7 +308,8 @@ RESTORE_SLOT_NOTE = """NOTE: If ESPHome's bootloader is installed, the installer
 
 
 def cmd_restore(args) -> None:
-    zip_path = firmware.cached_zip(args.device, args.version)
+    p = profile.load_profile(args.device)
+    zip_path = firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
     if zip_path is None:
         raise builder.OtaError(f"No official {args.device} ZIP cached. Run 'ota.py fetch {args.device}' first.")
     ui.say(f"Restoring the official firmware from {zip_path}")
