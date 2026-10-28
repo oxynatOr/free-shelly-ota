@@ -18,8 +18,8 @@ import textwrap
 import zipfile
 from pathlib import Path
 
-from shelly_ota import (MODULE_DIR, ble, buildinfo, builder, devicegen, devkit, firmware, lint, logview, logwatch, profile, rpc,
-                        secrets_check, sender, ui)
+from shelly_ota import (MODULE_DIR, ble, buildinfo, builder, compile as compile_, devicegen, devkit, firmware, lint, logview, logwatch,
+                        profile, rpc, secrets_check, sender, ui)
 from shelly_ota.logview import Level
 
 LOG_FILE_AUTO = "<auto>"    # --log-file without a path
@@ -198,20 +198,45 @@ def cmd_devkit(args) -> None:
         ui.say(f"{note[0]}: {note[1]}")
 
 
+def _compile_for_build(args, p) -> None:
+    """--compile YAML: build the binaries first and hand them to the build below as APP and --esphome-factory."""
+    if args.app:
+        raise builder.OtaError("Give either APP.bin or --compile YAML, not both.")
+    problems = lint.lint_esphome(args.compile, p)
+    if problems:      # before the compile, which takes minutes
+        raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
+    ui.say(f"ESPHome config check OK ({args.compile.name})")
+    compile_.pick_runner(args.runner)      # no runner: say so before "Compiling"
+    ui.say(f"Compiling {args.compile.name} ...")
+    done = compile_.compile_yaml(args.compile, args.runner, args.image or compile_.DEFAULT_IMAGE)
+    ui.say(f"Compiled: {done.ota}")
+    args.app = done.ota
+    args.esphome_factory = args.esphome_factory or done.factory
+    args.esphome_yaml = args.esphome_yaml or args.compile
+
+
 def cmd_build(args) -> None:
     p = profile.load_profile(args.device)
+    if not args.compile and not args.app:
+        raise builder.OtaError("Give APP.bin, or --compile YAML to build it from an ESPHome config.")
+    if not args.compile and (args.runner != "auto" or args.image):
+        raise builder.OtaError("--runner and --image only go with --compile.")
     # The automatic name only carries app file name, date and tag: two builds on one day get the same one, and ESPHome
     # always calls the app firmware.ota.bin. An existing package may already be on a device, so it is never replaced
-    # silently (a name given with -o is deliberate and is overwritten, as before).
-    output = args.output or MODULE_DIR / "out" / builder.default_output_name(p, args.app, tag=builder.check_tag(args.tag))
+    # silently (a name given with -o is deliberate and is overwritten, as before). Checked before a compile, which takes minutes.
+    named_after = args.app or Path(compile_.OTA_BIN)
+    output = args.output or MODULE_DIR / "out" / builder.default_output_name(p, named_after, tag=builder.check_tag(args.tag))
     would_replace = output.exists() and args.output is None and not args.force
     if would_replace and not args.dry_run:
         raise builder.OtaError(f"{output} already exists. Use --tag LABEL or -o ZIP for another name, or --force to replace it.")
+    if args.compile:
+        _compile_for_build(args, p)
     if args.esphome_yaml:
         problems = lint.lint_esphome(args.esphome_yaml, p)
         if problems:
             raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
-        ui.say(f"ESPHome config check OK ({args.esphome_yaml.name})")
+        if not args.compile:      # --compile has said it before the compile
+            ui.say(f"ESPHome config check OK ({args.esphome_yaml.name})")
         for w in lint.lint_warnings(args.esphome_yaml, bootloader_shipped=bool(args.esphome_factory)):
             ui.say(f"  WARNING: {w}")
     secrets = None
@@ -567,10 +592,18 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--port", default="COMx", metavar="PORT", help="serial port in the printed esptool commands (default: %(default)s)")
     dk.set_defaults(func=cmd_devkit)
 
-    b = _command(sub, "build", usage="ota.py build DEVICE APP.bin [options]",
+    b = _command(sub, "build", usage="ota.py build DEVICE (APP.bin | --compile YAML) [options]",
                  epilog=_epilog("build PlugMG3 app.ota.bin --esphome-factory app.factory.bin", "build"))
     b.add_argument("device", metavar="DEVICE", help=dev_help)
-    b.add_argument("app", type=Path, metavar="APP.bin", help="ESPHome app binary (the .ota.bin, not the merged image)")
+    b.add_argument("app", type=Path, nargs="?", metavar="APP.bin",
+                   help="ESPHome app binary (the .ota.bin, not the merged image); or use --compile")
+    g = b.add_argument_group("compile")
+    g.add_argument("--compile", type=Path, metavar="YAML",
+                   help="compile this ESPHome config first and use its binaries (APP.bin and --esphome-factory)")
+    g.add_argument("--runner", choices=compile_.RUNNERS, default="auto",
+                   help="with --compile: how to run ESPHome; auto = the esphome command, else Docker (default: %(default)s)")
+    g.add_argument("--image", metavar="NAME:TAG",
+                   help=f"with --compile and Docker: the ESPHome image (default: {compile_.DEFAULT_IMAGE})")
     g = b.add_argument_group("app and bootloader")
     g.add_argument("--esphome-factory", type=Path, metavar="FACTORY.bin",
                    help="also swap in ESPHome's bootloader and a clean otadata from this factory image (same build as "

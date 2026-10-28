@@ -67,6 +67,22 @@ values and a `Fix:` line. Seen so far:
 | Partition table differs | Use the device's `partitions/<Profile>-stock.csv` and its `CONFIG_PARTITION_TABLE_OFFSET`. |
 | `.factory.bin` from another build | Build `APP.bin` and the factory image from the same compile. |
 
+### `build --compile` is slow, or stops before the compile
+
+The first compile with Docker downloads the toolchain and builds all of ESP-IDF; that takes many minutes. It is the only slow one: the toolchain stays in the Docker volume `free-shelly-esphome-cache` ([Compile](commands.md#compile)). If every compile is slow, the volume is gone or is not used.
+
+| Message or symptom | Cause and fix |
+| --- | --- |
+| `Docker is installed but not running` | Start Docker Desktop (Windows) or the service (`sudo systemctl start docker`), then run `build` again. |
+| `Neither 'esphome' nor 'docker' was found` | Install one of them; the message says how. |
+| `ESPHome config check failed` (before the compile) | The YAML must have the `esp32:` block with the profile's partition table and offset, written out in the file itself: `!include` and `packages` are not followed ([Quick start](../README.md#quick-start)). |
+| `... already exists. Use --tag ...` (before the compile) | A package with that name is in `out/`. Use `--tag LABEL`, `-o ZIP` or `--force`. |
+| Every compile downloads ESP-IDF again | The volume was removed, or a different `--image` version is used. `docker volume ls` shows `free-shelly-esphome-cache`. |
+| Very slow with the `esphome` command under WSL | The YAML is on `/mnt/c` or `/mnt/i`. Copy it into the Linux home and compile there. |
+| `Could not prepare the Docker volume` or `Permission denied` (Linux) | The volume belongs to another user. `docker volume rm free-shelly-esphome-cache` and compile again. |
+| `no firmware.ota.bin was found` | The compile did not produce one: the config needs `framework: type: esp-idf`. |
+| Disk full | The volume is 3 GB and more; `docker system df -v` shows it, `docker volume rm free-shelly-esphome-cache` frees it. |
+
 ### No progress, no device log
 
 `send` reads the device log (UDP datagrams on port 9514, `--log-port`) to show the progress and the device's own confirmation.

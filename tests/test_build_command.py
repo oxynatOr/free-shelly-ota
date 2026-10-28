@@ -113,6 +113,61 @@ class BuildOutputTests(unittest.TestCase):
         self.assertEqual(self.build("-o", str(target), app=self.other / "firmware.ota.bin")[0], 0)
         self.assertNotEqual(target.read_bytes(), first)
 
+    # --compile: the binaries come from compile_yaml (faked here), everything after that is the normal build.
+    def test_neither_app_nor_compile(self):
+        code, text = self.run_ota("build", "PlugMG3")
+        self.assertNotEqual(code, 0)
+        self.assertIn("--compile", text)
+
+    def test_app_and_compile_together(self):
+        code, text = self.run_ota("build", "PlugMG3", str(self.app), "--compile", str(self.tmp / "x.yaml"))
+        self.assertNotEqual(code, 0)
+        self.assertIn("not both", text)
+
+    def test_runner_without_compile(self):
+        code, text = self.build("--runner", "docker")
+        self.assertNotEqual(code, 0)
+        self.assertIn("--compile", text)
+
+    def test_compile_feeds_the_build(self):
+        yaml = self.tmp / "plug.yaml"
+        yaml.write_text("esphome:\n  name: plug\n")
+        factory = self.tmp / "firmware.factory.bin"
+        compiled = ota.compile_.Compiled(self.app, factory)
+        seen = {}
+
+        def fake_build(p, app, official, target, **kw):
+            seen.update(app=app, factory=kw["factory"])
+            raise ota.builder.OtaError("stop here")
+
+        with mock.patch.object(ota.lint, "lint_esphome", return_value=[]), \
+                mock.patch.object(ota.lint, "lint_warnings", return_value=[]), \
+                mock.patch.object(ota.compile_, "pick_runner"), \
+                mock.patch.object(ota.compile_, "compile_yaml", return_value=compiled) as comp, \
+                mock.patch.object(ota.builder, "build", fake_build):
+            code, text = self.run_ota("build", "PlugMG3", "--compile", str(yaml), "--runner", "docker",
+                                      "--official", str(firmware.cached_zip("PlugMG3")))
+        comp.assert_called_once_with(yaml, "docker", ota.compile_.DEFAULT_IMAGE)
+        self.assertEqual(seen, {"app": self.app, "factory": factory})
+        self.assertIn("stop here", text)
+
+    def test_existing_package_stops_before_the_compile(self):
+        self.assertEqual(self.build()[0], 0)                       # firmware.ota.bin gives the automatic name
+        with mock.patch.object(ota.lint, "lint_esphome", return_value=[]), \
+                mock.patch.object(ota.compile_, "compile_yaml") as comp:
+            code, text = self.run_ota("build", "PlugMG3", "--compile", str(self.tmp / "x.yaml"))
+        self.assertNotEqual(code, 0)
+        self.assertIn("already exists", text)
+        comp.assert_not_called()
+
+    def test_config_problem_stops_before_the_compile(self):
+        with mock.patch.object(ota.lint, "lint_esphome", return_value=["bad partition"]), \
+                mock.patch.object(ota.compile_, "compile_yaml") as comp:
+            code, text = self.run_ota("build", "PlugMG3", "--compile", str(self.tmp / "x.yaml"))
+        self.assertNotEqual(code, 0)
+        self.assertIn("bad partition", text)
+        comp.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

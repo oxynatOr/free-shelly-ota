@@ -68,7 +68,10 @@ file.
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
 | `DEVICE` | yes | | Profile name |
-| `APP.bin` | yes | | ESPHome app binary (the `.ota.bin`, not the merged image) |
+| `APP.bin` | yes, unless `--compile` | | ESPHome app binary (the `.ota.bin`, not the merged image) |
+| `--compile YAML` | no | none | Compile this ESPHome config first and use its `firmware.ota.bin` as `APP.bin` and its `firmware.factory.bin` as `--esphome-factory`; the YAML is also checked (`--esphome-yaml`). Give it instead of `APP.bin`. See [Compile](#compile) |
+| `--runner auto\|esphome\|docker` | no | `auto` | Only with `--compile`: how ESPHome is run. `auto` takes the `esphome` command from the PATH, else Docker |
+| `--image NAME:TAG` | no | a fixed ESPHome version | Only with `--compile` and Docker: the ESPHome image |
 | `--esphome-yaml YAML` | no | none | Also check the partition offset and `partitions:` CSV of this config, and run the [credential check](credential-check.md) |
 | `--esphome-factory FACTORY.bin` | no | none | Also ship ESPHome's bootloader and a clean `otadata` taken from this factory image (same build as `APP.bin`). See [Bootloader and slots](bootloader-and-slots.md) |
 | `--boot-min-version VER` | no | profile value, else one patch above Shelly's | Only with `--esphome-factory`: the bootloader `min_version` in the manifest. The installer writes only a newer bootloader. `keep` leaves it, which probably makes the installer skip the bootloader |
@@ -97,6 +100,26 @@ file.
 
 `--esphome-yaml` also warns if `allow_partition_access` is missing in the `ota:` block, with and without `--esphome-factory`:
 ESPHome needs it to update the bootloader later (without `--esphome-factory` also to avoid falling back to the previous image).
+
+### Compile
+
+`--compile YAML` runs ESPHome for you, so there is one command from config to package:
+
+```
+python ota.py build PlugMG3 --compile my-plug.yaml
+```
+
+The config is checked first (before the compile, which takes minutes), then compiled, and the build goes on with the two binaries and the credential check as usual. The binaries are read from `.esphome/build/<name>/build/` next to the YAML.
+
+- **Runner.** `auto` uses the `esphome` command if there is one, else Docker. `--runner` forces one of them. If neither is there, `build` says what to install: Docker Desktop or `pip install esphome` on Windows, `pipx install esphome` on Linux.
+- **Docker has to be running.** `build` asks the Docker daemon first and stops with "Docker is installed but not running" (start Docker Desktop on Windows, `sudo systemctl start docker` on Linux). It never starts Docker itself.
+- **The cache volume.** The toolchain (ESP-IDF, compilers, ccache; 3 GB and more) and the build files live in the Docker volume `free-shelly-esphome-cache`, shared by every YAML. **The first compile downloads the toolchain and builds everything (many minutes), later ones reuse it and take a fraction of that.** Keep the volume: without it every compile starts from nothing. A new ESPHome version (`--image`) adds its own toolchain to the volume once. The volume is not next to the YAML on purpose: a Windows folder mounted into the container is very slow for this many small files.
+- **What lands next to the YAML.** Only `firmware.ota.bin` and `firmware.factory.bin`, copied to `.esphome/build/<name>/build/`. They hold the Wi-Fi credentials of the config, so that folder is as private as the YAML and `secrets.yaml`.
+- **Linux.** The container runs as your own user, so the copied files are yours. A new volume belongs to root; `build` hands it to you once before the first compile, with a short root container.
+- **Housekeeping.** `docker volume inspect free-shelly-esphome-cache` shows it, `docker system df -v` its size, `docker volume rm free-shelly-esphome-cache` removes it (the next compile downloads everything again).
+- **The `esphome` command** keeps its own cache (`~/.cache/esphome`) and writes the build files next to the YAML. Under WSL keep the YAML in the Linux home (`~/...`), not on `/mnt/c` or `/mnt/i`, which is slow.
+- **Image.** The Docker image has a fixed ESPHome version, not `latest`, so the same YAML gives the same build next month. `--image NAME:TAG` takes another one. The `esphome` command is whatever version you installed; for two comparable packages use the same version for both.
+- **Not with `APP.bin`.** Either give the binary or `--compile`; `--runner` and `--image` need `--compile`.
 
 ## send
 

@@ -3,6 +3,7 @@
 import hashlib
 import http.server
 import json
+import re
 import shutil
 import socket
 import sys
@@ -374,12 +375,17 @@ class OfflineTests(unittest.TestCase):
         self.assertEqual(len(lint.lint_esphome(wrong, prof)), 1)
 
     def test_partition_csv_matches_the_files_in_partitions_dir(self):
+        # The header names the firmware version the file was read from. A newer cached package (Shelly ships 2.0.3 where
+        # the file came from 2.0.2) must not fail this test as long as its partition table is the same.
+        def table(text: str) -> str:
+            return re.sub(r"official \S+ package", "official <version> package", text)
+
         for name in profile.list_devices():
             committed = profile.MODULE_DIR / "partitions" / f"{name}-stock.csv"
             zip_path = firmware.cached_zip(name)
             if not zip_path:
                 continue
-            self.assertEqual(devicegen.partition_csv(zip_path), committed.read_text(encoding="utf-8"), name)
+            self.assertEqual(table(devicegen.partition_csv(zip_path)), table(committed.read_text(encoding="utf-8")), name)
 
     def test_partition_csv_rows_pass_the_lint_slot_check(self):
         text = devicegen.partition_csv(firmware.cached_zip("HTG3"))

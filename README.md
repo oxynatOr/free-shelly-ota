@@ -104,6 +104,8 @@ ota:
 esphome compile my-plug.yaml
 ```
 
+Or let the tool do it in step 3 with `--compile my-plug.yaml`: it uses the `esphome` command, else Docker (Docker Desktop has to be running; the first compile downloads the toolchain into a Docker volume and takes a while, later ones are fast, see [Compile](docs/commands.md#compile)).
+
 ESPHome writes two files you need: `firmware.ota.bin` (the app) and `firmware.factory.bin`. Below they are called
 `app.ota.bin` and `app.factory.bin`. With `--esphome-factory` the package also carries ESPHome's bootloader, so later
 ESPHome OTAs work without extra steps — see [Bootloader and slots](docs/bootloader-and-slots.md).
