@@ -103,16 +103,78 @@ class Command(unittest.TestCase):
         self.assertIn("1000:1001", cmd)
         self.assertIn(f"{comp.CACHE_VOLUME}:/cache", cmd)
         self.assertEqual(cmd[cmd.index("--entrypoint") + 1], "sh")
-        script = cmd[-1]
+        script = cmd[-3]
+        self.assertEqual(cmd[-2:], ["sh", "/config"])      # the YAML's folder in the container: $1 of the script
         self.assertIn("firmware.ota.bin", script)
         self.assertIn("firmware.factory.bin", script)
-        self.assertIn("/config/.esphome/build/", script)
+        self.assertIn("$1/.esphome/build/", script)
+
+    def test_a_git_repository_is_mounted_whole_so_includes_next_to_it_are_found(self):
+        repo = Path(tempfile.mkdtemp())
+        (repo / ".git").mkdir()
+        (repo / "examples").mkdir()
+        (repo / "projects").mkdir()
+        yaml = repo / "examples" / "full.yaml"
+        yaml.write_text("packages:\n  base: !include ../projects/p.yaml\n")
+        self.assertEqual(comp.mount_root(yaml), repo.resolve())
+        cmd = comp.build_command("docker", yaml, "img:1", posix=False)
+        self.assertEqual(cmd[cmd.index("-v") + 1], f"{repo.resolve()}:/config")
+        self.assertEqual(cmd[-3:], ["img:1", "compile", "/config/examples/full.yaml"])
+        back = comp.copy_back_command(yaml, "img:1", posix=False)
+        self.assertEqual(back[-1], "/config/examples")       # the binaries land next to the YAML, not in the repo root
+
+    def test_without_a_repository_only_the_yaml_folder_is_mounted(self):
+        self.assertEqual(comp.mount_root(self.yaml), self.yaml.resolve().parent)
+
+    def test_the_action_can_be_config(self):
+        self.assertEqual(comp.build_command("esphome", self.yaml, action="config")[:2], ["esphome", "config"])
+        self.assertEqual(comp.build_command("docker", self.yaml, "img:1", posix=False, action="config")[-2], "config")
 
     def test_default_image_is_pinned(self):
         self.assertRegex(comp.DEFAULT_IMAGE, r":\d{4}\.\d+\.\d+$")
 
         self.assertNotIn(":latest", comp.DEFAULT_IMAGE)
         self.assertIn(":", comp.DEFAULT_IMAGE)
+
+
+class ResolveConfig(unittest.TestCase):
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        self.yaml = self.dir / "plug.yaml"
+        self.yaml.write_text("packages:\n  a: github://x/y/z.yaml@v1\n")
+
+    def test_returns_the_text_ESPHome_prints(self):
+        seen = []
+
+        def run(cmd, **kw):
+            seen.append((cmd, kw))
+            return SimpleNamespace(returncode=0, stdout="esp32:\n  board: x\n", stderr="INFO Reading\n")
+        text = comp.resolve_config(self.yaml, "esphome", run=run, which=only("esphome"))
+        self.assertEqual(text, "esp32:\n  board: x\n")
+        self.assertEqual(seen[0][0][:2], ["esphome", "config"])
+        self.assertTrue(seen[0][1]["capture_output"])      # kept in memory: it can hold secrets
+
+    def test_docker_gets_the_daemon_check_and_the_volume_first(self):
+        seen = []
+
+        def run(cmd, **kw):
+            seen.append(cmd)
+            return SimpleNamespace(returncode=0, stdout="esp32: {}\n", stderr="")
+        comp.resolve_config(self.yaml, "docker", run=run, which=only("docker"))
+        self.assertEqual([c[1] for c in seen], ["info", "run", "run"])
+        self.assertEqual(seen[2][-2], "config")
+
+    def test_a_config_ESPHome_rejects_says_why(self):
+        def run(cmd, **kw):
+            return SimpleNamespace(returncode=2, stdout="", stderr="INFO Reading\nFailed config\n  Error including file 'x'\n")
+        with self.assertRaises(comp.CompileError) as ctx:
+            comp.resolve_config(self.yaml, "esphome", run=run, which=only("esphome"))
+        self.assertIn("Error including file 'x'", str(ctx.exception))
+        self.assertNotIn("INFO Reading", str(ctx.exception))
+
+    def test_yaml_not_found(self):
+        with self.assertRaises(comp.CompileError):
+            comp.resolve_config(self.dir / "nope.yaml", "esphome", which=only("esphome"))
 
 
 class Compile(unittest.TestCase):

@@ -26,9 +26,10 @@ _DATA = "/cache/data"
 # A new volume belongs to root. On Linux the container runs as the calling user (so the copied binaries are theirs), which
 # could then not write into it: this one-off step as root creates the folders and hands the volume over.
 _PREPARE = "mkdir -p /cache/data /cache/idf /cache/home"
+# $1 is the folder of the YAML inside the container (/config, or /config/<sub folder> when a git repository is mounted)
 _COPY_BACK = (f'd=$(ls -dt {_DATA}/build/*/build | head -n 1) && n=$(basename "$(dirname "$d")") && '
-              f'mkdir -p "/config/.esphome/build/$n/build" && '
-              f'cp -p "$d/firmware.ota.bin" "$d/firmware.factory.bin" "/config/.esphome/build/$n/build/"')
+              't="$1/.esphome/build/$n/build" && mkdir -p "$t" && '
+              'cp -p "$d/firmware.ota.bin" "$d/firmware.factory.bin" "$t/"')
 
 OTA_BIN = "firmware.ota.bin"
 FACTORY_BIN = "firmware.factory.bin"
@@ -76,28 +77,52 @@ def docker_running(run: Callable[..., "subprocess.CompletedProcess"] = subproces
     return done.returncode == 0
 
 
+def mount_root(yaml: Path) -> Path:
+    """The folder Docker mounts as /config: the git repository the YAML is in (its `!include ../x.yaml` and local
+    packages can then be found), else the YAML's own folder."""
+    yaml = Path(yaml).resolve()
+    home = Path.home().resolve()
+    for folder in yaml.parents:
+        if folder == home or folder.parent == folder:
+            break
+        if (folder / ".git").exists():
+            return folder
+    return yaml.parent
+
+
+def _in_container(yaml: Path) -> tuple[Path, str, str]:
+    """(folder mounted as /config, path of the YAML in the container, folder of the YAML in the container)."""
+    yaml = Path(yaml).resolve()
+    root = mount_root(yaml)
+    rel = yaml.relative_to(root).as_posix()
+    folder = yaml.parent.relative_to(root).as_posix()
+    return root, f"/config/{rel}", "/config" if folder == "." else f"/config/{folder}"
+
+
 def build_command(runner: str, yaml: Path, image: str = DEFAULT_IMAGE, *, posix: bool | None = None,
-                  uid_gid: tuple[int, int] | None = None) -> list[str]:
-    """The command line that compiles `yaml`; runner is 'esphome' or 'docker'.
+                  uid_gid: tuple[int, int] | None = None, action: str = "compile") -> list[str]:
+    """The command line that runs `esphome <action> yaml` (compile, or config to print the resolved config);
+    runner is 'esphome' or 'docker'.
 
     On Linux the container runs as the calling user (uid_gid), so the build files are not owned by root.
     """
     yaml = Path(yaml).resolve()
     if runner == "esphome":
-        return ["esphome", "compile", str(yaml)]
+        return ["esphome", action, str(yaml)]
     if runner != "docker":
         raise CompileError(f"Unknown runner '{runner}'.")
     if posix is None:
         posix = os.name == "posix"
     if uid_gid is None and posix:
         uid_gid = (os.getuid(), os.getgid())  # type: ignore[attr-defined]
-    cmd = _docker_base(yaml, posix, uid_gid)
+    root, in_container, _ = _in_container(yaml)
+    cmd = _docker_base(root, posix, uid_gid)
     cmd += ["-e", f"ESPHOME_DATA_DIR={_DATA}", "-e", "ESPHOME_ESP_IDF_PREFIX=/cache/idf", "-e", "HOME=/cache/home"]
-    return cmd + [image, "compile", f"/config/{yaml.name}"]
+    return cmd + [image, action, in_container]
 
 
-def _docker_base(yaml: Path, posix: bool, uid_gid: tuple[int, int] | None) -> list[str]:
-    cmd = ["docker", "run", "--rm", "-v", f"{yaml.parent}:/config", "-v", f"{CACHE_VOLUME}:/cache"]
+def _docker_base(root: Path, posix: bool, uid_gid: tuple[int, int] | None) -> list[str]:
+    cmd = ["docker", "run", "--rm", "-v", f"{root}:/config", "-v", f"{CACHE_VOLUME}:/cache"]
     if posix and uid_gid is not None:
         cmd += ["--user", f"{uid_gid[0]}:{uid_gid[1]}"]
     return cmd
@@ -115,12 +140,12 @@ def prepare_volume_command(image: str = DEFAULT_IMAGE, *, uid_gid: tuple[int, in
 def copy_back_command(yaml: Path, image: str = DEFAULT_IMAGE, *, posix: bool | None = None,
                       uid_gid: tuple[int, int] | None = None) -> list[str]:
     """Docker only: copy the newest build's two binaries from the volume to <yaml folder>/.esphome/build/<name>/build/."""
-    yaml = Path(yaml).resolve()
+    root, _, folder = _in_container(yaml)
     if posix is None:
         posix = os.name == "posix"
     if uid_gid is None and posix:
         uid_gid = (os.getuid(), os.getgid())  # type: ignore[attr-defined]
-    return _docker_base(yaml, posix, uid_gid) + ["--entrypoint", "sh", image, "-c", _COPY_BACK]
+    return _docker_base(root, posix, uid_gid) + ["--entrypoint", "sh", image, "-c", _COPY_BACK, "sh", folder]
 
 
 def find_binaries(yaml_dir: Path, since: float = 0.0) -> Compiled:
@@ -141,6 +166,45 @@ def find_binaries(yaml_dir: Path, since: float = 0.0) -> Compiled:
     return Compiled(ota, factory)
 
 
+def _ready_docker(image: str, run: Callable[..., "subprocess.CompletedProcess"]) -> None:
+    """The Docker daemon answers and the cache volume exists and belongs to the user."""
+    if not docker_running(run):
+        start = "Start Docker Desktop" if os.name == "nt" else "Start the Docker service (sudo systemctl start docker)"
+        raise CompileError(f"Docker is installed but not running. {start} and try again.")
+    uid_gid = (os.getuid(), os.getgid()) if os.name == "posix" else None  # type: ignore[attr-defined]
+    try:
+        prepared = run(prepare_volume_command(image, uid_gid=uid_gid), check=False)
+    except OSError as e:
+        raise CompileError(f"Could not start docker: {e}") from e
+    if prepared.returncode != 0:
+        raise CompileError("Could not prepare the Docker volume for the ESPHome cache (the messages above say why).")
+
+
+def resolve_config(yaml: Path, runner: str = "auto", image: str = DEFAULT_IMAGE,
+                   run: Callable[..., "subprocess.CompletedProcess"] = subprocess.run,
+                   which: Callable[[str], str | None] = shutil.which) -> str:
+    """The full config as ESPHome sees it (`esphome config`): `packages:`, `!include` and substitutions resolved.
+
+    The text is only returned, never written or printed: it can hold secrets. `github://` packages need the network
+    the first time.
+    """
+    yaml = Path(yaml)
+    if not yaml.is_file():
+        raise CompileError(f"YAML file not found: {yaml}")
+    chosen = pick_runner(runner, which)
+    if chosen == "docker":
+        _ready_docker(image, run)
+    cmd = build_command(chosen, yaml, image, action="config")
+    try:
+        done = run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    except OSError as e:
+        raise CompileError(f"Could not start {cmd[0]}: {e}") from e
+    if done.returncode != 0:
+        text = [l for l in (done.stderr or done.stdout or "").splitlines() if l.strip() and not l.startswith("INFO ")]
+        raise CompileError("ESPHome could not read the config:\n  " + "\n  ".join(text[-20:]))
+    return done.stdout
+
+
 def compile_yaml(yaml: Path, runner: str = "auto", image: str = DEFAULT_IMAGE,
                  run: Callable[..., "subprocess.CompletedProcess"] = subprocess.run,
                  which: Callable[[str], str | None] = shutil.which) -> Compiled:
@@ -149,17 +213,8 @@ def compile_yaml(yaml: Path, runner: str = "auto", image: str = DEFAULT_IMAGE,
     if not yaml.is_file():
         raise CompileError(f"YAML file not found: {yaml}")
     chosen = pick_runner(runner, which)
-    if chosen == "docker" and not docker_running(run):
-        start = "Start Docker Desktop" if os.name == "nt" else "Start the Docker service (sudo systemctl start docker)"
-        raise CompileError(f"Docker is installed but not running. {start} and try again.")
     if chosen == "docker":
-        uid_gid = (os.getuid(), os.getgid()) if os.name == "posix" else None  # type: ignore[attr-defined]
-        try:
-            prepared = run(prepare_volume_command(image, uid_gid=uid_gid), check=False)
-        except OSError as e:
-            raise CompileError(f"Could not start docker: {e}") from e
-        if prepared.returncode != 0:
-            raise CompileError("Could not prepare the Docker volume for the ESPHome cache (the messages above say why).")
+        _ready_docker(image, run)
     cmd = build_command(chosen, yaml, image)
     started = time.time() - 2  # file times can be a little coarse
     try:

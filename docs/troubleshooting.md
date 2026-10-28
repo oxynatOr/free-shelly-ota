@@ -75,7 +75,8 @@ The first compile with Docker downloads the toolchain and builds all of ESP-IDF;
 | --- | --- |
 | `Docker is installed but not running` | Start Docker Desktop (Windows) or the service (`sudo systemctl start docker`), then run `build` again. |
 | `Neither 'esphome' nor 'docker' was found` | Install one of them; the message says how. |
-| `ESPHome config check failed` (before the compile) | The YAML must have the `esp32:` block with the profile's partition table and offset, written out in the file itself: `!include` and `packages` are not followed ([Quick start](../README.md#quick-start)). |
+| `ESPHome config check failed` (before the compile) | The config does not have the profile's partition table and offset ([Quick start](../README.md#quick-start)). With `--compile` the check runs on the config ESPHome puts together from `packages:` and `!include`; with `--esphome-yaml` alone the file is read as it is and `packages:` are not followed. |
+| `ESPHome could not read the config` | ESPHome itself rejected the YAML (the lines after it are its message): a missing `!include` file, an unreachable `github://` package (network), a `!secret` that is not in `secrets.yaml`. With Docker only the YAML's folder, or its git repository, is visible: an include outside it is not found. |
 | `... already exists. Use --tag ...` (before the compile) | A package with that name is in `out/`. Use `--tag LABEL`, `-o ZIP` or `--force`. |
 | Every compile downloads ESP-IDF again | The volume was removed, or a different `--image` version is used. `docker volume ls` shows `free-shelly-esphome-cache`. |
 | Very slow with the `esphome` command under WSL | The YAML is on `/mnt/c` or `/mnt/i`. Copy it into the Linux home and compile there. |

@@ -202,13 +202,20 @@ def _compile_for_build(args, p) -> None:
     """--compile YAML: build the binaries first and hand them to the build below as APP and --esphome-factory."""
     if args.app:
         raise builder.OtaError("Give either APP.bin or --compile YAML, not both.")
-    problems = lint.lint_esphome(args.compile, p)
+    image = args.image or compile_.DEFAULT_IMAGE
+    compile_.pick_runner(args.runner)      # no runner: say so first
+    args.resolved_cfg = None
+    cfg = lint.load_file(args.compile)
+    if not lint.has_esp32_block(cfg):
+        # The esp32: block may come from packages or !include: let ESPHome put the config together (kept in memory only)
+        ui.say("No esp32: block in the file: asking ESPHome for the full config (github:// packages need the network) ...")
+        cfg = args.resolved_cfg = lint.load_config(compile_.resolve_config(args.compile, args.runner, image))
+    problems = lint.lint_esphome(args.compile, p, cfg=cfg)
     if problems:      # before the compile, which takes minutes
         raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
     ui.say(f"ESPHome config check OK ({args.compile.name})")
-    compile_.pick_runner(args.runner)      # no runner: say so before "Compiling"
     ui.say(f"Compiling {args.compile.name} ...")
-    done = compile_.compile_yaml(args.compile, args.runner, args.image or compile_.DEFAULT_IMAGE)
+    done = compile_.compile_yaml(args.compile, args.runner, image)
     ui.say(f"Compiled: {done.ota}")
     args.app = done.ota
     args.esphome_factory = args.esphome_factory or done.factory
@@ -231,13 +238,14 @@ def cmd_build(args) -> None:
         raise builder.OtaError(f"{output} already exists. Use --tag LABEL or -o ZIP for another name, or --force to replace it.")
     if args.compile:
         _compile_for_build(args, p)
+    resolved = getattr(args, "resolved_cfg", None) if args.esphome_yaml == args.compile else None
     if args.esphome_yaml:
-        problems = lint.lint_esphome(args.esphome_yaml, p)
+        problems = lint.lint_esphome(args.esphome_yaml, p, cfg=resolved)
         if problems:
             raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
         if not args.compile:      # --compile has said it before the compile
             ui.say(f"ESPHome config check OK ({args.esphome_yaml.name})")
-        for w in lint.lint_warnings(args.esphome_yaml, bootloader_shipped=bool(args.esphome_factory)):
+        for w in lint.lint_warnings(args.esphome_yaml, bootloader_shipped=bool(args.esphome_factory), cfg=resolved):
             ui.say(f"  WARNING: {w}")
     secrets = None
     if args.esphome_yaml or args.secrets:
