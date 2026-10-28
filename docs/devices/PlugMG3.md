@@ -146,7 +146,10 @@ Shelly's `2.2.0-beta2` for this plug (found by [onkelfarmor](https://github.com/
 > [!NOTE]
 > **Partly checked (2026-10-28, one plug):** Shelly's 2.2.0-beta2 was written over UART, then `restore` and `send PlugMG3-beta` with `--esphome-factory` (the installer wrote to slot 0 and replaced the loader 1.0.3), ESPHome started, and a second ESPHome OTA from the Home Assistant builder (ESPHome 2026.10.1) succeeded. ESPHome ran from `app_1` at `0x400000` and logged Shelly's beta table (`app_0` `0x20000` / `0x300000`, `app_1` `0x400000` / `0x300000`, `scratch` and `shelly` unchanged).
 >
-> **Not tested:** the step from stock 1.8.99 or a 2.x release directly to this package. Shelly's installer writes the partition table of a package unconditionally, so it may re-arrange a plug that still has the old layout. Relay and meter were not reported.
+> Relay and meter were not reported.
+
+> [!CAUTION]
+> **Do not send this package to a plug that still has the old layout** (Shelly 1.8.99, 2.0.1, 2.1.0). Tried on 2026-10-28 with stock 1.8.99: the installer replaced the bootloader with ESPHome's, but wrote neither the new partition table nor the app (`Skipping app`, `Skipping fs` in its log). The plug then started the old stock app from `app_0` by luck, because ESPHome's bootloader with an unset `otadata` tries all slots; with an empty `app_0` it would not have started and only UART brings it back. Take the step to Shelly's own beta package first and send this package only to a plug that already runs the beta layout.
 
 Shelly can pull the beta at any time (the 2.0.1 and 2.1.0 files are gone from the CDN since 2026-10-27): keep your copy in `fw/`.
 
