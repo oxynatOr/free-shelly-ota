@@ -1,0 +1,129 @@
+# Shelly Plus i4 / i4 DC (Gen2)
+
+[← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
+
+![State: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
+
+[🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [📍 Pins](#pins) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
+
+A classic ESP32 like the [Plus Uni](PlusUni.md): partition table at the ESP-IDF default `0x8000`, bootloader at `0x1000`, and the ESPHome build needs the 80 MHz flash frequency (the bootloader header says so). Requested by [niki11euro](https://github.com/niki11euro) for the DC version ([#106](https://github.com/oxynatOr/free-shelly-ota/issues/106)); the profile is made from Shelly's package for the app name `PlusI4`, which is the name that device reports.
+
+| Fact | Value |
+| --- | --- |
+| Profile | `PlusI4` |
+| Flash | 4 MB (partition table: the last partition ends at `0x400000`) |
+| Official package | 1.7.6 (Shelly's update API lists no 2.x for this model, checked 2026-10-29) |
+| Partition table | **`0x8000`** (ESP-IDF default) |
+| Bootloader address | `0x1000` |
+| App slot size | `0x190000` |
+| Bootloader `min_version` | `1.0.9` (set in the profile; the package carries loader 1.0.2) |
+
+> [!NOTE]
+> **Untested:** the package builds and verifies, nobody has flashed it yet. It is not known whether the AC version of the Plus i4 uses the same app name; this profile was only checked against the package for `PlusI4`.
+
+## Before you start
+
+Check first:
+
+- [ ] the device runs Shelly's own firmware, not ESPHome yet
+- [ ] you know its IP address (`--ip`), or this PC is on the device's own access point (default `192.168.33.1`)
+- [ ] the device can reach this PC: same network, port 8000 (`--port`) not blocked
+- [ ] your ESPHome config uses the partition table below and is compiled
+- [ ] a UART adapter is at hand as your way back ([Recovery over UART](../recovery-uart.md))
+
+## ESPHome config
+
+> [!IMPORTANT]
+> `build` refuses a config without Shelly's partition table. Copy `partitions/PlusI4-stock.csv` from this repository next to your
+> YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x8000"`.
+
+```yaml
+esp32:
+  variant: ESP32
+  board: esp32dev
+  flash_size: 4MB
+  partitions: PlusI4-stock.csv        # copy from partitions/ in this repository
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      COMPILER_OPTIMIZATION_SIZE: y
+      CONFIG_PARTITION_TABLE_OFFSET: "0x8000"
+      CONFIG_ESPTOOLPY_FLASHFREQ_80M: "y"   # without it `build` refuses: the bootloader header says 80 MHz
+    advanced:
+      enable_ota_rollback: false
+
+ota:
+  - platform: esphome
+    allow_partition_access: true         # keep it in the FIRST config: it lets ESPHome Builder's "Update bootloader" fix a bootloader problem over OTA
+```
+
+## Pins
+
+Not read yet: no stock dump of this device has been analysed. The four inputs and the LED are the part to map (the Plus i4 has no relay). Please report what you find; pins read from the firmware are listed as "not confirmed" until someone has measured them. The UART header of the board is not documented here either: look at the board and check it with a multimeter before you connect anything ([Recovery over UART](../recovery-uart.md)).
+
+## Flash it
+
+1. **Install the requirements** (once):
+
+   ```
+   pip install -r requirements.txt
+   ```
+
+2. **Fetch** the official package:
+
+   ```
+   python ota.py fetch PlusI4 --insecure
+   ```
+
+3. **Build:** put your app into it; the ZIP goes to `out/`:
+
+   ```
+   python ota.py build PlusI4 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml
+   ```
+
+4. **Check the device** first. Nothing is sent:
+
+   ```
+   python ota.py send PlusI4 out/PlusI4-app-<date>.zip --ip <device IP> --dry-run
+   ```
+
+5. **Flash it** (the log goes to a file with `--log-file`):
+
+   ```
+   python ota.py send PlusI4 out/PlusI4-app-<date>.zip --ip <device IP> --log-file
+   ```
+
+`app.ota.bin` and `app.factory.bin` are the two files ESPHome compiles. `--dry-run` only checks the device and, for this
+package, reads the update target slot. Command reference: [Commands](../commands.md).
+
+## What to expect
+
+`send` shows these lines at the default log level, in this order:
+
+| # | Log line | Meaning |
+| --- | --- | --- |
+| 1 | `Update target slot: 0 ...` | The slot check of `send`. Anything else: run `python ota.py restore PlusI4` first |
+| 2 | `Device: The bootloader will be replaced ...` (raw log: `Boot: cur ... min ... update? 1`) | The installer will write ESPHome's bootloader. `WARNING: ESPHome's bootloader was NOT written` (`update? 0`) means it will not: build again with a higher `--boot-min-version` ([why](../bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version)) |
+| 3 | The progress (`Update: ... %`, one line that updates in place) up to 100 %, then `Done: update installed, the device confirmed it` | The device restarts into ESPHome |
+
+## Notes for this device
+
+**Bootloader `min_version`.** The official package carries Shelly OS loader 1.0.2, but a device that Shelly updated can report 1.0.3 (as on the Plus Uni), and the installer skips ESPHome's bootloader when the package value is not higher. The profile sets 1.0.9. Please report the line `Boot: cur ... min ... update?` of your run, with the installed loader ([why](../bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version)).
+
+**ESPHome warnings.** As on other classic ESP32 devices, leave `minimum_chip_revision` and `sram1_as_iram` out of the config you build the package from: `build` refuses a bootloader whose header differs from Shelly's ([why](../troubleshooting.md#build-refuses-to-replace-the-bootloader)).
+
+Still open: a first run, the pins of the inputs and the LED, the loader version of this model.
+
+## Way back
+
+`python ota.py restore PlusI4` sends the official firmware back while Shelly firmware still runs.
+
+---
+
+> [!WARNING]
+> - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
+> - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back ([Recovery over UART](../recovery-uart.md)). Take a flash backup first if you can.
+> - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
+
+[Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

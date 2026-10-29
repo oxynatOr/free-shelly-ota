@@ -31,6 +31,7 @@ checked yet, 🔬 = the OTA ran through on a dev board with the [DevKit image](.
 | [Mini 1PM Gen3](Mini1PMG3.md) | `Mini1PMG3` | ESP32-C3 | **`0xf000`** | `0x2a0000` | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
 | [Mini 1PM Gen4](Mini1PMG4.md) | `Mini1PMG4` | ESP32-C6 | `0x10000` | `0x300000` | 🔬 |  |
 | [Mini 1PM Gen4 (Zigbee)](Mini1PMG4.md#zigbee-variant) | `Mini1PMG4ZB` | ESP32-C6 | `0x10000` | `0x300000` | 🔬 |  |
+| [Plus i4 / i4 DC (Gen2)](PlusI4.md) | `PlusI4` | **ESP32** | **`0x8000`** | `0x190000` | 🧪 |  |
 | [Plus Uni (Gen2)](PlusUni.md) | `PlusUni` | **ESP32** | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
 | [Pro 3EM (Gen2)](Pro3EM.md) | `Pro3EM` | **ESP32** | **`0x8000`** | `0x200000` | 🧪 |  |
 | [1 Gen3](S1G3.md) | `S1G3` | ESP32-C3 | **`0xf000`** | `0x2b0000` | ✅ |  |
@@ -79,7 +80,7 @@ These profiles went through the whole update on a dev board with the [DevKit ima
 
 - **Partition table at `0xf000`:** [H&T Gen3](HTG3.md), [PM Mini Gen3](MiniPMG3.md), [Mini 1 Gen3](Mini1G3.md) and [Mini 1PM Gen3](Mini1PMG3.md). A default
   ESPHome build uses ESP-IDF's default `0x8000` and does not match.
-- **Classic ESP32 (Gen2):** the [Plus Plug S](PlusPlugS.md), [Plus Plug IT](PlusPlugIT.md), [Plus Uni](PlusUni.md) and [Pro 3EM](Pro3EM.md). Partition table at
+- **Classic ESP32 (Gen2):** the [Plus i4](PlusI4.md), [Plus Plug S](PlusPlugS.md), [Plus Plug IT](PlusPlugIT.md), [Plus Uni](PlusUni.md) and [Pro 3EM](Pro3EM.md). Partition table at
   `0x8000`, bootloader at `0x1000`, and the ESPHome build needs the 80 MHz flash frequency. Flash is 4 MB, except on the Pro 3EM
   (16 MB, so `flash_size: 16MB`, and an extra `emdata` partition).
 - **Gen4 / ESP32-C6:** [Power Strip](PowerStrip.md), [Power Strip (Zigbee)](PowerStripZB.md) and

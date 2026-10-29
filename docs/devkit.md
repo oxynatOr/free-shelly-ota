@@ -25,6 +25,7 @@ The chip family must match and the flash must hold the whole partition table of 
 
 | Profile | Device | Chip | Flash needed | Board |
 | --- | --- | --- | --- | --- |
+| `PlusI4` | Plus i4 / i4 DC | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
 | `PlusUni` | Plus Uni | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
 | `PlusPlugS` | Plus Plug S | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
 | `PlusPlugIT` | Plus Plug IT | ESP32 | 4 MiB | classic ESP32 board, 4 MB |

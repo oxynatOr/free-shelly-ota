@@ -5,6 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Profile `PlusI4` (🧪, Shelly Plus i4 / i4 DC, Gen2, classic ESP32) made from the official 1.7.6 package, with its stock CSV and a device page, requested in [#106](https://github.com/oxynatOr/free-shelly-ota/issues/106) (thanks to [niki11euro](https://github.com/niki11euro)). `boot_min_version` is 1.0.9 like the other profiles. The pins are not read yet and it has not run on a device. Not breaking: no existing profile, package or command changed; the profile list grows from 43 to 44.
+
 ## [0.7.0] - 2026-10-29
 
 Still 0.x, so still experimental: nobody has flashed 19 of the 43 profiles, and seven more went through the update on a dev board only.

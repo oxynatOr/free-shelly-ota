@@ -29,6 +29,7 @@ body:
         - MiniPMG3 (PM Mini Gen3, measures only)
         - Mini1PMG4 (Mini 1PM Gen4)
         - Mini1PMG4ZB (Mini 1PM Gen4, Zigbee)
+        - PlusI4 (Plus i4 / i4 DC, Gen2)
         - PlusUni (Plus Uni, Gen2)
         - Pro3EM (Pro 3EM, Gen2)
         - Dimmer0110VPMG3 (Dimmer 0/1-10V PM Gen3)

@@ -95,6 +95,10 @@
     "revision": 2,
     "hash": "4e040fa7081f"
   },
+  "PlusI4": {
+    "revision": 1,
+    "hash": "edb87d0da41c"
+  },
   "PlusPlugIT": {
     "revision": 1,
     "hash": "912743c4c967"
