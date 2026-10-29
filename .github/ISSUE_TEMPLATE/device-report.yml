@@ -1,130 +1,130 @@
-name: Device report
-description: You flashed (or tried to flash) a Shelly with this tool. Tell us how it went, also when it worked.
-title: "[Device report] <device>: <short result>"
-labels: ["type: device-report"]
-body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for testing. Reports of **successful** flashes are as useful as failures: they are how a device gets its check mark in the table.
-
-        **Before you paste anything:** remove Wi-Fi names and passwords, API keys, public IP addresses and MAC addresses. The device log of some models prints the **cloud key** of the device (`key=...`): delete that line. Never upload a built ZIP, it can contain your Wi-Fi password.
-  - type: dropdown
-    id: device
-    attributes:
-      label: Device
-      description: The profile you used (`python ota.py list`).
-      options:
-        - PlugMG3 (Plug M Gen3)
-        - PlugMG3-beta (Plug M Gen3, beta layout)
-        - PlugSG3 (Plug S Gen3)
-        - HTG3 (H&T Gen3)
-        - RGBCCTBulbG3 (Multicolor Bulb Gen3)
-        - DuoBulbG3 (Duo Bulb Gen3)
-        - PowerStrip (Power Strip 4 Gen4)
-        - PowerStripZB (Power Strip 4 Gen4, Zigbee)
-        - PlusPlugS (Plus Plug S, Gen2)
-        - Pill (The Pill)
-        - Mini1PMG3 (Mini 1PM Gen3)
-        - MiniPMG3 (PM Mini Gen3, measures only)
-        - Mini1PMG4 (Mini 1PM Gen4)
-        - Mini1PMG4ZB (Mini 1PM Gen4, Zigbee)
-        - PlusUni (Plus Uni, Gen2)
-        - Pro3EM (Pro 3EM, Gen2)
-        - Dimmer0110VPMG3 (Dimmer 0/1-10V PM Gen3)
-        - Dimmer0110VPMG4 (Dimmer 0/1-10V PM Gen4)
-        - DimmerG3 (Dimmer Gen3)
-        - DimmerG4 (Dimmer Gen4)
-        - EMG3 (EM Gen3)
-        - EMG4 (EM Gen4)
-        - I4G3 (i4 Gen3)
-        - I4G4 (i4 Gen4)
-        - Mini1G3 (Mini 1 Gen3)
-        - Mini1G4 (1 Mini Gen4)
-        - MiniEMG4 (EM Mini Gen4)
-        - OutdoorPlugSG3 (Outdoor Plug S Gen3)
-        - PlugPMG3 (Plug PM Gen3)
-        - PlugUSG4 (Plug US Gen4)
-        - PlusPlugIT (Plus Plug IT)
-        - PresenceG4 (Presence Gen4)
-        - S1G3 (1 Gen3)
-        - S1G4 (1 Gen4)
-        - S1LG3 (1L Gen3)
-        - S1LG4 (1L Gen4)
-        - S1PMG3 (1PM Gen3)
-        - S1PMG4 (1PM Gen4)
-        - S2LG3 (2L Gen3)
-        - S2LG4 (2L Gen4)
-        - S2PMG3 (2PM Gen3)
-        - S2PMG4 (2PM Gen4)
-        - S3EMG3 (3EM-63 Gen3)
-        - Other (a profile made with add-device)
-    validations:
-      required: true
-  - type: input
-    id: tool_version
-    attributes:
-      label: Tool version
-      description: Output of `python ota.py --version`.
-      placeholder: "0.7.0 (main, v0.7.0, 2026-10-28)"
-    validations:
-      required: true
-  - type: input
-    id: stock_version
-    attributes:
-      label: Shelly firmware on the device before flashing
-      description: For example `1.8.99` or `2.0.1` (web UI, or the first lines of `send`).
-    validations:
-      required: true
-  - type: dropdown
-    id: method
-    attributes:
-      label: How did you build the package?
-      options:
-        - build with --esphome-factory (ESPHome's bootloader in the package)
-        - build without --esphome-factory (plain package)
-        - restore (official firmware)
-        - UART / esptool
-    validations:
-      required: true
-  - type: dropdown
-    id: result
-    attributes:
-      label: Result
-      options:
-        - Worked - ESPHome runs and a later ESPHome OTA took effect
-        - ESPHome runs, but I did not try a second OTA
-        - Shelly firmware came back (old app started again)
-        - The device does not start (needs UART)
-        - send was refused or stopped (see the log)
-        - build was refused (see the log)
-        - Other
-    validations:
-      required: true
-  - type: textarea
-    id: log
-    attributes:
-      label: Log file of `send ... --log-file`
-      description: "Paste the whole file that `--log-file` writes (logs/<name>.send.log), also when everything worked. The lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot` matter most."
-      render: shell
-    validations:
-      required: true
-  - type: textarea
-    id: what
-    attributes:
-      label: What happened afterwards
-      description: Did it boot, join Wi-Fi, switch, measure? Did you need a power cycle? Anything unexpected?
-  - type: textarea
-    id: config
-    attributes:
-      label: ESPHome config (the `esphome:` and `esp32:` blocks only)
-      description: Without secrets. Shows the partition table, offset and flash options you used.
-      render: yaml
-  - type: checkboxes
-    id: uart
-    attributes:
-      label: Safety net
-      options:
-        - label: I have UART (or USB) access to this device in case it does not start
-        - label: I removed passwords, keys, the cloud key and MAC addresses from everything I pasted
-          required: true
+name: Device report
+description: You flashed (or tried to flash) a Shelly with this tool. Tell us how it went, also when it worked.
+title: "[Device report] <device>: <short result>"
+labels: ["type: device-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing. Reports of **successful** flashes are as useful as failures: they are how a device gets its check mark in the table.
+
+        **Before you paste anything:** remove Wi-Fi names and passwords, API keys, public IP addresses and MAC addresses. The device log of some models prints the **cloud key** of the device (`key=...`): delete that line. Never upload a built ZIP, it can contain your Wi-Fi password.
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      description: The profile you used (`python ota.py list`).
+      options:
+        - PlugMG3 (Plug M Gen3)
+        - PlugMG3-beta (Plug M Gen3, beta layout)
+        - PlugSG3 (Plug S Gen3)
+        - HTG3 (H&T Gen3)
+        - RGBCCTBulbG3 (Multicolor Bulb Gen3)
+        - DuoBulbG3 (Duo Bulb Gen3)
+        - PowerStrip (Power Strip 4 Gen4)
+        - PowerStripZB (Power Strip 4 Gen4, Zigbee)
+        - PlusPlugS (Plus Plug S, Gen2)
+        - Pill (The Pill)
+        - Mini1PMG3 (Mini 1PM Gen3)
+        - MiniPMG3 (PM Mini Gen3, measures only)
+        - Mini1PMG4 (Mini 1PM Gen4)
+        - Mini1PMG4ZB (Mini 1PM Gen4, Zigbee)
+        - PlusUni (Plus Uni, Gen2)
+        - Pro3EM (Pro 3EM, Gen2)
+        - Dimmer0110VPMG3 (Dimmer 0/1-10V PM Gen3)
+        - Dimmer0110VPMG4 (Dimmer 0/1-10V PM Gen4)
+        - DimmerG3 (Dimmer Gen3)
+        - DimmerG4 (Dimmer Gen4)
+        - EMG3 (EM Gen3)
+        - EMG4 (EM Gen4)
+        - I4G3 (i4 Gen3)
+        - I4G4 (i4 Gen4)
+        - Mini1G3 (Mini 1 Gen3)
+        - Mini1G4 (1 Mini Gen4)
+        - MiniEMG4 (EM Mini Gen4)
+        - OutdoorPlugSG3 (Outdoor Plug S Gen3)
+        - PlugPMG3 (Plug PM Gen3)
+        - PlugUSG4 (Plug US Gen4)
+        - PlusPlugIT (Plus Plug IT)
+        - PresenceG4 (Presence Gen4)
+        - S1G3 (1 Gen3)
+        - S1G4 (1 Gen4)
+        - S1LG3 (1L Gen3)
+        - S1LG4 (1L Gen4)
+        - S1PMG3 (1PM Gen3)
+        - S1PMG4 (1PM Gen4)
+        - S2LG3 (2L Gen3)
+        - S2LG4 (2L Gen4)
+        - S2PMG3 (2PM Gen3)
+        - S2PMG4 (2PM Gen4)
+        - S3EMG3 (3EM-63 Gen3)
+        - Other (a profile made with add-device)
+    validations:
+      required: true
+  - type: input
+    id: tool_version
+    attributes:
+      label: Tool version
+      description: Output of `python ota.py --version`.
+      placeholder: "0.7.0 (main, v0.7.0, 2026-10-28)"
+    validations:
+      required: true
+  - type: input
+    id: stock_version
+    attributes:
+      label: Shelly firmware on the device before flashing
+      description: For example `1.8.99` or `2.0.1` (web UI, or the first lines of `send`).
+    validations:
+      required: true
+  - type: dropdown
+    id: method
+    attributes:
+      label: How did you build the package?
+      options:
+        - build with --esphome-factory (ESPHome's bootloader in the package)
+        - build without --esphome-factory (plain package)
+        - restore (official firmware)
+        - UART / esptool
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Worked - ESPHome runs and a later ESPHome OTA took effect
+        - ESPHome runs, but I did not try a second OTA
+        - Shelly firmware came back (old app started again)
+        - The device does not start (needs UART)
+        - send was refused or stopped (see the log)
+        - build was refused (see the log)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log file of `send ... --log-file`
+      description: "Paste the whole file that `--log-file` writes (logs/<name>.send.log), also when everything worked. The lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot` matter most."
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened afterwards
+      description: Did it boot, join Wi-Fi, switch, measure? Did you need a power cycle? Anything unexpected?
+  - type: textarea
+    id: config
+    attributes:
+      label: ESPHome config (the `esphome:` and `esp32:` blocks only)
+      description: Without secrets. Shows the partition table, offset and flash options you used.
+      render: yaml
+  - type: checkboxes
+    id: uart
+    attributes:
+      label: Safety net
+      options:
+        - label: I have UART (or USB) access to this device in case it does not start
+        - label: I removed passwords, keys, the cloud key and MAC addresses from everything I pasted
+          required: true
