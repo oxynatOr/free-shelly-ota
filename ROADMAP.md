@@ -35,7 +35,6 @@ Where the project stands and where it goes next.
   "Example config" row with the ready-made config in `oxynatOr/esphome-configs`, once that repo is finished.
 - **More of the test bench.** The profiles that need other boards (the ESP32-C3 devices need a board with 8 MB; the EM Gen4 (ESP32-C6) and the Pro 3EM (classic ESP32) 16 MB), and a plan B if the Shelly app wants its `shelly` partition:
   one taken from an own dump, never shared.
-- **`esphome config` with `github://` packages through the native command.** It needs `git`; it was tried through Docker, and for local includes natively.
 - **Tests without the firmware cache.** Many tests need the local `fw/` folder, which is not in git. Small synthetic packages as
   fixtures, then a GitHub Actions run on every pull request.
 - **More devices on request.** Whatever the "Request a new device" form brings.
