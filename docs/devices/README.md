@@ -44,7 +44,6 @@ checked yet, 🔬 = the OTA ran through on a dev board with the [DevKit image](.
 | [EM Gen3](EMG3.md) | `EMG3` | ESP32-C3 | `0x10000` | `0x280000` | 🧪 |  |
 | [3EM-63 Gen3](S3EMG3.md) | `S3EMG3` | ESP32-C3 | `0x10000` | `0x280000` | 🧪 |  |
 | [Outdoor Plug S Gen3](OutdoorPlugSG3.md) | `OutdoorPlugSG3` | ESP32-C3 | `0x10000` | `0x2a0000` | 🧪 |  |
-| [BLU Gateway Gen3](BluGwG3.md) | `BluGwG3` | ESP32-C3 | `0x10000` | `0x240000` | 🧪 |  |
 | [1 Gen4](S1G4.md) | `S1G4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
 | [1PM Gen4](S1PMG4.md) | `S1PMG4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
 | [2PM Gen4](S2PMG4.md) | `S2PMG4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |

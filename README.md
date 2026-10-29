@@ -44,7 +44,7 @@ flowchart LR
 
 ## Supported devices
 
-**44 profiles:** ✅ 10 confirmed · 🟡 7 partly checked · 🔬 7 DevKit-tested · 🧪 20 untested
+**43 profiles:** ✅ 10 confirmed · 🟡 7 partly checked · 🔬 7 DevKit-tested · 🧪 19 untested
 
 Click the profile for the device page: ESPHome config, the exact commands and what to expect. This table shows the devices that ran on
 real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and the untested (🧪) ones, are on the
@@ -103,6 +103,8 @@ ota:
 ```
 esphome compile my-plug.yaml
 ```
+
+Or let the tool do it in step 3 with `--compile my-plug.yaml`: it uses the `esphome` command, else Docker (Docker Desktop has to be running; the first compile downloads the toolchain into a Docker volume and takes a while, later ones are fast, see [Compile](docs/commands.md#compile)).
 
 ESPHome writes two files you need: `firmware.ota.bin` (the app) and `firmware.factory.bin`. Below they are called
 `app.ota.bin` and `app.factory.bin`. With `--esphome-factory` the package also carries ESPHome's bootloader, so later

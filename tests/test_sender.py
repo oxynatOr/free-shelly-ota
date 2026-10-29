@@ -3,6 +3,7 @@
 import http.server
 import json
 import shutil
+import socket
 import sys
 import tempfile
 import _thread
@@ -218,6 +219,30 @@ class SenderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FileServerStartTests(unittest.TestCase):
+    def test_start_does_not_wait_for_a_reverse_lookup(self):
+        # socket.getfqdn() can take many seconds on a slow resolver; the server has no use for the name
+        path = Path(tempfile.mkdtemp()) / "f.zip"
+        path.write_bytes(b"x")
+        self.addCleanup(shutil.rmtree, path.parent, ignore_errors=True)
+        with mock.patch.object(socket, "getfqdn", side_effect=AssertionError("getfqdn called")):
+            server = sender.FileServer(path, port=0, bind="127.0.0.1")
+        self.addCleanup(server.httpd.server_close)
+        self.assertEqual(server.httpd.server_name, "127.0.0.1")
+        self.assertEqual(server.httpd.server_port, server.port)
+
+    def test_it_still_serves_the_file(self):
+        path = Path(tempfile.mkdtemp()) / "f.zip"
+        path.write_bytes(b"payload")
+        self.addCleanup(shutil.rmtree, path.parent, ignore_errors=True)
+        server = sender.FileServer(path, port=0, bind="127.0.0.1")
+        server.start()
+        self.addCleanup(server.stop)
+        with urllib.request.urlopen(server.url("127.0.0.1")) as r:
+            self.assertEqual(r.read(), b"payload")
+        self.assertTrue(server.served.wait(5))
 
 
 class OldLayoutTests(unittest.TestCase):

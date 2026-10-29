@@ -27,12 +27,33 @@ def _parse_size(text: str) -> int | None:
         return None
 
 
-def lint_esphome(yaml_path: Path, profile: Profile) -> list[str]:
-    """Return a list of problems (empty = looks fine)."""
-    cfg = yaml.load(yaml_path.read_text(encoding="utf-8"), Loader=_Loader) or {}
+def load_config(text: str) -> dict:
+    """The plain structure of an ESPHome YAML (tags like !secret and !lambda are ignored)."""
+    cfg = yaml.load(text, Loader=_Loader)
+    return cfg if isinstance(cfg, dict) else {}
+
+
+def load_file(yaml_path: Path) -> dict:
+    return load_config(yaml_path.read_text(encoding="utf-8"))
+
+
+def has_esp32_block(cfg: dict) -> bool:
+    return isinstance(cfg.get("esp32"), dict)
+
+
+def lint_esphome(yaml_path: Path, profile: Profile, cfg: dict | None = None) -> list[str]:
+    """Return a list of problems (empty = looks fine).
+
+    cfg: the config as ESPHome resolved it (`compile.resolve_config`), for a YAML that gets its `esp32:` block from
+    `packages:` or `!include`. Without it the file itself is read, and those are not followed.
+    """
+    if cfg is None:
+        cfg = load_file(yaml_path)
     esp32 = cfg.get("esp32")
     if not isinstance(esp32, dict):
-        return ["No 'esp32:' block found (is this an ESP32 ESPHome config?)."]
+        hint = (" The file uses `packages:`, which this check does not follow: put the esp32: block in the file, "
+                "or use build --compile, which asks ESPHome for the full config.") if "packages" in cfg else ""
+        return ["No 'esp32:' block found (is this an ESP32 ESPHome config?)." + hint]
     problems = []
 
     framework = esp32.get("framework") or {}
@@ -63,13 +84,14 @@ def lint_esphome(yaml_path: Path, profile: Profile) -> list[str]:
     return problems
 
 
-def lint_warnings(yaml_path: Path, *, bootloader_shipped: bool = False) -> list[str]:
+def lint_warnings(yaml_path: Path, *, bootloader_shipped: bool = False, cfg: dict | None = None) -> list[str]:
     """Things that do not block the build but matter after the first boot.
 
     bootloader_shipped: the package carries ESPHome's bootloader (--esphome-factory). allow_partition_access is still
     wanted then: without it ESPHome cannot update that bootloader later.
     """
-    cfg = yaml.load(yaml_path.read_text(encoding="utf-8"), Loader=_Loader) or {}
+    if cfg is None:
+        cfg = load_file(yaml_path)
     ota = cfg.get("ota")
     entries = ota if isinstance(ota, list) else [ota] if isinstance(ota, dict) else []
     esphome_ota = [e for e in entries if isinstance(e, dict) and e.get("platform") == "esphome"]
