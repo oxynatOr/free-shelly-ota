@@ -17,6 +17,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import ota  # noqa: E402
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import builder, firmware, logwatch, profile, rpc, sender  # noqa: E402
 from test_extras import FakeRpcShelly, free_udp_port  # noqa: E402
 
@@ -143,11 +144,13 @@ class SendFlowTests(unittest.TestCase):
 
     # --- uptime check before sending
 
+    @needs_fw
     def test_device_uptime_is_read_and_a_missing_answer_is_not_an_error(self):
         self.assertEqual(sender.device_uptime(self._shelly(uptime=42).addr), 42)
         self.assertIsNone(sender.device_uptime(self._shelly().addr))          # Sys.GetStatus answers with an error
         self.assertIsNone(sender.device_uptime("127.0.0.1:1"))
 
+    @needs_fw
     def test_a_device_that_just_started_gets_a_note_and_an_offer_to_wait(self):
         s = self._shelly(uptime=30)
         ask = Script("yes", "yes")
@@ -157,6 +160,7 @@ class SendFlowTests(unittest.TestCase):
         self.assertEqual(self.sleeps.count(0.5), 190)                         # 95 s in half-second steps
         self.assertEqual(len(s.updates), 1)
 
+    @needs_fw
     def test_the_offer_can_be_declined_and_sending_goes_on(self):
         s = self._shelly(uptime=30)
         ask = Script("no", "yes")
@@ -164,17 +168,20 @@ class SendFlowTests(unittest.TestCase):
         self.assertEqual(self.sleeps.count(0.5), 0)
         self.assertTrue(any("Not waiting" in l for l in self.lines), self.lines)
 
+    @needs_fw
     def test_a_settled_device_gets_no_question_about_waiting(self):
         ask = Script("yes")
         self.assertTrue(self._send(self._shelly(uptime=500), ask))
         self.assertEqual(ask.prompts, [FLASH])
         self.assertFalse(any("running for only" in l for l in self.lines), self.lines)
 
+    @needs_fw
     def test_an_unknown_uptime_stays_quiet(self):
         ask = Script("yes")
         self.assertTrue(self._send(self._shelly(), ask))
         self.assertEqual(ask.prompts, [FLASH])
 
+    @needs_fw
     def test_dry_run_and_yes_only_say_so_and_never_wait(self):
         s = self._shelly(uptime=30)
         self._send(s, dry_run=True)
@@ -182,6 +189,7 @@ class SendFlowTests(unittest.TestCase):
         self.assertEqual(sum("running for only 30 s" in l for l in self.lines), 2)
         self.assertEqual(self.sleeps.count(0.5), 0)
 
+    @needs_fw
     def test_ctrl_c_while_waiting_stops_cleanly(self):
         def interrupt(seconds):
             raise KeyboardInterrupt
@@ -191,6 +199,7 @@ class SendFlowTests(unittest.TestCase):
 
     # --- the device refuses anyway
 
+    @needs_fw
     def test_not_committed_waits_and_asks_again_before_the_next_pass(self):
         s = self._shelly(uptime=500, update_refusals=[NOT_COMMITTED])
         ask = Script("yes", "yes", "yes")
@@ -200,11 +209,13 @@ class SendFlowTests(unittest.TestCase):
         self.assertEqual(len(s.updates), 1)
         self.assertTrue(any("Not committed" in l and l.startswith("WARNING") for l in self.lines), self.lines)
 
+    @needs_fw
     def test_wait_option_sets_the_pause(self):
         s = self._shelly(uptime=500, update_refusals=[NOT_COMMITTED])
         self.assertTrue(self._send(s, Script("yes", "yes", "yes"), wait=30))
         self.assertEqual(self.sleeps.count(0.5), 60)
 
+    @needs_fw
     def test_declining_to_wait_ends_with_the_explanation(self):
         s = self._shelly(uptime=500, update_refusals=[NOT_COMMITTED])
         with self.assertRaises(builder.OtaError) as cm:
@@ -214,6 +225,7 @@ class SendFlowTests(unittest.TestCase):
         self.assertNotIn("url=", str(cm.exception))
         self.assertEqual(s.updates, [])
 
+    @needs_fw
     def test_the_next_pass_needs_its_own_confirmation(self):
         s = self._shelly(uptime=500, update_refusals=[NOT_COMMITTED])
         with self.assertRaises(builder.OtaError) as cm:
@@ -221,6 +233,7 @@ class SendFlowTests(unittest.TestCase):
         self.assertEqual(str(cm.exception), "Cancelled.")
         self.assertEqual(s.updates, [])
 
+    @needs_fw
     def test_yes_never_retries_by_itself(self):
         s = self._shelly(uptime=500, update_refusals=[NOT_COMMITTED])
         with self.assertRaises(builder.OtaError) as cm:
@@ -228,6 +241,7 @@ class SendFlowTests(unittest.TestCase):
         self.assertIn("Not committed", str(cm.exception))
         self.assertEqual(self.sleeps.count(0.5), 0)
 
+    @needs_fw
     def test_it_gives_up_after_three_passes(self):
         s = self._shelly(uptime=500, update_refusals=[NOT_COMMITTED] * 3)
         ask = Script(*["yes"] * 5)
@@ -237,12 +251,14 @@ class SendFlowTests(unittest.TestCase):
         self.assertEqual(len(ask.prompts), 5)           # flash, then twice: wait? + flash again
         self.assertEqual(s.updates, [])
 
+    @needs_fw
     def test_a_battery_refusal_is_not_retried(self):
         s = self._shelly(uptime=500, update_refusals=[BATTERY])
         with self.assertRaises(builder.OtaError) as cm:
             self._send(s, Script("yes"))
         self.assertIn("Charge the battery", str(cm.exception))
 
+    @needs_fw
     def test_ctrl_c_in_the_wait_after_a_refusal_leaves_no_server_behind(self):
         s = self._shelly(uptime=500, update_refusals=[NOT_COMMITTED])
 

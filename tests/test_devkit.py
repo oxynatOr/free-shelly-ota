@@ -15,6 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import ota  # noqa: E402
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import builder, devkit, firmware, profile  # noqa: E402
 from shelly_ota.devicegen import parse_partitions  # noqa: E402
 from test_bootswap import make_factory  # noqa: E402
@@ -43,6 +44,7 @@ class ImageTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
 
+    @needs_fw
     def test_every_profile_gives_a_consistent_image(self):
         seen = 0
         for name in profile.list_devices():
@@ -72,6 +74,7 @@ class ImageTests(unittest.TestCase):
             self.assertEqual(pt.offset, prof.pt_offset, name)
         self.assertGreater(seen, 5, "the firmware cache is missing")
 
+    @needs_fw
     def test_a_board_with_too_little_flash_is_refused_with_the_need(self):
         plug = profile.load_profile("PlugMG3")
         with self.assertRaises(builder.OtaError) as cm:
@@ -86,6 +89,7 @@ class ImageTests(unittest.TestCase):
         with self.assertRaises(builder.OtaError):
             devkit.build_image(firmware.cached_zip("PlusUni"), uni, flash_size="3MB")
 
+    @needs_fw
     def test_a_built_package_gives_the_state_after_the_install(self):
         prof = profile.load_profile("PlugMG3")
         official = firmware.cached_zip("PlugMG3")
@@ -111,6 +115,7 @@ class ImageTests(unittest.TestCase):
         ota_off = table["otadata"]["offset"]
         self.assertEqual(set(image.data[ota_off:ota_off + 8192]), {0xFF})      # clean otadata
 
+    @needs_fw
     def test_a_part_that_does_not_fit_its_partition_is_refused(self):
         prof = profile.load_profile("PlugMG3")
 
@@ -124,6 +129,7 @@ class ImageTests(unittest.TestCase):
             devkit.build_image(bad, prof)
         self.assertIn("does not fit", str(cm.exception))
 
+    @needs_fw
     def test_overlapping_parts_are_refused(self):
         prof = profile.load_profile("PlugMG3")
 
@@ -135,6 +141,7 @@ class ImageTests(unittest.TestCase):
             devkit.build_image(bad, prof)
         self.assertIn("overlap", str(cm.exception))
 
+    @needs_fw
     def test_a_package_with_a_wrong_hash_is_refused(self):
         prof = profile.load_profile("PlugMG3")
         bad = rewrite(firmware.cached_zip("PlugMG3"), self.tmp / "hash.zip", files={"fs.img": b"\x00" * 917504})
@@ -154,6 +161,7 @@ class CommandTests(unittest.TestCase):
             args.func(args)
         return buf.getvalue()
 
+    @needs_fw
     def test_writes_the_image_and_prints_the_esptool_commands(self):
         out = self.tmp / "uni.bin"
         text = self._run("PlusUni", "-o", str(out), "--port", "COM7")
@@ -166,6 +174,7 @@ class CommandTests(unittest.TestCase):
         self.assertIn("BURN BLOCK3", text)
         self.assertIn("WARNING:", text)
 
+    @needs_fw
     def test_the_c3_image_starts_with_the_bootloader_at_zero(self):
         out = self.tmp / "plug.bin"
         text = self._run("PlugMG3", "-o", str(out))
@@ -175,6 +184,7 @@ class CommandTests(unittest.TestCase):
             boot = z.read("bootloader.bin")
         self.assertEqual(out.read_bytes()[:len(boot)], boot)
 
+    @needs_fw
     def test_an_existing_output_needs_force(self):
         out = self.tmp / "uni.bin"
         out.write_bytes(b"old")

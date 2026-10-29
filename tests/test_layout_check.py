@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import builder, devicegen, firmware, profile  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 
@@ -50,9 +51,11 @@ class LayoutCheckTests(unittest.TestCase):
         with zipfile.ZipFile(path) as zf:
             return builder.package_layout_problems(self.profile, zf, builder.read_official_manifest(zf))
 
+    @needs_fw
     def test_matching_package_has_no_problem(self):
         self.assertEqual(self._problems(self.official), [])
 
+    @needs_fw
     def test_build_refuses_a_bigger_app_slot(self):
         other = self.tmp / "beta.zip"
         zip_with_app_slot(self.official, other, "app_0", 0x300000)  # the layout of PlugMG3 2.2.0-beta2
@@ -62,17 +65,20 @@ class LayoutCheckTests(unittest.TestCase):
         self.assertIn("Nothing was built", str(cm.exception))
         self.assertFalse((self.tmp / "out.zip").exists())
 
+    @needs_fw
     def test_build_refuses_it_also_when_pt_is_dropped(self):
         other = self.tmp / "beta.zip"
         zip_with_app_slot(self.official, other, "app_0", 0x300000)
         with self.assertRaises(builder.OtaError):
             builder.build(self.profile, self.app, other, self.tmp / "out.zip", drop=("pt",))
 
+    @needs_fw
     def test_other_table_address_is_a_problem(self):
         other = self.tmp / "moved.zip"
         zip_with_app_slot(self.official, other, "app_0", self.profile.app_slot_size, pt_addr=0x8000)
         self.assertIn("0x8000", self._problems(other)[0])
 
+    @needs_fw
     def test_inspect_warns(self):
         other = self.tmp / "beta.zip"
         zip_with_app_slot(self.official, other, "app_0", 0x300000)
@@ -87,6 +93,7 @@ class CachedPackagesMatchStockCsvTests(unittest.TestCase):
     def _rows(text):
         return [l.strip() for l in text.splitlines() if l.strip() and not l.lstrip().startswith("#")]
 
+    @needs_fw
     def test_every_cached_package_matches_its_profile_and_csv(self):
         checked = 0
         for name in profile.list_devices():

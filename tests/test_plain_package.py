@@ -8,6 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import builder, firmware, profile, sender  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 from test_extras import FakeRpcShelly  # noqa: E402
@@ -31,6 +32,7 @@ class PlainPackageTests(unittest.TestCase):
         return sender.send(self.profile, zip_path, self.shelly.addr, port=0, assume_yes=True, timeout=10,
                            out=self.lines.append, **kw)
 
+    @needs_fw
     def test_refused_without_force(self):
         with self.assertRaises(builder.OtaError) as cm:
             self._send(self.plain)
@@ -40,10 +42,12 @@ class PlainPackageTests(unittest.TestCase):
         self.assertIn("--force", text)
         self.assertEqual(self.shelly.updates, [])   # nothing was sent
 
+    @needs_fw
     def test_dry_run_is_refused_too(self):
         with self.assertRaises(builder.OtaError):
             self._send(self.plain, dry_run=True)
 
+    @needs_fw
     def test_force_sends_and_repeats_the_text_as_a_warning(self):
         self._send(self.plain, force=True)
         self.assertEqual(len(self.shelly.updates), 1)
@@ -52,6 +56,7 @@ class PlainPackageTests(unittest.TestCase):
         self.assertIn("sending anyway", warn[0])
         self.assertTrue(any("three starts" in l for l in self.lines), self.lines)   # the note after the update
 
+    @needs_fw
     def test_official_package_is_not_refused(self):
         for kw in ({}, {"restoring": True}):
             self.shelly.updates.clear()
