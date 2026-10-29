@@ -66,8 +66,9 @@ def check_app_image(app: bytes, platform: str, slot_size: int, slot_name: str) -
     if len(app) > slot_size:
         raise OtaError(f"App image is {len(app)} bytes, slot {slot_name} only holds {slot_size} "
                        f"({slot_size / 1024:.0f} KB).\n"
-                       f"  Fix: make the ESPHome build smaller (fewer components, `COMPILER_OPTIMIZATION_SIZE: y` under "
-                       f"esp32 > framework > sdkconfig_options, less logging).")
+                       f"  Fix: make the ESPHome build smaller: fewer components (for example web_server, captive_portal "
+                       f"or sensors you do not use) and less logging (logger: level: WARN). ESPHome already builds for "
+                       f"size, so there is no compiler option left to try.")
     expected = CHIP_IDS.get(platform)
     chip_id = int.from_bytes(app[12:14], "little")
     if expected is not None and chip_id != expected:

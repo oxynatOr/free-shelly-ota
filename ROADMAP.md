@@ -36,7 +36,6 @@ Where the project stands and where it goes next.
 - **More of the test bench.** The profiles that need other boards (the ESP32-C3 devices need a board with 8 MB; the EM Gen4 (ESP32-C6) and the Pro 3EM (classic ESP32) 16 MB), and a plan B if the Shelly app wants its `shelly` partition:
   one taken from an own dump, never shared.
 - **A package from `build --compile` on a real Shelly.** It is the same as one built by hand and went through the whole update on a dev board (ESPHome 2026.10.0), but not yet on a device. `esphome config` (for configs with `packages:`) was tried through Docker only, not through the native command.
-- **The `esp32:` snippet on the device pages.** `COMPILER_OPTIMIZATION_SIZE: y` under `sdkconfig_options` does nothing: ESP-IDF ignores it with a warning ("ignoring malformed line"); with the `CONFIG_` prefix the warning goes and the app stays the same size (838 482 bytes on the Plug S Gen3), because ESPHome already builds for size. Drop the line from all device pages and the DevKit configs, and from the "app too large" message of `build`, which recommends it as a fix.
 - **Tests without the firmware cache.** Many tests need the local `fw/` folder, which is not in git. Small synthetic packages as
   fixtures, then a GitHub Actions run on every pull request.
 - **More devices on request.** Whatever the "Request a new device" form brings.

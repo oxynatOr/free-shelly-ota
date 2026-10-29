@@ -52,7 +52,6 @@ esp32:
     type: esp-idf
     sdkconfig_options:
       CONFIG_FREERTOS_UNICORE: y
-      COMPILER_OPTIMIZATION_SIZE: y
       CONFIG_PARTITION_TABLE_OFFSET: "0x8000"
       CONFIG_ESPTOOLPY_FLASHFREQ_80M: "y"   # without it `build` refuses: the bootloader header says 40 MHz
     advanced:

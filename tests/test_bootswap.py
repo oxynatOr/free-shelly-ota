@@ -203,7 +203,8 @@ class BootswapTests(unittest.TestCase):
         self.assertIn("ESP32C6", str(cm.exception))
         with self.assertRaises(builder.OtaError) as cm:
             builder.check_app_image(fake_app(100_000), "esp32c3", 50_000, "app_0")
-        self.assertIn("COMPILER_OPTIMIZATION_SIZE", str(cm.exception))
+        self.assertIn("fewer components", str(cm.exception))
+        self.assertNotIn("COMPILER_OPTIMIZATION", str(cm.exception))      # ESP-IDF ignores that line; it was no fix
 
     def _send_dry(self, target_slot, core_dump_target=None, shelly_kw=None, **kw):
         res = self._build(make_factory(self.official, self.app))        # a package that replaces the bootloader
