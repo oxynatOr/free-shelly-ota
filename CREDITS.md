@@ -13,6 +13,7 @@ Almost everything this tool knows was found out by other people: how a Shelly pa
 
 | Project | License | What we learned from it |
 | --- | --- | --- |
+| [niki11euro](https://github.com/niki11euro) | A device request for the [Plus i4 / i4 DC](docs/devices/PlusI4.md) (October 2026, [#106](https://github.com/oxynatOr/free-shelly-ota/issues/106)): led to the `PlusI4` profile; offers to test it with UART access |
 | [tasmota/mgos32-to-tasmota32](https://github.com/tasmota/mgos32-to-tasmota32) | GPL-3.0 | Converting a Shelly OTA ZIP so the stock updater accepts third-party firmware |
 | [inventor7777/ESPHome-Shelly-Plus-Plug-US](https://github.com/inventor7777/ESPHome-Shelly-Plus-Plug-US) | MIT | Replacing only the app image in Shelly's ZIP; the partition table at `0x10000`; the follow-up bootloader step (see [Bootloader and slots](docs/bootloader-and-slots.md)) |
 | [automatous-io/shelly-gen4-esphome](https://github.com/automatous-io/shelly-gen4-esphome) | Apache-2.0 | Gen4 (ESP32-C6) partition layout, the A/B slot rule, install documentation |
