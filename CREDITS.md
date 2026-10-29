@@ -13,7 +13,6 @@ Almost everything this tool knows was found out by other people: how a Shelly pa
 
 | Project | License | What we learned from it |
 | --- | --- | --- |
-| [niki11euro](https://github.com/niki11euro) | A device request for the [Plus i4 / i4 DC](docs/devices/PlusI4.md) (October 2026, [#106](https://github.com/oxynatOr/free-shelly-ota/issues/106)): led to the `PlusI4` profile; offers to test it with UART access |
 | [tasmota/mgos32-to-tasmota32](https://github.com/tasmota/mgos32-to-tasmota32) | GPL-3.0 | Converting a Shelly OTA ZIP so the stock updater accepts third-party firmware |
 | [inventor7777/ESPHome-Shelly-Plus-Plug-US](https://github.com/inventor7777/ESPHome-Shelly-Plus-Plug-US) | MIT | Replacing only the app image in Shelly's ZIP; the partition table at `0x10000`; the follow-up bootloader step (see [Bootloader and slots](docs/bootloader-and-slots.md)) |
 | [automatous-io/shelly-gen4-esphome](https://github.com/automatous-io/shelly-gen4-esphome) | Apache-2.0 | Gen4 (ESP32-C6) partition layout, the A/B slot rule, install documentation |
@@ -24,6 +23,7 @@ People who tested a device, sent a report or shared what they know. Newest first
 
 | Who | What |
 | --- | --- |
+| [niki11euro](https://github.com/niki11euro) | A device request for the [Plus i4 / i4 DC](docs/devices/PlusI4.md) (October 2026, [#106](https://github.com/oxynatOr/free-shelly-ota/issues/106)): led to the `PlusI4` profile; offers to test it with UART access |
 | [chusovich](https://github.com/chusovich) | A device report for the [1 Gen3](docs/devices/S1G3.md) (October 2026, [#98](https://github.com/oxynatOr/free-shelly-ota/issues/98)): two devices flashed over OTA from stock 1.4.0 with the full log (loader 1.0.1, the first seen on this device) and a later ESPHome OTA, and the config setup used with `S1G3-stock.csv` |
 | [WulffTech](https://github.com/WulffTech) | A device report for the [1PM Gen3](docs/devices/S1PMG3.md) and the [2PM Gen3](docs/devices/S2PMG3.md) (October 2026): one 1PM and two 2PM Gen3 converted over OTA from Shelly 2.0.1 without UART, with their own tooling; the device info, the stable ESPHome run across reboots and a later ESPHome OTA; and the observation that the installer writes a `pt` part from the package every time (it has no `min_version`), plus the finding that Shelly's CA is in the device filesystem |
 | [pienovi](https://github.com/pienovi) | A device report for the [Mini 1PM Gen3](docs/devices/Mini1PMG3.md) (October 2026, [#82](https://github.com/oxynatOr/free-shelly-ota/issues/82)): two units flashed over OTA from stock 1.4.0 with the full log, the first loader 1.0.0 seen, and two [Mini 1 Gen3](docs/devices/Mini1G3.md) from stock 1.4.4 |
