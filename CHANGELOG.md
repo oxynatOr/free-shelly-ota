@@ -5,7 +5,7 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.7.0] - 2026-10-28
+## [0.7.0] - 2026-10-29
 
 Still 0.x, so still experimental: nobody has flashed 19 of the 43 profiles, and seven more went through the update on a dev board only.
 

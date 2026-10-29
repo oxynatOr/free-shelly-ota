@@ -8,7 +8,7 @@ Where the project stands and where it goes next.
 
 > [!NOTE]
 > This is a plan, not a promise: the order changes when a test report or a new device shows up.
-> State: 2026-10-28, at release 0.7.0 (see the [CHANGELOG](CHANGELOG.md)).
+> State: 2026-10-29, at release 0.7.0 (see the [CHANGELOG](CHANGELOG.md)).
 
 ## Now
 
@@ -89,5 +89,5 @@ Items that stood under "Now" in an earlier version of this page.
 | Release 0.5.0 | [CHANGELOG](CHANGELOG.md#050---2026-10-22) |
 | 25 profiles for Gen3 and Gen4 devices (43 in total), the 🔬 state and the dev board test bench, `ota.py ble`, the time left in the progress line, shorter device pages | [CHANGELOG](CHANGELOG.md#060---2026-10-24) |
 | Release 0.6.0 (pre-release) | [CHANGELOG](CHANGELOG.md#060---2026-10-24) |
-| `build --compile` (ESPHome command or Docker with a cache volume, also for `packages:` and `!include`), `pyproject.toml` for development, `PlugMG3-beta` and the layout check, `BluGwG3` removed | [CHANGELOG](CHANGELOG.md#070---2026-10-28) |
-| Release 0.7.0 | [CHANGELOG](CHANGELOG.md#070---2026-10-28) |
+| `build --compile` (ESPHome command or Docker with a cache volume, also for `packages:` and `!include`), `pyproject.toml` for development, `PlugMG3-beta` and the layout check, `BluGwG3` removed | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |
+| Release 0.7.0 | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |
