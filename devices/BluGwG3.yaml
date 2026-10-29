@@ -1,8 +1,0 @@
-# OTA profile for BluGwG3, generated from the official 2.0.2 package.
-display_name: "Shelly BLU Gateway Gen3"
-platform: esp32c3
-update_id: BluGwG3        # name used by https://updates.shelly.cloud/update/<update_id>
-app_ptn: app_0
-app_slot_size: 0x240000   # app_0 @0x20000
-boot_min_version: "1.0.9"   # Shelly OS loader 1.0.3 is what these devices run; the default (one patch above) would not replace it
-revision: 2   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)

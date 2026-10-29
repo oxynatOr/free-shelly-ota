@@ -172,6 +172,26 @@ class ResolveConfig(unittest.TestCase):
         self.assertIn("Error including file 'x'", str(ctx.exception))
         self.assertNotIn("INFO Reading", str(ctx.exception))
 
+    def test_the_message_on_stdout_is_found_too(self):
+        # the esphome command prints "Failed config" on stdout and only INFO lines on stderr
+        out = "Failed config\n\npackages: [source x.yaml:3]\n  \n  git is not installed. See https://git-scm.com\n  base: IncludeFile(a.yaml)\n"
+        for _ in range(3):
+            out += "  a: 1\n"
+
+        def run(cmd, **kw):
+            return SimpleNamespace(returncode=2, stdout=out, stderr="INFO ESPHome 2026.10.0\nINFO Cloning https://x\n")
+        with self.assertRaises(comp.CompileError) as ctx:
+            comp.resolve_config(self.yaml, "esphome", run=run, which=only("esphome"))
+        self.assertIn("git is not installed", str(ctx.exception))
+        self.assertNotIn("INFO", str(ctx.exception))
+
+    def test_a_failure_without_any_text_still_says_something(self):
+        def run(cmd, **kw):
+            return SimpleNamespace(returncode=1, stdout="", stderr="INFO only\n")
+        with self.assertRaises(comp.CompileError) as ctx:
+            comp.resolve_config(self.yaml, "esphome", run=run, which=only("esphome"))
+        self.assertIn("esphome config", str(ctx.exception))
+
     def test_yaml_not_found(self):
         with self.assertRaises(comp.CompileError):
             comp.resolve_config(self.dir / "nope.yaml", "esphome", which=only("esphome"))

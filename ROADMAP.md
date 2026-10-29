@@ -8,7 +8,7 @@ Where the project stands and where it goes next.
 
 > [!NOTE]
 > This is a plan, not a promise: the order changes when a test report or a new device shows up.
-> State: 2026-10-24, at release 0.6.0, a pre-release (see the [CHANGELOG](CHANGELOG.md)).
+> State: 2026-10-29, at release 0.7.0 (see the [CHANGELOG](CHANGELOG.md)).
 
 ## Now
 
@@ -57,7 +57,9 @@ Where the project stands and where it goes next.
 - **The Bluetooth step in Home Assistant** (a component or a bridge using the same RPC calls as `shelly_ota/ble.py`), for people without a Bluetooth adapter in the PC (an ESPHome Bluetooth proxy). Only if there is demand.
 - A command that prints the `esp32:` block of a profile, and device pages generated from one template with the shared sentences, so they cannot drift (a test checks the safety sentences now).
 - Find the device on the network (mDNS) instead of `--ip`.
-- Install with `pipx` and a `pyproject.toml`.
+- Install with `pipx`. A `pyproject.toml` exists since 0.7.0, for development (`pip install -e .[ble]`); the tool still reads its profiles and `fw/` from the checkout.
+- A `shelly-ota.toml` with defaults (`--ip`, profile, log level, compile runner and image), only if wanted.
+- The ESPHome dashboard or Home Assistant add-on as a way to compile: ESPHome's own protocol for it is not documented, so `build --compile` calls the command line.
 
 ## Help wanted
 
@@ -87,3 +89,5 @@ Items that stood under "Now" in an earlier version of this page.
 | Release 0.5.0 | [CHANGELOG](CHANGELOG.md#050---2026-10-22) |
 | 25 profiles for Gen3 and Gen4 devices (43 in total), the 🔬 state and the dev board test bench, `ota.py ble`, the time left in the progress line, shorter device pages | [CHANGELOG](CHANGELOG.md#060---2026-10-24) |
 | Release 0.6.0 (pre-release) | [CHANGELOG](CHANGELOG.md#060---2026-10-24) |
+| `build --compile` (ESPHome command or Docker with a cache volume, also for `packages:` and `!include`), `pyproject.toml` for development, `PlugMG3-beta` and the layout check, `BluGwG3` removed | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |
+| Release 0.7.0 | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |

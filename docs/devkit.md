@@ -55,7 +55,6 @@ The chip family must match and the flash must hold the whole partition table of 
 | `EMG3` | EM Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
 | `S3EMG3` | 3EM-63 Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
 | `OutdoorPlugSG3` | Outdoor Plug S Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
-| `BluGwG3` | BLU Gateway Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
 | `S1G4` | 1 Gen4 | ESP32-C6 | 8 MiB | ESP32-C6 board with 8 MB |
 | `S1PMG4` | 1PM Gen4 | ESP32-C6 | 8 MiB | ESP32-C6 board with 8 MB |
 | `S2PMG4` | 2PM Gen4 | ESP32-C6 | 8 MiB | ESP32-C6 board with 8 MB |

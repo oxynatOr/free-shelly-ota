@@ -32,7 +32,6 @@ body:
         - PlusI4 (Plus i4 / i4 DC, Gen2)
         - PlusUni (Plus Uni, Gen2)
         - Pro3EM (Pro 3EM, Gen2)
-        - BluGwG3 (BLU Gateway Gen3)
         - Dimmer0110VPMG3 (Dimmer 0/1-10V PM Gen3)
         - Dimmer0110VPMG4 (Dimmer 0/1-10V PM Gen4)
         - DimmerG3 (Dimmer Gen3)
@@ -68,7 +67,7 @@ body:
     attributes:
       label: Tool version
       description: Output of `python ota.py --version`.
-      placeholder: "0.6.0 (main, v0.6.0, 2026-10-24)"
+      placeholder: "0.7.0 (main, v0.7.0, 2026-10-29)"
     validations:
       required: true
   - type: input
