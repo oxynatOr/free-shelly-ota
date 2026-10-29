@@ -35,7 +35,7 @@ Where the project stands and where it goes next.
   "Example config" row with the ready-made config in `oxynatOr/esphome-configs`, once that repo is finished.
 - **More of the test bench.** The profiles that need other boards (the ESP32-C3 devices need a board with 8 MB; the EM Gen4 (ESP32-C6) and the Pro 3EM (classic ESP32) 16 MB), and a plan B if the Shelly app wants its `shelly` partition:
   one taken from an own dump, never shared.
-- **A package from `build --compile` on a real Shelly.** It is the same as one built by hand and went through the whole update on a dev board (ESPHome 2026.10.0), but not yet on a device. `esphome config` (for configs with `packages:`) was tried through Docker only, not through the native command.
+- **A package from `build --compile` on a real Shelly.** It is the same as one built by hand and went through the whole update on a dev board (ESPHome 2026.10.0), but not yet on a device. `esphome config` (for configs with `packages:`) was tried through Docker and, for local includes, through the native command; `github://` packages through the native command need `git` and were not tried.
 - **Tests without the firmware cache.** Many tests need the local `fw/` folder, which is not in git. Small synthetic packages as
   fixtures, then a GitHub Actions run on every pull request.
 - **More devices on request.** Whatever the "Request a new device" form brings.

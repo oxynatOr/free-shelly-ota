@@ -200,9 +200,20 @@ def resolve_config(yaml: Path, runner: str = "auto", image: str = DEFAULT_IMAGE,
     except OSError as e:
         raise CompileError(f"Could not start {cmd[0]}: {e}") from e
     if done.returncode != 0:
-        text = [l for l in (done.stderr or done.stdout or "").splitlines() if l.strip() and not l.startswith("INFO ")]
-        raise CompileError("ESPHome could not read the config:\n  " + "\n  ".join(text[-20:]))
+        raise CompileError("ESPHome could not read the config:\n  " + "\n  ".join(_why(done)))
     return done.stdout
+
+
+def _why(done: "subprocess.CompletedProcess") -> list[str]:
+    """The lines that say why `esphome config` failed. The message is on stderr with Docker and on stdout with the
+    esphome command (stdout then goes on with a dump of the config), so both are read: from "Failed config" on if
+    that is there, else the last lines without the INFO ones."""
+    lines = [l.rstrip() for l in ((done.stdout or "") + "\n" + (done.stderr or "")).splitlines() if l.strip()]
+    lines = [l for l in lines if not l.startswith("INFO ")]
+    start = next((i for i, l in enumerate(lines) if l.startswith("Failed config")), None)
+    if start is not None:
+        return lines[start:start + 12]
+    return lines[-20:] or ["(no message; run `esphome config` on the file to see it)"]
 
 
 def compile_yaml(yaml: Path, runner: str = "auto", image: str = DEFAULT_IMAGE,
