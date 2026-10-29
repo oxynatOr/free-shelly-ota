@@ -17,6 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import builder, devicegen, firmware, lint, logwatch, profile, rpc, sender  # noqa: E402
 
 
@@ -194,6 +195,7 @@ class SlotAndChipTests(unittest.TestCase):
         with self.assertRaises(builder.OtaError):
             builder.check_app_image(img, "esp32c3", 1 << 20, "app_0")
 
+    @needs_fw
     def test_send_shows_the_reported_slot_without_warning_about_it(self):
         """The old 'device runs from slot 0' warning was wrong for H&T and Plus Plug S; the target slot is probed instead."""
         tmp = Path(tempfile.mkdtemp())
@@ -210,6 +212,7 @@ class SlotAndChipTests(unittest.TestCase):
 
 
 class VariantTests(unittest.TestCase):
+    @needs_fw
     def test_zigbee_profile_has_parent_and_own_firmware(self):
         zb = profile.load_profile("PowerStripZB")
         self.assertEqual(zb.parent, "PowerStrip")
@@ -227,14 +230,17 @@ class VariantTests(unittest.TestCase):
         sender.send(profile.load_profile(profile_name), z, s.addr, port=0, dry_run=True, out=lines.append, **kw)
         return lines
 
+    @needs_fw
     def test_zigbee_device_accepted_by_base_package_via_compatible_pattern(self):
         lines = self._send_dry("PowerStripZB", "PowerStrip")
         self.assertTrue(any("compatible pattern" in l for l in lines), lines)
 
+    @needs_fw
     def test_exact_match_has_no_note(self):
         lines = self._send_dry("PowerStripZB", "PowerStripZB")
         self.assertFalse(any("compatible pattern" in l for l in lines), lines)
 
+    @needs_fw
     def test_unrelated_device_still_refused(self):
         with self.assertRaises(builder.OtaError):
             self._send_dry("PlugMG3", "PowerStrip")
@@ -248,6 +254,7 @@ class VariantTests(unittest.TestCase):
         self.assertFalse(match("Pro3EM", None))
         self.assertFalse(match("Pro3EM", ""))
 
+    @needs_fw
     def test_device_named_in_a_compatible_list_is_accepted(self):
         lines = self._send_dry("Pro3EMProAddon", "Pro3EM")   # the Pro3EM package says "Pro3EM,Pro3EMProAddon"
         self.assertTrue(any("compatible pattern" in l for l in lines), lines)
@@ -261,6 +268,7 @@ class VariantTests(unittest.TestCase):
 
 
 class RestoreNoteTests(unittest.TestCase):
+    @needs_fw
     def test_restore_prints_note_and_hints_when_device_is_silent(self):
         import argparse, contextlib, io
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -295,6 +303,7 @@ class NetworkTests(unittest.TestCase):
         self.addCleanup(s.close)
         return s
 
+    @needs_fw
     def test_log_is_captured_and_setting_restored(self):
         s = self._shelly()
         lines = []
@@ -302,6 +311,7 @@ class NetworkTests(unittest.TestCase):
         self.assertTrue(any("hello from fake shelly" in l for l in lines), lines)
         self.assertIsNone(s.udp_addr)
 
+    @needs_fw
     def test_send_with_watch(self):
         s = self._shelly()
         lines = []
@@ -310,12 +320,14 @@ class NetworkTests(unittest.TestCase):
         self.assertEqual(len(s.updates), 1)
         self.assertTrue(any("log|" in l for l in lines), lines)
 
+    @needs_fw
     def test_send_with_password(self):
         s = self._shelly(password="secret")
         sender.send(self.profile, self.zip, s.addr, port=0, assume_yes=True, timeout=10,
                     user="admin", password="secret", out=lambda m: None)
         self.assertEqual(len(s.updates), 1)
 
+    @needs_fw
     def test_password_missing_or_wrong(self):
         s = self._shelly(password="secret")
         with self.assertRaises(builder.OtaError):
@@ -356,6 +368,7 @@ class OfflineTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
 
+    @needs_fw
     def test_add_device_reads_slot_size_from_partition_table(self):
         for name in ("PlugMG3", "DuoBulbG3"):
             path, info = devicegen.create_profile(firmware.cached_zip(name), devices_dir=self.tmp)
@@ -387,6 +400,7 @@ class OfflineTests(unittest.TestCase):
                 continue
             self.assertEqual(table(devicegen.partition_csv(zip_path)), table(committed.read_text(encoding="utf-8")), name)
 
+    @needs_fw
     def test_partition_csv_rows_pass_the_lint_slot_check(self):
         text = devicegen.partition_csv(firmware.cached_zip("HTG3"))
         self.assertIn("app_0, app, ota_0, 0x20000, 0x280000,", text)
@@ -394,6 +408,7 @@ class OfflineTests(unittest.TestCase):
         y = self._yaml(self.GOOD.replace("0x10000", "0xf000"), text)
         self.assertEqual(lint.lint_esphome(y, profile.load_profile("HTG3")), [])
 
+    @needs_fw
     def test_add_device_refuses_overwrite(self):
         devicegen.create_profile(firmware.cached_zip("PlugMG3"), devices_dir=self.tmp)
         with self.assertRaises(builder.OtaError):
@@ -423,6 +438,7 @@ class OfflineTests(unittest.TestCase):
         bad = self._yaml(self.GOOD, csv)  # Plug M's offset on the H&T
         self.assertEqual(len(lint.lint_esphome(bad, htg3)), 1)
 
+    @needs_fw
     def test_add_device_writes_pt_offset_only_when_not_default(self):
         path, _ = devicegen.create_profile(firmware.cached_zip("HTG3"), devices_dir=self.tmp)
         self.assertEqual(profile.load_profile("HTG3", self.tmp).pt_offset, 0xf000)

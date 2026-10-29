@@ -10,6 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import builder, firmware, profile  # noqa: E402
 
 
@@ -35,6 +36,7 @@ class BuilderTests(unittest.TestCase):
         app.write_bytes(app_bytes)
         return p, official, builder.build(p, app, official, self.tmp / "out.zip", **kw)
 
+    @needs_fw
     def test_golden_official_app_reproduces_manifest(self):
         for device in profile.list_devices():
             p = profile.load_profile(device)
@@ -47,33 +49,39 @@ class BuilderTests(unittest.TestCase):
                 self.assertEqual(json.loads(z.read("manifest.json")), manifest)
             res.output.unlink()
 
+    @needs_fw
     def test_drop_fs_removes_part_and_file(self):
         _, _, res = self._build("PlugMG3", fake_app(100_000), drop=("fs",))
         with zipfile.ZipFile(res.output) as z:
             self.assertNotIn("fs.img", z.namelist())
             self.assertNotIn("fs", json.loads(z.read("manifest.json"))["parts"])
 
+    @needs_fw
     def test_rejects_bad_magic(self):
         bad = bytearray(fake_app(100_000)); bad[0] = 0x00
         with self.assertRaises(builder.OtaError):
             self._build("PlugMG3", bytes(bad))
 
+    @needs_fw
     def test_rejects_bootloader_and_factory_images(self):
         boot = zipfile.ZipFile(firmware.cached_zip("PlugMG3")).read("bootloader.bin")
         with self.assertRaises(builder.OtaError) as cm:
             self._build("PlugMG3", boot)
         self.assertIn("factory", str(cm.exception))
 
+    @needs_fw
     def test_rejects_wrong_chip(self):
         with self.assertRaises(builder.OtaError):
             self._build("PlugMG3", fake_app(100_000, chip_id=0))
 
+    @needs_fw
     def test_slot_sizes_differ_per_device(self):
         size = 0x2A0000  # fits PlugMG3 exactly, too big for DuoBulbG3
         self._build("PlugMG3", fake_app(size))
         with self.assertRaises(builder.OtaError):
             self._build("DuoBulbG3", fake_app(size))
 
+    @needs_fw
     def test_rejects_unknown_drop_part(self):
         with self.assertRaises(builder.OtaError):
             self._build("PlugMG3", fake_app(100_000), drop=("app",))

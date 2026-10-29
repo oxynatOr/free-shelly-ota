@@ -15,6 +15,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import builder, firmware, logview, profile, sender, ui  # noqa: E402
 from shelly_ota.logview import Level  # noqa: E402
 from test_extras import FakeRpcShelly, free_udp_port  # noqa: E402
@@ -48,6 +49,7 @@ class SendLevelTests(unittest.TestCase):
 
     # --- a successful update that the device confirms
 
+    @needs_fw
     def test_normal_shows_the_progress_and_the_confirmation_and_not_the_details(self):
         self.assertTrue(self._send(self._shelly(ota_events="success"), Level.normal))
         self.assertEqual(self._starting_with("Update:"), ["Update: 0 %", "Update: 50 %", "Update: 100 %"])
@@ -58,23 +60,27 @@ class SendLevelTests(unittest.TestCase):
             self.assertFalse(self._starting_with(hidden), (hidden, self.lines))
         self.assertTrue(self.lines[-1].startswith("Device log: ") and "hidden" in self.lines[-1], self.lines[-1])
 
+    @needs_fw
     def test_quiet_shows_only_the_result(self):
         self.assertTrue(self._send(self._shelly(ota_events="success"), Level.quiet))
         self.assertEqual(len(self.lines), 1, self.lines)
         self.assertTrue(self.lines[0].startswith(DONE_CONFIRMED))
 
+    @needs_fw
     def test_verbose_adds_the_explanations_and_the_steps_of_the_device(self):
         self.assertTrue(self._send(self._shelly(ota_events="success"), Level.verbose))
         for shown in ("ZIP:", "Download URL", "Device accepted", "After the first ESPHome boot", "Device: The update started"):
             self.assertTrue(self._starting_with(shown), (shown, self.lines))
         self.assertFalse(self._starting_with("  log|"))
 
+    @needs_fw
     def test_debug_shows_every_entry_of_the_device_log_on_its_own_line(self):
         self.assertTrue(self._send(self._shelly(ota_events="success"), Level.debug))
         entries = self._starting_with("  log|")
         self.assertEqual(len(entries), 6)             # begin, 0 %, 50 %, 100 %, success: five events and the log setup ...
         self.assertTrue(any("ota_success" in e or "Event ota_success" in e for e in entries), entries)
 
+    @needs_fw
     def test_raw_shows_the_log_as_it_arrives(self):
         self.assertTrue(self._send(self._shelly(ota_events="success"), Level.raw))
         glued = [l for l in self._starting_with("  log|") if l.count("fakeshelly-aabbccddeeff ") > 1]
@@ -83,17 +89,20 @@ class SendLevelTests(unittest.TestCase):
 
     # --- without a confirmation
 
+    @needs_fw
     def test_a_log_that_never_arrives_falls_back_to_the_download(self):
         """No datagram reaches the PC (a firewall): no waiting, the old message."""
         self.assertTrue(self._send(self._shelly(send_log=False, ota_events="success"), Level.normal))
         self.assertTrue(self._starting_with(DONE_DOWNLOADED), self.lines)
         self.assertFalse(self._starting_with("Update:"))
 
+    @needs_fw
     def test_a_device_log_that_cannot_be_switched_on_is_a_note_not_a_failure(self):
         self.assertTrue(self._send(self._shelly(getconfig_fails=True), Level.normal))
         self.assertTrue(any(l.startswith("NOTE: the device log is not available") for l in self.lines), self.lines)
         self.assertTrue(self._starting_with(DONE_DOWNLOADED))
 
+    @needs_fw
     def test_a_device_without_update_events_is_not_waited_for(self):
         self.assertTrue(self._send(self._shelly(), Level.normal))      # the fake logs, but reports no update
         self.assertTrue(self._starting_with(DONE_DOWNLOADED))
@@ -101,6 +110,7 @@ class SendLevelTests(unittest.TestCase):
 
     # --- a failure
 
+    @needs_fw
     def test_an_error_of_the_device_ends_the_run_and_shows_the_last_lines_even_when_quiet(self):
         with self.assertRaises(builder.OtaError) as cm:
             self._send(self._shelly(ota_events="error"), Level.quiet)
@@ -109,6 +119,7 @@ class SendLevelTests(unittest.TestCase):
         self.assertTrue(any("flash write failed" in l for l in self.lines), self.lines)
         self.assertFalse(self._starting_with("Done:"))
 
+    @needs_fw
     def test_a_refusal_of_the_update_does_not_print_log_lines(self):
         s = self._shelly(update_refusals=[{"code": -109, "message": "Not committed"}])
         with self.assertRaises(builder.OtaError):
@@ -117,6 +128,7 @@ class SendLevelTests(unittest.TestCase):
 
     # --- the log file
 
+    @needs_fw
     def test_the_log_file_holds_everything_whatever_the_level(self):
         path = self.tmp / "logs" / "t.send.log"
         logfile = logview.LogFile(path)
@@ -131,6 +143,7 @@ class SendLevelTests(unittest.TestCase):
 
     # --- the python API keeps working
 
+    @needs_fw
     def test_the_default_level_is_verbose_so_existing_callers_see_what_they_saw(self):
         lines = []
         s = self._shelly()

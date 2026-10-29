@@ -11,6 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import __version__, builder, firmware, profile, secrets_check  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 
@@ -60,6 +61,7 @@ class SecretsTests(unittest.TestCase):
         found, _ = secrets_check.collect(self.yaml)
         self.assertEqual(secrets_check.scan(image_with(b"nothing special"), found), [])
 
+    @needs_fw
     def test_build_warns_and_reports_names_never_values(self):
         found, _ = secrets_check.collect(self.yaml)
         app = self.tmp / "app.bin"
@@ -76,6 +78,7 @@ class SecretsTests(unittest.TestCase):
         self.assertEqual(data["contains_secrets"], ["wifi.password"])
         self.assertEqual(data["tool_version"], __version__)
 
+    @needs_fw
     def test_fail_on_secrets_writes_nothing(self):
         found, _ = secrets_check.collect(self.yaml)
         app = self.tmp / "app.bin"
@@ -87,6 +90,7 @@ class SecretsTests(unittest.TestCase):
         self.assertNotIn(PW, str(ctx.exception))
         self.assertFalse(out.exists())
 
+    @needs_fw
     def test_unchecked_build_says_so(self):
         app = self.tmp / "app.bin"
         app.write_bytes(fake_app(100_000))
@@ -97,6 +101,7 @@ class SecretsTests(unittest.TestCase):
         data = json.loads((self.tmp / "o.zip.report.json").read_text(encoding="utf-8"))
         self.assertIsNone(data["contains_secrets"])
 
+    @needs_fw
     def test_build_warns_if_the_image_lacks_partition_access(self):
         p = profile.load_profile("PlugMG3")
         official = firmware.cached_zip("PlugMG3")

@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import builder, firmware, profile, sender  # noqa: E402
 
 
@@ -104,6 +105,7 @@ class SenderTests(unittest.TestCase):
         self.addCleanup(s.addCleanup)
         return s
 
+    @needs_fw
     def test_send_delivers_zip(self):
         s = self._shelly()
         log = []
@@ -111,6 +113,7 @@ class SenderTests(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(len(s.updates), 1)
 
+    @needs_fw
     def test_ctrl_c_ends_the_wait_for_the_download_quickly(self):
         # On Windows one long Event.wait() ignores Ctrl+C until it times out: the wait must be sliced.
         s = self._shelly(download=False)
@@ -122,34 +125,40 @@ class SenderTests(unittest.TestCase):
             sender.send(self.profile, self.zip, s.addr, port=0, assume_yes=True, timeout=300, out=lambda m: None)
         self.assertLess(time.monotonic() - start, 10)
 
+    @needs_fw
     def test_not_committed_gets_an_explanation(self):
         s = self._shelly(update_error="Not committed")
         with self.assertRaises(builder.OtaError) as cm:
             sender.send(self.profile, self.zip, s.addr, port=0, assume_yes=True, out=lambda m: None)
         self.assertIn("couple of minutes", str(cm.exception))      # the wording of explain_update_refusal
 
+    @needs_fw
     def test_dry_run_sends_nothing(self):
         s = self._shelly()
         sender.send(self.profile, self.zip, s.addr, port=0, dry_run=True, out=lambda m: None)
         self.assertEqual(s.updates, [])
 
+    @needs_fw
     def test_wrong_model_is_refused(self):
         s = self._shelly(app="PlugMG3")
         with self.assertRaises(builder.OtaError):
             sender.send(self.profile, self.zip, s.addr, port=0, assume_yes=True, out=lambda m: None)
         self.assertEqual(s.updates, [])
 
+    @needs_fw
     def test_password_protected_is_refused(self):
         s = self._shelly(auth_en=True)
         with self.assertRaises(builder.OtaError):
             sender.send(self.profile, self.zip, s.addr, port=0, assume_yes=True, out=lambda m: None)
 
+    @needs_fw
     def test_declined_confirmation_sends_nothing(self):
         s = self._shelly()
         with self.assertRaises(builder.OtaError):
             sender.send(self.profile, self.zip, s.addr, port=0, ask=lambda p: "no", out=lambda m: None)
         self.assertEqual(s.updates, [])
 
+    @needs_fw
     def test_dry_run_checks_that_the_device_reaches_this_pc(self):
         s = self._shelly(reach="ok")
         log = []
@@ -165,6 +174,7 @@ class SenderTests(unittest.TestCase):
         sender.send(self.profile, self.zip, s.addr, port=0, dry_run=True, out=log.append, level=level)
         return log
 
+    @needs_fw
     def test_normal_says_the_steps_but_not_the_details(self):
         log = self._dry(sender.Level.normal)
         self.assertTrue(any(l.startswith("Device ") and ", fw " in l for l in log), log)
@@ -172,15 +182,18 @@ class SenderTests(unittest.TestCase):
         self.assertTrue(any(l.startswith("Dry run: nothing sent") for l in log), log)
         self.assertFalse(any(l.startswith(("Download URL", "  parts:", "  model")) or "can reach this PC" in l for l in log), log)
 
+    @needs_fw
     def test_verbose_adds_the_details(self):
         log = self._dry(sender.Level.verbose)
         self.assertTrue(any(l.startswith("Download URL") for l in log), log)
         self.assertTrue(any(l.startswith("  parts:") for l in log), log)
         self.assertTrue(any("can reach this PC" in l for l in log), log)
 
+    @needs_fw
     def test_quiet_says_nothing_when_all_is_well(self):
         self.assertEqual(self._dry(sender.Level.quiet), [])
 
+    @needs_fw
     def test_dry_run_fails_when_the_device_cannot_reach_this_pc(self):
         s = self._shelly(reach="blocked")
         with self.assertRaises(builder.OtaError) as cm:
@@ -188,12 +201,14 @@ class SenderTests(unittest.TestCase):
         self.assertIn("Connection error: -13", str(cm.exception))
         self.assertEqual(s.updates, [])
 
+    @needs_fw
     def test_dry_run_without_http_get_is_only_a_note(self):
         s = self._shelly()  # no HTTP.GET on this fake
         log = []
         self.assertTrue(sender.send(self.profile, self.zip, s.addr, port=0, dry_run=True, out=log.append))
         self.assertTrue(any(m.startswith("NOTE: could not check whether the device can reach") for m in log), log)
 
+    @needs_fw
     def test_send_warns_but_still_sends_when_the_check_fails(self):
         s = self._shelly(reach="blocked")
         log = []
@@ -201,6 +216,7 @@ class SenderTests(unittest.TestCase):
         self.assertTrue(any(m.startswith("WARNING: The device cannot reach this PC") for m in log), log)
         self.assertEqual(len(s.updates), 1)
 
+    @needs_fw
     def test_check_reach_answers(self):
         ok, blocked, none = self._shelly(reach="ok"), self._shelly(reach="blocked"), self._shelly()
         server = sender.FileServer(self.zip, 0)
@@ -212,6 +228,7 @@ class SenderTests(unittest.TestCase):
         self.assertIsNone(state)
         self.assertIn("404", detail)
 
+    @needs_fw
     def test_unreachable_device(self):
         with self.assertRaises(builder.OtaError):
             sender.device_info("127.0.0.1:1", timeout=2)
@@ -260,6 +277,7 @@ class OldLayoutTests(unittest.TestCase):
         self.addCleanup(s.addCleanup)
         return s
 
+    @needs_fw
     def test_text_for_old_firmware_only(self):
         for ver in ("1.8.99-plugmg3prod0", "2.0.1", "2.1.0", "", "garbage"):
             self.assertIn("old flash layout", sender.old_layout_text(self.profile, ver), ver)
@@ -267,6 +285,7 @@ class OldLayoutTests(unittest.TestCase):
             self.assertIsNone(sender.old_layout_text(self.profile, ver), ver)
         self.assertIsNone(sender.old_layout_text(profile.load_profile("PlugMG3"), "1.8.99"))   # a profile without the key is not affected
 
+    @needs_fw
     def test_send_refuses_old_firmware_before_anything_is_sent(self):
         s = self._shelly("1.8.99-plugmg3prod0")
         with self.assertRaises(builder.OtaError) as cm:
@@ -274,11 +293,13 @@ class OldLayoutTests(unittest.TestCase):
         self.assertIn("restore PlugMG3-beta", str(cm.exception))
         self.assertEqual(s.updates, [])
 
+    @needs_fw
     def test_dry_run_refuses_too(self):
         s = self._shelly("2.1.0")
         with self.assertRaises(builder.OtaError):
             sender.send(self.profile, self.zip, s.addr, port=0, dry_run=True, out=lambda m: None)
 
+    @needs_fw
     def test_force_and_restore_go_through(self):
         for kw in ({"force": True}, {"restoring": True}):
             s = self._shelly("1.8.99-plugmg3prod0")
@@ -286,6 +307,7 @@ class OldLayoutTests(unittest.TestCase):
                                         out=lambda m: None, **kw), kw)
             self.assertEqual(len(s.updates), 1, kw)
 
+    @needs_fw
     def test_a_device_with_the_beta_layout_is_fine(self):
         s = self._shelly("2.2.0-beta2")
         sender.send(self.profile, self.zip, s.addr, port=0, dry_run=True, probe_wait=0.2, out=lambda m: None)
@@ -335,11 +357,13 @@ class SlowDownloadTests(unittest.TestCase):
                 ok = e
         return ok, log
 
+    @needs_fw
     def test_a_slow_but_steady_download_extends_the_wait(self):
         ok, log = self._send(9, timeout=4, max_wait=60)
         self.assertIs(ok, True, (ok, log))
         self.assertTrue(any("extended" in l for l in log), log)
 
+    @needs_fw
     def test_the_cap_is_kept(self):
         ok, log = self._send(30, timeout=3, max_wait=5)
         self.assertIsInstance(ok, sender.OtaError)

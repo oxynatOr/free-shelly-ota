@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import MODULE_DIR, __version__, buildinfo, builder, firmware, profile, sender  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 from test_extras import FakeRpcShelly  # noqa: E402
@@ -120,6 +121,7 @@ class ReportTests(unittest.TestCase):
         builder.write_report(res)
         return out, json.loads(Path(str(out) + ".report.json").read_text(encoding="utf-8"))
 
+    @needs_fw
     def test_report_says_which_tool_state_profile_and_options_made_the_package(self):
         _, data = self._built()
         self.assertEqual(data["tool_version"], __version__)
@@ -128,6 +130,7 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(data["options"], {"esphome_factory": False, "boot_min_version": None, "dropped": [], "tag": "t1"})
         self.assertNotIn(str(self.tmp), json.dumps(data))             # flags only, no local paths
 
+    @needs_fw
     def test_send_prints_the_origin_of_the_package_and_notes_a_changed_profile(self):
         out, _ = self._built()
         shelly = FakeRpcShelly(app="PlugMG3")
@@ -145,6 +148,7 @@ class ReportTests(unittest.TestCase):
         sender.send(newer, out, shelly.addr, port=0, dry_run=True, force=True, out=lines.append)
         self.assertTrue(any("has changed since this package was built" in l for l in lines), lines)
 
+    @needs_fw
     def test_a_package_without_report_just_has_no_origin_line(self):
         out, _ = self._built()
         Path(str(out) + ".report.json").unlink()
@@ -160,6 +164,7 @@ class CommandLineTests(unittest.TestCase):
         out = self._run("--version").stdout.strip()
         self.assertTrue(out.startswith(f"ota.py {__version__}"), out)
 
+    @needs_fw
     def test_commands_start_with_the_tool_line_except_data_output(self):
         first = self._run("list").stdout.splitlines()[0]
         self.assertTrue(first.startswith(f"free-shelly-ota {__version__}"), first)

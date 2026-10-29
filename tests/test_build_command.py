@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import ota  # noqa: E402
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import firmware  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 
@@ -51,12 +52,14 @@ class BuildOutputTests(unittest.TestCase):
     def packages(self) -> dict[str, bytes]:
         return {p.name: p.read_bytes() for p in sorted(self.out_dir.glob("*"))} if self.out_dir.exists() else {}
 
+    @needs_fw
     def test_dry_run_writes_nothing(self):
         code, text = self.build("--dry-run")
         self.assertEqual(code, 0, text)
         self.assertIn("DRY RUN", text)
         self.assertEqual(self.packages(), {})
 
+    @needs_fw
     def test_dry_run_leaves_an_existing_package_and_its_files_alone(self):
         code, text = self.build()
         self.assertEqual(code, 0, text)
@@ -69,6 +72,7 @@ class BuildOutputTests(unittest.TestCase):
         self.assertIn("already exists", text)                   # a real build would stop: say so
         self.assertEqual(self.packages(), before)
 
+    @needs_fw
     def test_dry_run_with_an_explicit_output_leaves_it_alone(self):
         target = self.tmp / "mine.zip"
         target.write_bytes(b"precious")
@@ -81,6 +85,7 @@ class BuildOutputTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("must not overwrite an input", text)
 
+    @needs_fw
     def test_second_build_with_the_same_automatic_name_stops(self):
         self.assertEqual(self.build()[0], 0)
         before = self.packages()
@@ -90,6 +95,7 @@ class BuildOutputTests(unittest.TestCase):
         self.assertIn("--force", text)
         self.assertEqual(self.packages(), before)
 
+    @needs_fw
     def test_force_replaces_the_automatic_name(self):
         self.assertEqual(self.build()[0], 0)
         first = self.packages()
@@ -100,12 +106,14 @@ class BuildOutputTests(unittest.TestCase):
         zip_name = next(n for n in after if n.endswith(".zip"))
         self.assertNotEqual(after[zip_name], first[zip_name])
 
+    @needs_fw
     def test_tag_gives_a_second_package_next_to_the_first(self):
         self.assertEqual(self.build()[0], 0)
         code, text = self.build("--tag", "b", app=self.other / "firmware.ota.bin")
         self.assertEqual(code, 0, text)
         self.assertEqual(len([n for n in self.packages() if n.endswith(".zip")]), 2)
 
+    @needs_fw
     def test_explicit_output_is_replaced_without_force(self):
         target = self.tmp / "mine.zip"
         self.assertEqual(self.build("-o", str(target))[0], 0)
@@ -151,6 +159,7 @@ class BuildOutputTests(unittest.TestCase):
         self.assertEqual(seen, {"app": self.app, "factory": factory})
         self.assertIn("stop here", text)
 
+    @needs_fw
     def test_existing_package_stops_before_the_compile(self):
         self.assertEqual(self.build()[0], 0)                       # firmware.ota.bin gives the automatic name
         with mock.patch.object(ota.lint, "lint_esphome", return_value=[]), \

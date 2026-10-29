@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from needs_fw import needs_fw  # noqa: E402
 from shelly_ota import bootswap, builder, firmware, profile, sender, ui  # noqa: E402
 from shelly_ota.devicegen import parse_partitions  # noqa: E402
 from test_extras import FakeRpcShelly, free_udp_port  # noqa: E402
@@ -67,6 +68,7 @@ class BootswapTests(unittest.TestCase):
         return builder.build(self.profile, self.tmp / "app.bin", self.official, self.tmp / "out.zip",
                              factory=self.tmp / "factory.bin", **kw)
 
+    @needs_fw
     def test_bootloader_and_otadata_replaced_everything_else_untouched(self):
         res = self._build(make_factory(self.official, self.app))
         self.assertEqual(res.replaced, ["boot", "otadata"])
@@ -81,26 +83,31 @@ class BootswapTests(unittest.TestCase):
             builder.read_official_manifest(out, "PlugMG3")  # all hashes consistent
         self.assertTrue(any("BOOTLOADER REPLACED" in w for w in res.warnings))
 
+    @needs_fw
     def test_flash_mode_mismatch_is_refused(self):
         with self.assertRaises(builder.OtaError) as cm:
             self._build(make_factory(self.official, self.app, boot_tweak=lambda b: b.__setitem__(2, 0)))
         self.assertIn("flash mode", str(cm.exception))
 
+    @needs_fw
     def test_corrupt_bootloader_is_refused(self):
         f = bytearray(make_factory(self.official, self.app))
         f[200] ^= 0xFF                      # damage the body, digest no longer matches
         with self.assertRaises(builder.OtaError):
             self._build(bytes(f))
 
+    @needs_fw
     def test_non_erased_otadata_is_refused(self):
         with self.assertRaises(builder.OtaError):
             self._build(make_factory(self.official, self.app, otadata=b"SH0S" + b"\xff" * 8188))
 
+    @needs_fw
     def test_other_app_than_packed_is_refused(self):
         with self.assertRaises(builder.OtaError) as cm:
             self._build(make_factory(self.official, fake_app(100_000)[:-1] + b"\x01"))
         self.assertIn("same build", str(cm.exception))
 
+    @needs_fw
     def test_critical_partition_mismatch_is_refused_but_scratch_only_warns(self):
         def move_app0(pt):
             pt[2 * 32 + 8:2 * 32 + 12] = (0x30000).to_bytes(4, "little")   # app_0 offset
@@ -117,6 +124,7 @@ class BootswapTests(unittest.TestCase):
         with zipfile.ZipFile(res.output) as z:
             return json.loads(z.read("manifest.json"))["parts"]["boot"]["min_version"], res
 
+    @needs_fw
     def test_boot_min_version_is_raised_by_default_and_overridable(self):
         import dataclasses
         self.profile = dataclasses.replace(self.profile, boot_min_version=None)   # profile sets nothing: official + one patch
@@ -126,6 +134,7 @@ class BootswapTests(unittest.TestCase):
         self.assertEqual(self._min_version(boot_min_version="keep")[0], "1.0.2")
         self.assertEqual(self._min_version(boot_min_version="2.0.0")[0], "2.0.0")
 
+    @needs_fw
     def test_profile_boot_min_version_is_the_default_and_the_option_still_wins(self):
         import dataclasses
         self.profile = dataclasses.replace(self.profile, boot_min_version="1.0.9")
@@ -146,6 +155,7 @@ class BootswapTests(unittest.TestCase):
             self._build(make_factory(self.official, self.app, **factory_kw))
         return str(cm.exception)
 
+    @needs_fw
     def test_header_errors_say_what_differs_and_how_to_fix_it(self):
         def set_byte(i, v):
             return lambda img: img.__setitem__(i, v)
@@ -171,6 +181,7 @@ class BootswapTests(unittest.TestCase):
         self.assertIn("ESP32-C6", msg)
         self.assertIn("variant", msg)
 
+    @needs_fw
     def test_esp32_frequency_hint_names_the_sdkconfig_option(self):
         prof = profile.load_profile("PlusPlugS")
         official = firmware.cached_zip("PlusPlugS")
@@ -185,6 +196,7 @@ class BootswapTests(unittest.TestCase):
         self.assertIn("4 MB, 80 MHz", msg)
         self.assertIn("CONFIG_ESPTOOLPY_FLASHFREQ_80M", msg)
 
+    @needs_fw
     def test_partition_layout_and_other_build_errors_come_with_a_fix(self):
         def move_app0(pt):
             pt[2 * 32 + 8:2 * 32 + 12] = (0x30000).to_bytes(4, "little")
@@ -220,6 +232,7 @@ class BootswapTests(unittest.TestCase):
             error = str(e)
         return lines, error, shelly
 
+    @needs_fw
     def test_send_refuses_when_the_installer_would_write_to_slot_1(self):
         lines, error, shelly = self._send_dry(target_slot=1)
         self.assertIsNotNone(error)
@@ -228,21 +241,25 @@ class BootswapTests(unittest.TestCase):
         self.assertEqual(shelly.updates, [])
         self.assertIsNone(shelly.udp_addr)                  # the debug log setting was put back
 
+    @needs_fw
     def test_send_accepts_slot_0_and_reports_it(self):
         lines, error, _ = self._send_dry(target_slot=0)
         self.assertIsNone(error)
         self.assertTrue(any("Update target slot: 0" in l for l in lines), lines)
 
+    @needs_fw
     def test_ignore_slot_sends_with_a_warning(self):
         lines, error, _ = self._send_dry(target_slot=1, ignore_slot=True)
         self.assertIsNone(error)
         self.assertTrue(any("--ignore-slot" in l and "WARNING" in l for l in lines), lines)
 
+    @needs_fw
     def test_unreadable_target_slot_only_warns(self):
         lines, error, _ = self._send_dry(target_slot=None)
         self.assertIsNone(error)
         self.assertTrue(any("could not be read" in l for l in lines), lines)
 
+    @needs_fw
     def test_core_dump_line_without_an_app_slot_is_not_blamed_on_the_firewall(self):
         """Plug M Gen3, stock 1.8.99: 'Storing core dumps to scratch (0x720000)'. The log works, it just names no app slot."""
         lines, error, _ = self._send_dry(target_slot=None, core_dump_target="scratch")
@@ -273,6 +290,7 @@ class BootswapTests(unittest.TestCase):
             self.assertEqual(sender.CORE_DUMP_RE.search(line).group(1), name)
         self.assertIsNone(sender.CORE_DUMP_RE.search("I a_esp32_backend.cpp:422 Will write to slot 0"))
 
+    @needs_fw
     def test_unreadable_slot_without_any_log_datagram_points_at_the_firewall(self):
         lines, error, _ = self._send_dry(target_slot=None, shelly_kw={"send_log": False})
         self.assertIsNone(error)
@@ -280,6 +298,7 @@ class BootswapTests(unittest.TestCase):
         self.assertIn("No UDP datagram arrived", warning)
         self.assertIn("Firewall", warning)
 
+    @needs_fw
     def test_unreadable_slot_while_the_log_arrives_does_not_blame_the_firewall(self):
         lines, error, _ = self._send_dry(target_slot=None)      # the fake sends a log line, but no slot line
         self.assertIsNone(error)
@@ -299,6 +318,7 @@ class BootswapTests(unittest.TestCase):
         probe = sender.probe_slot(silent.addr, "127.0.0.1", free_udp_port(), wait=1.0)
         self.assertEqual((probe.slot, probe.datagrams), (None, 0))
 
+    @needs_fw
     def test_classic_esp32_bootloader_at_0x1000_is_swapped(self):
         """Gen2 (ESP32): bootloader at 0x1000, partition table at 0x8000, otadata at 0xd000, chip id 0."""
         prof = profile.load_profile("PlusPlugS")
@@ -320,6 +340,7 @@ class BootswapTests(unittest.TestCase):
             (self.tmp / "bad.bin").write_bytes(fake_app(100_000))
             builder.build(prof, self.tmp / "bad.bin", official, self.tmp / "bad.zip")
 
+    @needs_fw
     def test_boot_min_version_needs_factory_and_valid_format(self):
         with self.assertRaises(builder.OtaError):
             builder.build(self.profile, self.tmp / "app.bin", self.official, self.tmp / "o.zip",
@@ -327,10 +348,12 @@ class BootswapTests(unittest.TestCase):
         with self.assertRaises(builder.OtaError):
             self._build(make_factory(self.official, self.app), boot_min_version="abc")
 
+    @needs_fw
     def test_cannot_drop_boot_with_factory(self):
         with self.assertRaises(builder.OtaError):
             self._build(make_factory(self.official, self.app), drop=("boot",))
 
+    @needs_fw
     def test_send_warns_about_replaced_bootloader(self):
         from test_extras import FakeRpcShelly
         res = self._build(make_factory(self.official, self.app))
@@ -340,6 +363,7 @@ class BootswapTests(unittest.TestCase):
         sender.send(self.profile, res.output, s.addr, port=0, dry_run=True, out=lines.append)
         self.assertTrue(any("replaces Shelly's bootloader" in l for l in lines), lines)
 
+    @needs_fw
     def test_send_after_replaced_bootloader_needs_no_update_note(self):
         from test_extras import FakeRpcShelly
         res = self._build(make_factory(self.official, self.app))
