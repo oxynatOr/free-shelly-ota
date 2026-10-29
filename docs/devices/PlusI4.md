@@ -60,7 +60,7 @@ ota:
 
 ## Pins
 
-Not read yet: no stock dump of this device has been analysed. The four inputs and the LED are the part to map (the Plus i4 has no relay). Please report what you find; pins read from the firmware are listed as "not confirmed" until someone has measured them. The UART header of the board is not documented here either: look at the board and check it with a multimeter before you connect anything ([Recovery over UART](../recovery-uart.md)).
+Not read yet: no stock dump of this device has been analysed. The four inputs are the part to map (the Plus i4 has no relay); whether the board has a status LED is not checked either. Please report what you find; pins read from the firmware are listed as "not confirmed" until someone has measured them. The UART header of the board is not documented here either: look at the board and check it with a multimeter before you connect anything ([Recovery over UART](../recovery-uart.md)).
 
 ## Flash it
 
