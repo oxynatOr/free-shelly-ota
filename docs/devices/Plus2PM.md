@@ -101,7 +101,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## Notes for this device
 
-**Not tried on a device.** The profile is made from Shelly's package for the app name `Plus2PM`; nobody has flashed it yet. The stock partition table is in `partitions/Plus2PM-stock.csv`. The DevKit image `python ota.py devkit Plus2PM` is built for it, but it has not been run on a dev board either (so the state stays 🧪, see [DevKit](../devkit.md)).
+**Not tried on a device, and not on the bare dev board either.** The DevKit image boots Shelly's loader and the app, but the stock app restarts again and again (2026-10-30: 44 restarts in about 75 s, `UNABLE TO LOAD FACTORY DATA`, the blank `shelly` partition), so `send` finds nothing to talk to. A board with a filled `shelly` partition might run; that was not tried.
 
 **Pins.** Not mapped here. No stock dump of this device has been analysed here; pins read from firmware or templates are "not confirmed" until someone has measured them.
 
