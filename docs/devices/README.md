@@ -88,7 +88,7 @@ Gen1 has no profile and no device page yet, so `ota.py` cannot update these devi
 
 | Device | SoC | Flash | State | Tracking |
 | --- | --- | --- | --- | --- |
-| Shelly 1 | ESP8266 | 2 MB (not confirmed) | 🔬 | [#47](https://github.com/oxynatOr/free-shelly-ota/issues/47): ESPHome booted and updated itself on an ESP8266 dev board, not on a real Shelly yet |
+| Shelly 1 | ESP8266 | 2 MB ![unconfirmed](https://img.shields.io/badge/-unconfirmed-yellow.svg?style=flat-square) | 🔬 | [#47](https://github.com/oxynatOr/free-shelly-ota/issues/47): ESPHome booted and updated itself on an ESP8266 dev board, not on a real Shelly yet |
 
 ## Tested on a dev board
 
