@@ -69,6 +69,9 @@ The `esp32:` block is the tester's working one (the report did not include the `
 > [!TIP]
 > The [ESPHome device page](https://devices.esphome.io/devices/shelly-pm-mini-gen3/) has the pins and an example config. Replace its `esp32:` block with the one above, or `build` refuses it.
 
+> [!TIP]
+> **Keep a way into the device after the flash.** The update wipes NVS, so the old Wi-Fi is gone. Put your Wi-Fi in `wifi:` and, at least for the first flash, a fallback access point (`ap:`): if the network or a fixed IP is wrong, the device otherwise stays silent and only UART or USB helps, and there is no log to tell why. A fixed IP and no `ap:` are fine once the device is known to work. Not needed for the update itself. See the [guide](../guide.md#5-write-the-esphome-config).
+
 ## Pins
 
 From the running ESPHome config of the report:
