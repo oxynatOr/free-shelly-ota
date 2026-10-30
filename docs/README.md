@@ -9,6 +9,7 @@ not work. The README has the short version; these pages have the details.
 
 ## Where to start
 
+0. **New here?** Read the [Step-by-step guide](guide.md).
 1. **Find your device** on the [device pages](devices/README.md): the ESPHome config it needs, the exact commands and the log
    lines to look for.
 2. **Run the three steps** `fetch`, `build`, `send` ([Commands](commands.md)).
@@ -19,6 +20,8 @@ not work. The README has the short version; these pages have the details.
 
 | Page | What is in it |
 | --- | --- |
+| [Step-by-step guide](guide.md) | The whole way for a user: check, prepare, config, build, send, afterwards, way back |
+| [Developer guide](guide-developers.md) | Adding devices, testing, reports, profiles, tool changes, release |
 | [Device pages](devices/README.md) | One page per device: config, pins, commands, log lines, pitfalls |
 | [Commands](commands.md) | `fetch`, `build`, `send`, `restore`, `ble`, `log` and the rest, with all options |
 | [Bootloader and slots](bootloader-and-slots.md) | Why ESPHome's bootloader is shipped, `min_version`, why the app must land in slot 0 |
@@ -57,3 +60,4 @@ not work. The README has the short version; these pages have the details.
 | [CHANGELOG](../CHANGELOG.md) | What changed |
 | [Roadmap](../ROADMAP.md) | What is planned, and where testers can help |
 | [Credits](../CREDITS.md) | Whose work this tool builds on, and who tested it |
+| [Contributing](../CONTRIBUTING.md) | How to help: reports, rules, AI-assisted work, pull requests |

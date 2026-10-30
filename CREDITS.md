@@ -4,7 +4,7 @@
 
 [🧩 Projects](#projects) · [🙌 People](#people) · [🧱 Shelly and the tools underneath](#shelly-and-the-tools-underneath) · [❓ Missing from this list?](#missing-from-this-list)
 
-Almost everything this tool knows was found out by other people: how a Shelly package is built, how its bootloader and slots work, which pin does what on which device. This page says who, and what we took from them. The short version is in the [README](README.md#credits).
+This tool builds on the research of other projects, and much of what it knows about single devices comes from the people who tested them. The rest was worked out here and on real devices: the loader's boot state, the slot rule, `min_version`, the pin tables, the DevKit. This page says who contributed what. The short version is in the [README](README.md#credits).
 
 > [!TIP]
 > Please visit and support these projects and people.
