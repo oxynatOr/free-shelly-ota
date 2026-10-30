@@ -18,7 +18,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 5 profiles: ✅ 2 · 🟡 2 · 🔬 0 · 🧪 1
 
-| Device | Profile | Partition table | App slot size | State | Note |
+| Device&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Profile&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Partition&nbsp;table&nbsp;&nbsp; | App&nbsp;slot&nbsp;size&nbsp;&nbsp; | State | Note |
 | --- | --- | --- | --- | --- | --- |
 | [Plus Plug S (V2 hardware, Gen2)](PlusPlugS.md) | `PlusPlugS` | **`0x8000`** | `0x190000` | ✅ | Flashed without UART |
 | [Plus Plug IT (Gen2)](PlusPlugIT.md) | `PlusPlugIT` | **`0x8000`** | `0x190000` | ✅ | Flashed without UART |
@@ -30,7 +30,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 22 profiles: ✅ 8 · 🟡 5 · 🔬 0 · 🧪 9
 
-| Device | Profile | Partition table | App slot size | State | Note |
+| Device&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Profile&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Partition&nbsp;table&nbsp;&nbsp; | App&nbsp;slot&nbsp;size&nbsp;&nbsp; | State | Note |
 | --- | --- | --- | --- | --- | --- |
 | [Plug M Gen3](PlugMG3.md) | `PlugMG3` | `0x10000` | `0x2a0000` | ✅ |  |
 | [Plug S Gen3](PlugSG3.md) | `PlugSG3` | `0x10000` | `0x2a0000` | ✅ |  |
@@ -59,7 +59,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 17 profiles: ✅ 0 · 🟡 1 · 🔬 7 · 🧪 9
 
-| Device | Profile | Partition table | App slot size | State | Note |
+| Device&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Profile&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Partition&nbsp;table&nbsp;&nbsp; | App&nbsp;slot&nbsp;size&nbsp;&nbsp; | State | Note |
 | --- | --- | --- | --- | --- | --- |
 | [Power Strip 4 Gen4](PowerStrip.md) | `PowerStrip` | `0x10000` | `0x300000` | 🟡 | Boots, outlets not checked |
 | [Mini 1PM Gen4](Mini1PMG4.md) | `Mini1PMG4` | `0x10000` | `0x300000` | 🔬 |  |
