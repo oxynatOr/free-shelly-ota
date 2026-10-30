@@ -313,6 +313,17 @@ class OldLayoutTests(unittest.TestCase):
         sender.send(self.profile, self.zip, s.addr, port=0, dry_run=True, probe_wait=0.2, out=lambda m: None)
 
 
+class OldFirmwareMiniPMG3Tests(unittest.TestCase):
+    """Issue #113: a PM Mini Gen3 on stock 1.1.99 (loader 00040405) stayed silent after the ESPHome package."""
+
+    def test_package_refused_below_1_3_3(self):
+        prof = profile.load_profile("MiniPMG3")
+        for ver in ("1.1.99-minig3prod1", "1.3.2", "1.0.0"):
+            self.assertIn("old flash layout", sender.old_layout_text(prof, ver), ver)
+        for ver in ("1.3.3", "1.4.0", "2.0.1", "2.1.1", "2.2.0-beta2"):
+            self.assertIsNone(sender.old_layout_text(prof, ver), ver)
+
+
 class DownloadWatchTests(unittest.TestCase):
     def test_eta_follows_the_speed_of_the_window(self):
         w = sender.DownloadWatch(1000, window=60)
