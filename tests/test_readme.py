@@ -171,6 +171,15 @@ class DevicePageTests(unittest.TestCase):
             for name in self._profiles(text):
                 self.assertIn(BADGE[self.states[name]], text, f"{page.name}: {name}")
 
+    def test_generation_badge_matches_the_chip_badge(self):
+        """Gen2 is the classic ESP32, Gen3 the ESP32-C3, Gen4 the ESP32-C6: the overview groups its tables the same way."""
+        chips = {"2": "chip-ESP32-blue", "3": "chip-ESP32--C3-", "4": "chip-ESP32--C6-"}
+        for page in self.pages:
+            text = page.read_text(encoding="utf-8")
+            gens = re.findall(r"badge/gen-(\d)-", text)
+            self.assertEqual(len(gens), 1, page.name)
+            self.assertIn(chips[gens[0]], text, page.name)
+
     def test_a_page_that_links_the_esphome_device_page_has_it_as_a_row_of_the_table(self):
         """The link is in the Fact table once, as https://devices.esphome.io/devices/<slug>/, and every other link on the page goes to the same page."""
         for page in self.pages:
