@@ -12,55 +12,83 @@ checked yet, 🔬 = the OTA ran through on a dev board with the [DevKit image](.
 
 ## Devices
 
-| Device | Profile | Chip | Partition table | App slot size | State | Note |
-| --- | --- | --- | --- | --- | --- | --- |
-| [Plug M Gen3](PlugMG3.md) | `PlugMG3` | ESP32-C3 | `0x10000` | `0x2a0000` | ✅ |  |
-| [Plug M Gen3, beta layout](PlugMG3.md#beta-layout) | `PlugMG3-beta` | ESP32-C3 | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0-beta2 only |
-| [Plug S Gen3](PlugSG3.md) | `PlugSG3` | ESP32-C3 | `0x10000` | `0x2a0000` | ✅ |  |
-| [Plug PM Gen3 (no relay)](PlugPMG3.md) | `PlugPMG3` | ESP32-C3 | `0x10000` | `0x280000` | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
-| [H&T Gen3](HTG3.md) | `HTG3` | ESP32-C3 | **`0xf000`** | `0x280000` | ✅ |  |
-| [PM Mini Gen3 (no relay)](MiniPMG3.md) | `MiniPMG3` | ESP32-C3 | **`0xf000`** | `0x280000` | ✅ | Measures only, no relay |
-| [Multicolor Bulb E27 Gen3](RGBCCTBulbG3.md) | `RGBCCTBulbG3` | ESP32-C3 | `0x10000` | `0x280000` | ✅ |  |
-| [Duo Bulb Gen3](DuoBulbG3.md) | `DuoBulbG3` | ESP32-C3 | `0x10000` | `0x280000` | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
-| [Power Strip 4 Gen4](PowerStrip.md) | `PowerStrip` | ESP32-C6 | `0x10000` | `0x300000` | 🟡 | Boots, outlets not checked |
-| [Power Strip 4 Gen4 (Zigbee)](PowerStripZB.md) | `PowerStripZB` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
-| [Plus Plug S (V2 hardware, Gen2)](PlusPlugS.md) | `PlusPlugS` | **ESP32** | **`0x8000`** | `0x190000` | ✅ | Flashed without UART |
-| [Plus Plug IT (Gen2)](PlusPlugIT.md) | `PlusPlugIT` | **ESP32** | **`0x8000`** | `0x190000` | ✅ | Flashed without UART |
-| [The Pill](Pill.md) | `Pill` | ESP32-C3 | `0x10000` | `0x280000` | 🧪 |  |
-| [Mini 1 Gen3](Mini1G3.md) | `Mini1G3` | ESP32-C3 | **`0xf000`** | `0x2a0000` | ✅ |  |
-| [Mini 1PM Gen3](Mini1PMG3.md) | `Mini1PMG3` | ESP32-C3 | **`0xf000`** | `0x2a0000` | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
-| [Mini 1PM Gen4](Mini1PMG4.md) | `Mini1PMG4` | ESP32-C6 | `0x10000` | `0x300000` | 🔬 |  |
-| [Mini 1PM Gen4 (Zigbee)](Mini1PMG4.md#zigbee-variant) | `Mini1PMG4ZB` | ESP32-C6 | `0x10000` | `0x300000` | 🔬 |  |
-| [Plus i4 / i4 DC (Gen2)](PlusI4.md) | `PlusI4` | **ESP32** | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA; the inputs and the LED not checked |
-| [Plus Uni (Gen2)](PlusUni.md) | `PlusUni` | **ESP32** | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
-| [Pro 3EM (Gen2)](Pro3EM.md) | `Pro3EM` | **ESP32** | **`0x8000`** | `0x200000` | 🧪 |  |
-| [1 Gen3](S1G3.md) | `S1G3` | ESP32-C3 | **`0xf000`** | `0x2b0000` | ✅ |  |
-| [1PM Gen3](S1PMG3.md) | `S1PMG3` | ESP32-C3 | **`0xf000`** | `0x2c0000` | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
-| [2PM Gen3](S2PMG3.md) | `S2PMG3` | ESP32-C3 | `0x10000` | `0x2c0000` | ✅ | Relays and meter not reported |
-| [1L Gen3](S1LG3.md) | `S1LG3` | ESP32-C3 | `0x10000` | `0x2b0000` | 🧪 |  |
-| [2L Gen3](S2LG3.md) | `S2LG3` | ESP32-C3 | `0x10000` | `0x2b0000` | 🧪 |  |
-| [i4 Gen3](I4G3.md) | `I4G3` | ESP32-C3 | **`0xf000`** | `0x280000` | 🧪 |  |
-| [Dimmer Gen3](DimmerG3.md) | `DimmerG3` | ESP32-C3 | `0x10000` | `0x300000` | 🧪 |  |
-| [Dimmer 0/1-10V PM Gen3](Dimmer0110VPMG3.md) | `Dimmer0110VPMG3` | ESP32-C3 | **`0xf000`** | `0x280000` | 🧪 |  |
-| [EM Gen3](EMG3.md) | `EMG3` | ESP32-C3 | `0x10000` | `0x280000` | 🧪 |  |
-| [3EM-63 Gen3](S3EMG3.md) | `S3EMG3` | ESP32-C3 | `0x10000` | `0x280000` | 🧪 |  |
-| [Outdoor Plug S Gen3](OutdoorPlugSG3.md) | `OutdoorPlugSG3` | ESP32-C3 | `0x10000` | `0x2a0000` | 🧪 |  |
-| [1 Gen4](S1G4.md) | `S1G4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
-| [1PM Gen4](S1PMG4.md) | `S1PMG4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
-| [2PM Gen4](S2PMG4.md) | `S2PMG4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
-| [1L Gen4](S1LG4.md) | `S1LG4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
-| [2L Gen4](S2LG4.md) | `S2LG4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
-| [i4 Gen4](I4G4.md) | `I4G4` | ESP32-C6 | `0x10000` | `0x300000` | 🔬 | Only the beta 2.2.0-beta1 is in the update API |
-| [Dimmer Gen4](DimmerG4.md) | `DimmerG4` | ESP32-C6 | `0x10000` | `0x300000` | 🔬 |  |
-| [Dimmer 0/1-10V PM Gen4](Dimmer0110VPMG4.md) | `Dimmer0110VPMG4` | ESP32-C6 | `0x10000` | `0x300000` | 🔬 |  |
-| [EM Gen4](EMG4.md) | `EMG4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 | 16 MB flash layout: its DevKit image needs a 16 MB board |
-| [1 Mini Gen4](Mini1G4.md) | `Mini1G4` | ESP32-C6 | `0x10000` | `0x300000` | 🔬 |  |
-| [EM Mini Gen4](MiniEMG4.md) | `MiniEMG4` | ESP32-C6 | `0x10000` | `0x2f0000` | 🔬 |  |
-| [Plug US Gen4](PlugUSG4.md) | `PlugUSG4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
-| [Presence Gen4](PresenceG4.md) | `PresenceG4` | ESP32-C6 | `0x10000` | `0x300000` | 🧪 |  |
+Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6) · [Gen1](#gen1-esp8266-in-testing). Within a group the confirmed devices come first.
+
+### Gen2 (ESP32)
+
+5 profiles: ✅ 2 · 🟡 2 · 🔬 0 · 🧪 1
+
+| Device | Profile | Partition table | App slot size | State | Note |
+| --- | --- | --- | --- | --- | --- |
+| [Plus Plug S (V2 hardware, Gen2)](PlusPlugS.md) | `PlusPlugS` | **`0x8000`** | `0x190000` | ✅ | Flashed without UART |
+| [Plus Plug IT (Gen2)](PlusPlugIT.md) | `PlusPlugIT` | **`0x8000`** | `0x190000` | ✅ | Flashed without UART |
+| [Plus i4 / i4 DC (Gen2)](PlusI4.md) | `PlusI4` | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA; the inputs and the LED not checked |
+| [Plus Uni (Gen2)](PlusUni.md) | `PlusUni` | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
+| [Pro 3EM (Gen2)](Pro3EM.md) | `Pro3EM` | **`0x8000`** | `0x200000` | 🧪 |  |
+
+### Gen3 (ESP32-C3)
+
+22 profiles: ✅ 8 · 🟡 5 · 🔬 0 · 🧪 9
+
+| Device | Profile | Partition table | App slot size | State | Note |
+| --- | --- | --- | --- | --- | --- |
+| [Plug M Gen3](PlugMG3.md) | `PlugMG3` | `0x10000` | `0x2a0000` | ✅ |  |
+| [Plug S Gen3](PlugSG3.md) | `PlugSG3` | `0x10000` | `0x2a0000` | ✅ |  |
+| [H&T Gen3](HTG3.md) | `HTG3` | **`0xf000`** | `0x280000` | ✅ |  |
+| [PM Mini Gen3 (no relay)](MiniPMG3.md) | `MiniPMG3` | **`0xf000`** | `0x280000` | ✅ | Measures only, no relay |
+| [Multicolor Bulb E27 Gen3](RGBCCTBulbG3.md) | `RGBCCTBulbG3` | `0x10000` | `0x280000` | ✅ |  |
+| [Mini 1 Gen3](Mini1G3.md) | `Mini1G3` | **`0xf000`** | `0x2a0000` | ✅ |  |
+| [1 Gen3](S1G3.md) | `S1G3` | **`0xf000`** | `0x2b0000` | ✅ |  |
+| [2PM Gen3](S2PMG3.md) | `S2PMG3` | `0x10000` | `0x2c0000` | ✅ | Relays and meter not reported |
+| [Plug M Gen3, beta layout](PlugMG3.md#beta-layout) | `PlugMG3-beta` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0-beta2 only |
+| [Plug PM Gen3 (no relay)](PlugPMG3.md) | `PlugPMG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
+| [Duo Bulb Gen3](DuoBulbG3.md) | `DuoBulbG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
+| [Mini 1PM Gen3](Mini1PMG3.md) | `Mini1PMG3` | **`0xf000`** | `0x2a0000` | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
+| [1PM Gen3](S1PMG3.md) | `S1PMG3` | **`0xf000`** | `0x2c0000` | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
+| [The Pill](Pill.md) | `Pill` | `0x10000` | `0x280000` | 🧪 |  |
+| [1L Gen3](S1LG3.md) | `S1LG3` | `0x10000` | `0x2b0000` | 🧪 |  |
+| [2L Gen3](S2LG3.md) | `S2LG3` | `0x10000` | `0x2b0000` | 🧪 |  |
+| [i4 Gen3](I4G3.md) | `I4G3` | **`0xf000`** | `0x280000` | 🧪 |  |
+| [Dimmer Gen3](DimmerG3.md) | `DimmerG3` | `0x10000` | `0x300000` | 🧪 |  |
+| [Dimmer 0/1-10V PM Gen3](Dimmer0110VPMG3.md) | `Dimmer0110VPMG3` | **`0xf000`** | `0x280000` | 🧪 |  |
+| [EM Gen3](EMG3.md) | `EMG3` | `0x10000` | `0x280000` | 🧪 |  |
+| [3EM-63 Gen3](S3EMG3.md) | `S3EMG3` | `0x10000` | `0x280000` | 🧪 |  |
+| [Outdoor Plug S Gen3](OutdoorPlugSG3.md) | `OutdoorPlugSG3` | `0x10000` | `0x2a0000` | 🧪 |  |
+
+### Gen4 (ESP32-C6)
+
+17 profiles: ✅ 0 · 🟡 1 · 🔬 7 · 🧪 9
+
+| Device | Profile | Partition table | App slot size | State | Note |
+| --- | --- | --- | --- | --- | --- |
+| [Power Strip 4 Gen4](PowerStrip.md) | `PowerStrip` | `0x10000` | `0x300000` | 🟡 | Boots, outlets not checked |
+| [Mini 1PM Gen4](Mini1PMG4.md) | `Mini1PMG4` | `0x10000` | `0x300000` | 🔬 |  |
+| [Mini 1PM Gen4 (Zigbee)](Mini1PMG4.md#zigbee-variant) | `Mini1PMG4ZB` | `0x10000` | `0x300000` | 🔬 |  |
+| [i4 Gen4](I4G4.md) | `I4G4` | `0x10000` | `0x300000` | 🔬 | Only the beta 2.2.0-beta1 is in the update API |
+| [Dimmer Gen4](DimmerG4.md) | `DimmerG4` | `0x10000` | `0x300000` | 🔬 |  |
+| [Dimmer 0/1-10V PM Gen4](Dimmer0110VPMG4.md) | `Dimmer0110VPMG4` | `0x10000` | `0x300000` | 🔬 |  |
+| [1 Mini Gen4](Mini1G4.md) | `Mini1G4` | `0x10000` | `0x300000` | 🔬 |  |
+| [EM Mini Gen4](MiniEMG4.md) | `MiniEMG4` | `0x10000` | `0x2f0000` | 🔬 |  |
+| [Power Strip 4 Gen4 (Zigbee)](PowerStripZB.md) | `PowerStripZB` | `0x10000` | `0x300000` | 🧪 |  |
+| [1 Gen4](S1G4.md) | `S1G4` | `0x10000` | `0x300000` | 🧪 |  |
+| [1PM Gen4](S1PMG4.md) | `S1PMG4` | `0x10000` | `0x300000` | 🧪 |  |
+| [2PM Gen4](S2PMG4.md) | `S2PMG4` | `0x10000` | `0x300000` | 🧪 |  |
+| [1L Gen4](S1LG4.md) | `S1LG4` | `0x10000` | `0x300000` | 🧪 |  |
+| [2L Gen4](S2LG4.md) | `S2LG4` | `0x10000` | `0x300000` | 🧪 |  |
+| [EM Gen4](EMG4.md) | `EMG4` | `0x10000` | `0x300000` | 🧪 | 16 MB flash layout: its DevKit image needs a 16 MB board |
+| [Plug US Gen4](PlugUSG4.md) | `PlugUSG4` | `0x10000` | `0x300000` | 🧪 |  |
+| [Presence Gen4](PresenceG4.md) | `PresenceG4` | `0x10000` | `0x300000` | 🧪 |  |
 
 The partition table offset goes into your ESPHome config as `CONFIG_PARTITION_TABLE_OFFSET`; `build` refuses a config that
 does not match the profile. Details per device are on its page.
+
+### Gen1 (ESP8266), in testing
+
+Gen1 has no profile and no device page yet, so `ota.py` cannot update these devices. Shelly's Gen1 update works differently (ESP8266, rBoot, no ESP-IDF partition table), and the way back to Shelly's firmware is different too. What is known and what is still open is in [Research: Shelly Gen1](../research/gen1.md).
+
+| Device | SoC | Flash | State | Tracking |
+| --- | --- | --- | --- | --- |
+| Shelly 1 | ESP8266 | 2 MB (not confirmed) | 🔬 | [#47](https://github.com/oxynatOr/free-shelly-ota/issues/47): ESPHome booted and updated itself on an ESP8266 dev board, not on a real Shelly yet |
 
 ## Tested on a dev board
 
@@ -83,8 +111,6 @@ These profiles went through the whole update on a dev board with the [DevKit ima
 - **Classic ESP32 (Gen2):** the [Plus i4](PlusI4.md), [Plus Plug S](PlusPlugS.md), [Plus Plug IT](PlusPlugIT.md), [Plus Uni](PlusUni.md) and [Pro 3EM](Pro3EM.md). Partition table at
   `0x8000`, bootloader at `0x1000`, and the ESPHome build needs the 80 MHz flash frequency. Flash is 4 MB, except on the Pro 3EM
   (16 MB, so `flash_size: 16MB`, and an extra `emdata` partition).
-- **Gen4 / ESP32-C6:** [Power Strip](PowerStrip.md), [Power Strip (Zigbee)](PowerStripZB.md) and
-  [Mini 1PM Gen4](Mini1PMG4.md) have the largest app slots (`0x300000`).
 - **Bootloader `min_version` 1.0.9:** every profile sets it, because a device that runs Shelly's loader 1.0.3 would otherwise skip
   ESPHome's bootloader (the default is one patch above the official loader, 1.0.3; a test checks that no profile lacks it). Background:
   [Bootloader and slots](../bootloader-and-slots.md).

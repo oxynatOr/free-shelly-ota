@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- The device overview ([docs/devices](docs/devices/README.md#devices)) is grouped by generation (Gen2, Gen3, Gen4), the confirmed devices first in each group, and has a short Gen1 (ESP8266) section for what is being tested. The `Chip` column is gone from the overview (the group names the chip), the root README table is sorted the same way. Not breaking: the anchor `#devices` and every page URL stay. The pages of `PlugMG3`, `PlusPlugS` and `Mini1PMG4` try extra badges (generation, package, UART, variant).
 - `PlusI4` (Plus i4 / i4 DC) is partly checked (🟡) after the first device report ([#106](https://github.com/oxynatOr/free-shelly-ota/issues/106), thanks to [niki11euro](https://github.com/niki11euro)): flashed over OTA from stock 1.7.6 (loader 1.0.2, replaced; the target slot was 1 until one `restore`), and the unit shows up in Home Assistant. Inputs, LED and a later ESPHome OTA are not reported yet. Documentation only, not a breaking change: no profile, package or command changed.
 
 ### Added

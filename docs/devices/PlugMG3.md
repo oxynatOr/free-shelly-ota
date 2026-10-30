@@ -4,7 +4,11 @@
 
 ![State: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
 ![State of the beta layout: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
+![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
+![Package: 2.1.0](https://img.shields.io/badge/package-2.1.0-lightgrey.svg?style=flat-square)
+![UART: not needed](https://img.shields.io/badge/UART-not%20needed-brightgreen.svg?style=flat-square)
+![Variant: beta layout](https://img.shields.io/badge/variant-beta%20layout-orange.svg?style=flat-square)
 
 [🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [📍 Pins](#pins) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
 

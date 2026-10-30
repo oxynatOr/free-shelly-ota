@@ -52,24 +52,24 @@ real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and th
 
 | Device | Profile | Chip | State | Note |
 | --- | --- | --- | --- | --- |
+| Plus Plug S (V2 hardware, Gen2) | [`PlusPlugS`](docs/devices/PlusPlugS.md) | ESP32 | ✅ | Flashed without UART |
+| Plus Plug IT (Gen2) | [`PlusPlugIT`](docs/devices/PlusPlugIT.md) | ESP32 | ✅ | Flashed without UART |
+| Plus i4 / i4 DC (Gen2) | [`PlusI4`](docs/devices/PlusI4.md) | ESP32 | 🟡 | Flashed over OTA; the inputs and the LED not checked |
+| Plus Uni (Gen2) | [`PlusUni`](docs/devices/PlusUni.md) | ESP32 | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
 | Plug M Gen3 | [`PlugMG3`](docs/devices/PlugMG3.md) | ESP32&#8209;C3 | ✅ | |
-| Plug M Gen3, beta layout | [`PlugMG3-beta`](docs/devices/PlugMG3.md#beta-layout) | ESP32&#8209;C3 | 🟡 | Shelly 2.2.0-beta2 only |
 | Plug S Gen3 | [`PlugSG3`](docs/devices/PlugSG3.md) | ESP32&#8209;C3 | ✅ | |
-| Plug PM Gen3 | [`PlugPMG3`](docs/devices/PlugPMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
 | H&T Gen3 | [`HTG3`](docs/devices/HTG3.md) | ESP32&#8209;C3 | ✅ | |
 | PM Mini Gen3 | [`MiniPMG3`](docs/devices/MiniPMG3.md) | ESP32&#8209;C3 | ✅ | Measures only, no relay |
 | Multicolor Bulb E27 Gen3 | [`RGBCCTBulbG3`](docs/devices/RGBCCTBulbG3.md) | ESP32&#8209;C3 | ✅ | |
-| Duo Bulb Gen3 | [`DuoBulbG3`](docs/devices/DuoBulbG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
-| Power Strip 4 Gen4 | [`PowerStrip`](docs/devices/PowerStrip.md) | ESP32&#8209;C6 | 🟡 | Boots, outlets not checked |
-| Plus Plug S (V2 hardware, Gen2) | [`PlusPlugS`](docs/devices/PlusPlugS.md) | ESP32 | ✅ | Flashed without UART |
-| Plus Plug IT (Gen2) | [`PlusPlugIT`](docs/devices/PlusPlugIT.md) | ESP32 | ✅ | Flashed without UART |
 | Mini 1 Gen3 | [`Mini1G3`](docs/devices/Mini1G3.md) | ESP32&#8209;C3 | ✅ | |
 | 1 Gen3 | [`S1G3`](docs/devices/S1G3.md) | ESP32&#8209;C3 | ✅ | |
-| Mini 1PM Gen3 | [`Mini1PMG3`](docs/devices/Mini1PMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
-| Plus i4 / i4 DC (Gen2) | [`PlusI4`](docs/devices/PlusI4.md) | ESP32 | 🟡 | Flashed over OTA; the inputs and the LED not checked |
-| Plus Uni (Gen2) | [`PlusUni`](docs/devices/PlusUni.md) | ESP32 | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
-| 1PM Gen3 | [`S1PMG3`](docs/devices/S1PMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
 | 2PM Gen3 | [`S2PMG3`](docs/devices/S2PMG3.md) | ESP32&#8209;C3 | ✅ | Relays and meter not reported |
+| Plug M Gen3, beta layout | [`PlugMG3-beta`](docs/devices/PlugMG3.md#beta-layout) | ESP32&#8209;C3 | 🟡 | Shelly 2.2.0-beta2 only |
+| Plug PM Gen3 | [`PlugPMG3`](docs/devices/PlugPMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
+| Duo Bulb Gen3 | [`DuoBulbG3`](docs/devices/DuoBulbG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
+| Mini 1PM Gen3 | [`Mini1PMG3`](docs/devices/Mini1PMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
+| 1PM Gen3 | [`S1PMG3`](docs/devices/S1PMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
+| Power Strip 4 Gen4 | [`PowerStrip`](docs/devices/PowerStrip.md) | ESP32&#8209;C6 | 🟡 | Boots, outlets not checked |
 
 > - ✅ The whole chain ran on a real device.
 > - 🟡 Flashed on a real device, but part of the chain or of the function is not checked yet (see the Note column).
