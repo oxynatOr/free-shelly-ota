@@ -30,6 +30,22 @@ The chip family must match and the flash must hold the whole partition table of 
 | `PlusPlugS` | Plus Plug S | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
 | `PlusPlugIT` | Plus Plug IT | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
 | `Pro3EM` | Pro 3EM | ESP32 | 16 MiB | classic ESP32 board with 16 MB (rare) |
+| `PlugUS` | Plus Plug US | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
+| `Plus1` | Plus 1 | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
+| `Plus1PM` | Plus 1PM | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
+| `Plus2PM` | Plus 2PM | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
+| `Plus1Mini` | Plus 1 Mini | ESP32-C3 | 4 MiB | ESP32-C3 board with 4 MB |
+| `Plus1PMMini` | Plus 1PM Mini | ESP32-C3 | 4 MiB | ESP32-C3 board with 4 MB |
+| `PlusPMMini` | Plus PM Mini | ESP32-C3 | 4 MiB | ESP32-C3 board with 4 MB |
+| `PlusPlugUK` | Plus Plug UK | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
+| `PlusRGBWPM` | Plus RGBW PM | ESP32 | 4 MiB | classic ESP32 board, 4 MB |
+| `Pro1` | Pro 1 | ESP32 | 8 MiB | classic ESP32 board with 8 MB |
+| `Pro1PM` | Pro 1PM | ESP32 | 8 MiB | classic ESP32 board with 8 MB |
+| `Pro2` | Pro 2 | ESP32 | 8 MiB | classic ESP32 board with 8 MB |
+| `Pro2PM` | Pro 2PM | ESP32 | 8 MiB | classic ESP32 board with 8 MB |
+| `Pro3` | Pro 3 | ESP32 | 8 MiB | classic ESP32 board with 8 MB |
+| `Pro4PM` | Pro 4PM | ESP32 | 8 MiB | classic ESP32 board with 8 MB |
+| `ProRGBWWPM` | Pro RGBWW PM | ESP32 | 8 MiB | classic ESP32 board with 8 MB |
 | `PlugMG3` | Plug M Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
 | `PlugSG3` | Plug S Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
 | `PlugPMG3` | Plug PM Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |

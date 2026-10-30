@@ -2,8 +2,8 @@
 
 [← README](../../README.md) · [Documentation](../README.md) · [Roadmap](../../ROADMAP.md)
 
-Working notes for [issue #47](https://github.com/oxynatOr/free-shelly-ota/issues/47) (Shelly 1, Gen1). Nothing here is built or tested on a device:
-it is what the official package and public sources show, and what is still open. Not a promise, and not part of the supported devices.
+Working notes for [issue #47](https://github.com/oxynatOr/free-shelly-ota/issues/47) (Shelly 1, Gen1). Nothing here has run on a real Shelly: the first sections
+are what the official package and public sources show, and [Results on a dev board](#results-on-a-dev-board) is what an ESP8266 dev board did (October 2026). Not a promise, and not part of the supported devices.
 
 ## Why it matters
 
@@ -72,6 +72,33 @@ The Shelly app is **Mongoose OS** (paths such as `/mongoose-os/platforms/esp8266
 5. **Later ESPHome OTAs.** After the first install, ESPHome's OTA on ESP8266 needs free flash next to the sketch; whether the rboot layout leaves it is open.
 6. **Gen1 ZIP rules.** `will not update %s with %.*s` and the manifest `name` (`switch1`): what must match.
 7. **Log.** Gen1 has a debug setting; whether it can send the log over UDP like Gen2 does (for progress and the slot) is not known.
+
+## Results on a dev board
+
+All runs used a D1 mini (ESP8266, 4 MB flash used as 2 MB) with a stock image built from the official package of the model (rBoot, both app slots, file system, boot config, as the package lays them out). The board was joined to the device's own access point and the update was started with `http://<ip>/ota?url=` against a web server on the PC. None of this ran on a real Shelly, and the board has no relay, meter or sensor.
+
+**What the experiments showed (answers to the open questions above):**
+
+- **Question 1, ESPHome from an rBoot slot: yes.** A sketch linked for the slot (`irom` origin `0x40200000` plus the slot offset plus `0x10`) starts from rBoot on the D1 mini. It needs its own boot confirmation: rBoot marks a new slot unconfirmed (flag in the config sector) and reverts after a few failed starts, so the running app writes the confirmation itself some seconds after boot.
+- **Question 3, signatures: not checked by the 1.14 stock updater** for the packages used here. It takes an unsigned ZIP whose manifest is complete (`name`, `platform`, `version`, `build_id`, `parts` with sizes and both hashes). The ZIP entries must be stored, not compressed (`Compressed ZIP files are not supported`).
+- **The flip.** The stock updater always writes to the slot that is not running, and ESPHome lives in slot 0. So the first package lands in slot 1, does not confirm and falls back; a second package that carries the stock app moves it to slot 1; the third package then lands in slot 0. The sequence ESPHome ZIP, stock ZIP, ESPHome ZIP ends with ESPHome running from slot 0 and the stock firmware in slot 1.
+- **Where the rBoot config is.** The config sector is at `0x1000` on the Shelly 1, 1PM, 1L, 2, 2.5, EM, 3EM, i3 and Uni, and at `0x7000` on the Plug S, Plug US, Plug 2, RGBW2, Bulb, Duo, Vintage, Dimmer, Dimmer 2 and H&T. A build that confirms at `0x1000` does not confirm on the second group.
+- **Prototype.** The runs used a prototype ESPHome component (not part of this repository, no licence chosen yet) that takes the layout from a partition CSV in the format of the Gen2+ stock tables, so the same kind of file describes every model. It receives a later image over TCP and installs it through a small routine in IRAM.
+
+**Per model** (stock image of the model, chain: ESPHome ZIP, stock ZIP, ESPHome ZIP):
+
+| Model | Config sector | Result |
+| --- | --- | --- |
+| Shelly 1, 1PM, 2.5, i3, Uni | `0x1000` | chain OK; boot confirmation read back on the Shelly 1 |
+| Plug S, Plug US, RGBW2, Bulb, Duo, Vintage, Dimmer, Dimmer 2 | `0x7000` | chain OK; the config sector afterwards shows current slot 0, previous slot 1, unconfirmed flag 0, attempts 0, and `0x1000` stays empty |
+| 1L, 2, EM, 3EM | `0x1000` | the stock image boot-loops on the bare board after switching the debug output to UART 1; needs the device hardware |
+| H&T | `0x7000` | the stock image stays silent on the bare board; see below |
+| Plug 2 | `0x7000`, slots at `0x100000` / `0x200000` | the stock boots; the ESPHome sketch is accepted by the updater and written to slot 0, then crashes right after rBoot starts it (`Fatal exception (0)`, IllegalInstruction). The SDK cache mapping of the second megabyte is not set. Same open problem as slot 1 of the Shelly 1 |
+| first Plug (SHPLG-1) | | the package is platform `cc3200` (Texas Instruments), not ESP8266: out of scope |
+
+**H&T pins (not confirmed).** Read from the firmware image with Ghidra, not measured: the ESP8266 talks to an STM co-processor over a bit-banged SPI (MISO `12`, MOSI `13`, SCLK `14`, CS `15`), `GPIO4` looks like its BOOT0 and `GPIO5` its reset. The temperature, humidity and button are not on the ESP8266; the STM reads them and speaks a framed protocol (sync byte, command, length, payload, XOR checksum, ACK `0x79` / NACK `0x1F`). An ESPHome firmware for the H&T would have to speak it.
+
+**Still open:** a real Shelly (the reporter of #47 has a Shelly 1 and UART access), the second megabyte for the Plug 2, the models that boot-loop on the bare board, a later ESPHome-to-ESPHome update on the real flash layout, and a licence for the component.
 
 ## A possible plan
 
