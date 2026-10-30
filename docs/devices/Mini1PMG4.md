@@ -3,7 +3,10 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
+![Generation: 4](https://img.shields.io/badge/gen-4-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C6](https://img.shields.io/badge/chip-ESP32--C6-blue.svg?style=flat-square)
+![Package: 2.1.0](https://img.shields.io/badge/package-2.1.0-lightgrey.svg?style=flat-square)
+![Variant: Zigbee](https://img.shields.io/badge/variant-Zigbee-orange.svg?style=flat-square)
 
 [🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [📍 Pins](#pins) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
 

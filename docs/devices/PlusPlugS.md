@@ -3,7 +3,10 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
+![Generation: 2](https://img.shields.io/badge/gen-2-lightgrey.svg?style=flat-square)
 ![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
+![Package: 1.7.5](https://img.shields.io/badge/package-1.7.5-lightgrey.svg?style=flat-square)
+![UART: not needed](https://img.shields.io/badge/UART-not%20needed-brightgreen.svg?style=flat-square)
 
 [🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [📍 Pins](#pins) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
 

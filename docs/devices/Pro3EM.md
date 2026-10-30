@@ -3,7 +3,9 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![Generation: 2](https://img.shields.io/badge/gen-2-lightgrey.svg?style=flat-square)
 ![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
+![Flash: 16 MB](https://img.shields.io/badge/flash-16%20MB-orange.svg?style=flat-square)
 
 [🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
 
