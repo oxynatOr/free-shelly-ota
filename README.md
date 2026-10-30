@@ -9,7 +9,7 @@
 [![Issues][issues-shield]][issues-url]
 [![License][license-shield]][license-url]
 
-[Supported devices](#supported-devices) · [Download](https://github.com/oxynatOr/free-shelly-ota/releases) · [Quick start](#quick-start) · [Documentation](#documentation) · [Request a device](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml)
+[Supported devices](#supported-devices) · [Download](https://github.com/oxynatOr/free-shelly-ota/releases) · [Quick start](#quick-start) · [Step-by-step guide](docs/guide.md) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Request a device](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml)
 
 `free-shelly-ota` is a command-line tool for **Shelly Gen2 (ESP32)**, **Gen3 (ESP32-C3)** and **Gen4 (ESP32-C6)** devices.
 It turns your ESPHome firmware into an update the Shelly accepts, and sends it over the network:
@@ -77,10 +77,21 @@ real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and th
 > - 🧪 The package builds and verifies, but nobody has flashed it yet.
 
 
+## What you need
+
+- A Shelly of a supported model that still runs **Shelly's own firmware**, and its IP address (or this PC on its access point).
+- **Python 3.10 or newer** on a PC that the Shelly can reach on your network.
+- **ESPHome** (the `esphome` command) or **Docker** to compile your firmware.
+- **A way back:** a UART adapter ([build one from a dev board](docs/recovery-uart.md#build-your-own-uart-adapter)). A bad flash can only be fixed over UART.
+
+The rule that makes it work: the package ships **ESPHome's bootloader**, and the installer has to write the app to **slot 0** ([why](docs/bootloader-and-slots.md)). `send` checks both and tells you what to do.
+
+
 ## Quick start
 
-**Download.** Get the [latest release](https://github.com/oxynatOr/free-shelly-ota/releases) (*Source code (zip)*) and unpack it, or
-run `git clone https://github.com/oxynatOr/free-shelly-ota`. It is a Python tool, nothing to install besides `pip install -r requirements.txt` (step 3).
+New to this? The [Step-by-step guide](docs/guide.md) covers everything from checking the device to the way back. The short version:
+
+**Download.** Get the [latest release](https://github.com/oxynatOr/free-shelly-ota/releases) (*Source code (zip)*) and unpack it, or run `git clone https://github.com/oxynatOr/free-shelly-ota`, then `pip install -r requirements.txt`.
 
 **1. Write your ESPHome config.** It must use Shelly's partition table and offset. Copy `partitions/<Profile>-stock.csv` from
 this repository next to your YAML (one per device; the device page lists the offset). Without it `build` refuses.
@@ -99,41 +110,28 @@ ota:
     allow_partition_access: true
 ```
 
-**2. Compile it.**
+**2. Compile and pack.** `--compile` runs ESPHome for you (the `esphome` command, else Docker; the first Docker compile downloads the toolchain, see [Compile](docs/commands.md#compile)).
 
 ```
-esphome compile my-plug.yaml
-```
-
-Or let the tool do it in step 3 with `--compile my-plug.yaml`: it uses the `esphome` command, else Docker (Docker Desktop has to be running; the first compile downloads the toolchain into a Docker volume and takes a while, later ones are fast, see [Compile](docs/commands.md#compile)).
-
-ESPHome writes two files you need: `firmware.ota.bin` (the app) and `firmware.factory.bin`. Below they are called
-`app.ota.bin` and `app.factory.bin`. With `--esphome-factory` the package also carries ESPHome's bootloader, so later
-ESPHome OTAs work without extra steps — see [Bootloader and slots](docs/bootloader-and-slots.md).
-
-**3. Pack and send.**
-
-```
-pip install -r requirements.txt
-
 # download the official package
 python ota.py fetch PlugMG3 --insecure
 
-# put your app into it; the ZIP goes to out/
-python ota.py build PlugMG3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml my-plug.yaml
+# compile your config and put the app into the package; the ZIP goes to out/
+python ota.py build PlugMG3 --compile my-plug.yaml
+```
 
-# send it to the device; progress and the device's confirmation are shown
+Compiled it yourself? Give `build` the two files ESPHome wrote: `python ota.py build PlugMG3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml my-plug.yaml`.
+
+**3. Send it.**
+
+```
 python ota.py send PlugMG3 out/PlugMG3-app-<date>.zip --ip <device IP>
 ```
 
 - `PlugMG3` is the example; use your device's profile from the table above.
-- `--insecure` is needed because Shelly's servers use a private CA, so TLS verification fails; the hash in the download URL
-  still guards against transfer errors ([`fetch`](docs/commands.md#fetch)).
-- Without `--ip`, `send` talks to `192.168.33.1`, the Shelly's own access point. Add `--dry-run` first to check the device
-  without sending anything ([`send`](docs/commands.md#send)).
-- **A device without Wi-Fi** (the Zigbee firmware opens no access point and has no network yet): give it one over Bluetooth first with
-  `python ota.py ble wifi <SSID> -`, which asks for the password and prints the address to use as `--ip`. It needs `pip install bleak` and a Bluetooth LE
-  adapter ([`ble`](docs/commands.md#ble); seen on one Zigbee unit on a dev board, not yet on a real device).
+- `--insecure` is needed because Shelly's servers use a private CA; the hash in the download URL still guards against transfer errors ([`fetch`](docs/commands.md#fetch)).
+- Add `--dry-run` first to check the device without sending anything ([`send`](docs/commands.md#send)).
+- A device without Wi-Fi (Zigbee firmware) needs [`ble wifi`](docs/commands.md#ble) first.
 
 > [!CAUTION]
 > The package wipes NVS (Wi-Fi and settings), and a package built from your config can contain your Wi-Fi password.
@@ -141,51 +139,42 @@ python ota.py send PlugMG3 out/PlugMG3-app-<date>.zip --ip <device IP>
 > hands the ZIP to anyone on your network who asks for its exact file name, so use a network you trust.
 
 
-## Another device?
+## Documentation
 
-A device needs a **profile**, which is made from the official OTA package and takes a few minutes. What takes time is a
-hardware test: nobody can say a device works until someone has flashed one.
+Start with the [Step-by-step guide](docs/guide.md). The [documentation index](docs/README.md) lists everything; the pages you will need most:
 
-- **Ask for it:** [request the device](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml). It helps
-  most if you offer to test it.
-- **Make the profile yourself:** `python ota.py add-device <official.zip>` creates it from an official package
-  (`--parent <base device>` for a variant, e.g. the Zigbee version). What a profile contains and what to do next:
-  [Device profiles](devices/README.md#adding-a-profile), [`add-device`](docs/commands.md#add-device).
-- **Tell us how it went,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml)
-  (choose *Other* for a profile you made yourself) and attach the file `send --log-file` writes.
+| Page | What is in it |
+| --- | --- |
+| [Step-by-step guide](docs/guide.md) | The whole way: check, prepare, config, build, send, afterwards, failure, way back |
+| [Device pages](docs/devices) | One page per device: config, pins, commands, log lines, pitfalls |
+| [Commands](docs/commands.md) | `fetch`, `build`, `send`, `restore`, `ble`, `log` and the rest, with all options |
+| [Troubleshooting](docs/troubleshooting.md) | Header errors, empty log, battery devices, eFuse, power cycle |
+| [Recovery over UART](docs/recovery-uart.md) | Back to Shelly OS with `esptool` |
+| [Bootloader and slots](docs/bootloader-and-slots.md) | Why ESPHome's bootloader is shipped, `min_version`, why the app must land in slot 0 |
+| [Developer guide](docs/guide-developers.md) | Adding devices, testing, reports, release |
+| [CHANGELOG](CHANGELOG.md) · [Roadmap](ROADMAP.md) | What changed, what is planned and where testers can help |
+
+
+## Contributing and reports
+
+Your device is not in the table, or you flashed one? Please tell us, also when it worked. A device needs a **profile** (made from the official package, takes minutes); what takes time is a hardware test.
+
+- [Request a device](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml); it helps most if you offer to test it.
+- [Open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml) and attach the file `send --log-file` writes. [Report a bug](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=bug.yml) if the tool misbehaved.
+- Make the profile yourself: `python ota.py add-device <official.zip>`, see [Device profiles](devices/README.md#adding-a-profile).
+- Code, docs and AI-assisted work are welcome when they are checked: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 > [!CAUTION]
 > Please do not attach flash dumps or built ZIPs to an issue: they can contain your Wi-Fi password and per-device secrets.
 
 
-## Documentation
-
-| Page | What is in it |
-| --- | --- |
-| [Device pages](docs/devices) | One page per device: config, commands, log lines, pitfalls |
-| [Commands](docs/commands.md) | `fetch`, `build`, `send`, `restore`, `ble`, `log` and the rest, with all options |
-| [Bootloader and slots](docs/bootloader-and-slots.md) | Why ESPHome's bootloader is shipped, `min_version`, why the app must land in slot 0 |
-| [Troubleshooting](docs/troubleshooting.md) | Header errors, empty log, battery devices, eFuse, power cycle |
-| [Recovery over UART](docs/recovery-uart.md) | Back to Shelly OS with `esptool` |
-| [Credential check](docs/credential-check.md) | Secrets inside images and packages |
-| [Versions](docs/versions.md) | Tool version, build report, profile revisions |
-| [CHANGELOG](CHANGELOG.md) | What changed |
-| [Roadmap](ROADMAP.md) | What is planned, and where testers can help |
-
-
 ## Credits
 
-Almost everything this tool knows was found out by other people. Please visit and support their projects. [CREDITS.md](CREDITS.md) has the same list with more detail, and names the people who tested devices and sent reports.
-
-| Project | License | What we learned from it |
-| --- | --- | --- |
-| [tasmota/mgos32-to-tasmota32](https://github.com/tasmota/mgos32-to-tasmota32) | GPL-3.0 | Converting a Shelly OTA ZIP so the stock updater accepts third-party firmware |
-| [inventor7777/ESPHome-Shelly-Plus-Plug-US](https://github.com/inventor7777/ESPHome-Shelly-Plus-Plug-US) | MIT | Replacing only the app image in Shelly's ZIP; the partition table at `0x10000`; the follow-up bootloader step |
-| [automatous-io/shelly-gen4-esphome](https://github.com/automatous-io/shelly-gen4-esphome) | Apache-2.0 | Gen4 (ESP32-C6) partition layout, the A/B slot rule, install documentation |
-| [jjanssen95](https://github.com/jjanssen95), [815rx1](https://github.com/815rx1), [yasdfgr](https://github.com/yasdfgr) | – | Device reports with logs: Mini 1 Gen3, Plug M Gen3 (the 2.1.0 package, loader 1.0.2) and Plus Uni (loader 1.0.3) |
-| [imsandli](https://github.com/imsandli) | – | The first external device report (PM Mini Gen3): a successful OTA run with logs, the BL0942 RX pull-up and voltage calibration, the idea for the reachability check |
-| Shelly / Allterco Robotics | – | The official OTA packages and update API (not redistributed here) |
-| [ESPHome](https://esphome.io), Espressif (esptool, ESP-IDF) | – | The firmware framework and tooling everything builds on |
+This project builds on the research of others: [tasmota/mgos32-to-tasmota32](https://github.com/tasmota/mgos32-to-tasmota32) (GPL-3.0),
+[inventor7777/ESPHome-Shelly-Plus-Plug-US](https://github.com/inventor7777/ESPHome-Shelly-Plus-Plug-US) (MIT) and
+[automatous-io/shelly-gen4-esphome](https://github.com/automatous-io/shelly-gen4-esphome) (Apache-2.0). Please visit and support them.
+The tool's own findings (the loader's boot state, the slot rule, `min_version`, the pin tables, the DevKit) were worked out here and on real
+devices, with the help of the people who tested and reported. [CREDITS.md](CREDITS.md) names them all and says what each contributed.
 
 
 ## License
