@@ -6,4 +6,5 @@ app_ptn: app_0
 app_slot_size: 0x280000   # app_0 @0x20000
 pt_offset: 0xf000   # partition table address (default 0x10000)
 boot_min_version: "1.0.9"   # the unit of the first device report ran Shelly OS loader 1.0.2 ("Boot: cur 010002ff"); with 1.0.9 the ESPHome bootloader was written (hardware-confirmed 2026-10-14)
-revision: 1   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)
+revision: 2   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)
+layout_since: "1.3.3"   # firmware older than this (a unit on 1.1.99, loader 00040405) most likely has an updater that moves neither partition table nor boot state and writes no bootloader (inferred from the log of issue #113): `send` refuses the package there. 1.3.3 is the oldest version seen to do the move

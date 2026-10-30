@@ -29,7 +29,7 @@ The first device that was flashed and reported by someone else: thanks to [imsan
 
 Check first:
 
-- [ ] the device runs Shelly's own firmware, not ESPHome yet
+- [ ] the device runs Shelly's own firmware, not ESPHome yet, and it is **1.3.3 or newer** (better 2.x): `send` refuses older ones ([why](#notes-for-this-device))
 - [ ] you know its IP address (`--ip`), or this PC is on the device's own access point (default `192.168.33.1`)
 - [ ] the device can reach this PC: same network, port 8000 (`--port`) not blocked
 - [ ] your ESPHome config uses the partition table below and is compiled
@@ -157,6 +157,8 @@ The `EFUSE write error` line also appeared on the [H&T Gen3](HTG3.md); the updat
 
 ## Notes for this device
 
+- **Old stock firmware (1.1.x to 1.3.2):** `send` refuses the package. One unit on stock **1.1.99** (loader `00040405`) accepted the ESPHome package without an error and then stayed silent, also after a power cycle, until it was flashed over UART/USB ([#113](https://github.com/oxynatOr/free-shelly-ota/issues/113), thanks to [aanban](https://github.com/aanban)). Its log lacks the lines `BS is being moved`, `PT is being moved` and `Installing BL`, which the updater of 1.3.3 prints on a dev board; so the old updater most likely changes neither the layout nor the bootloader. This is inferred from the log: the 1.1.99 package is not available (Shelly's update API names 1.3.3 as the next step for it). Update such a device with Shelly's own update first (the web interface or app), then send.
+- **Stock 1.3.3 on a dev board:** the updater moves the partition table (`0x8000` to `0xf000`) and boot state (`0x10000` to `0x11000`) and replaces the bootloader, but it does not name its update target slot beforehand, so `send` cannot check it. In the test it wrote to slot 1 and the old firmware came back; `restore` first (see the Slot note below) is the way: on a dev board, `restore` put 2.1.1 in slot 1 and replaced the bootloader (`010000ff` to `010003ff`), the next `send --dry-run` named slot 0, and `send` then worked (ESPHome's access point appeared).
 - The installed loader was 1.0.2, which is why the profile sets `boot_min_version: 1.0.9`: a lower value would have been skipped by the installer.
 - **Slot:** the first `send --dry-run` refused because the installer would have written to slot 1. `python ota.py restore MiniPMG3` fixed that (the device then ran from slot 1, and the next dry run reported slot 0). The restore kept
   Wi-Fi and settings on this unit (2.0.1 to 2.0.1).
