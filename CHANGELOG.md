@@ -5,6 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- `PlusI4` (Plus i4 / i4 DC) is partly checked (🟡) after the first device report ([#106](https://github.com/oxynatOr/free-shelly-ota/issues/106), thanks to [niki11euro](https://github.com/niki11euro)): flashed over OTA from stock 1.7.6 (loader 1.0.2, replaced; the target slot was 1 until one `restore`), and the unit shows up in Home Assistant. Inputs, LED and a later ESPHome OTA are not reported yet. Documentation only, not a breaking change: no profile, package or command changed.
+
 ### Added
 - Profile `PlusI4` (🧪, Shelly Plus i4 / i4 DC, Gen2, classic ESP32) made from the official 1.7.6 package, with its stock CSV and a device page, requested in [#106](https://github.com/oxynatOr/free-shelly-ota/issues/106) (thanks to [niki11euro](https://github.com/niki11euro)). `boot_min_version` is 1.0.9 like the other profiles. The pins are not read yet and it has not run on a device. Not breaking: no existing profile, package or command changed; the profile list grows from 43 to 44.
 

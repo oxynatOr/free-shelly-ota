@@ -2,16 +2,18 @@
 
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
-![State: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![State: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
 ![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
 
 [🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [📍 Pins](#pins) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
 
-A classic ESP32 like the [Plus Uni](PlusUni.md): partition table at the ESP-IDF default `0x8000`, bootloader at `0x1000`, and the ESPHome build needs the 80 MHz flash frequency (the bootloader header says so). Requested by [niki11euro](https://github.com/niki11euro) for the DC version ([#106](https://github.com/oxynatOr/free-shelly-ota/issues/106)); the profile is made from Shelly's package for the app name `PlusI4`, which is the name that device reports.
+A classic ESP32 like the [Plus Uni](PlusUni.md): partition table at the ESP-IDF default `0x8000`, bootloader at `0x1000`, and the ESPHome build needs the 80 MHz flash frequency (the bootloader header says so). Thanks to [niki11euro](https://github.com/niki11euro) for the request and the first run on the DC version (October 2026, [#106](https://github.com/oxynatOr/free-shelly-ota/issues/106)); the profile is made from Shelly's package for the app name `PlusI4`, which is the name that device reports.
 
 | Fact | Value |
 | --- | --- |
 | Profile | `PlusI4` |
+| Model | SNSN-0D24X (Plus i4 DC, PCB `Shelly i4DC_v0.1.4`) |
+| SoC | ESP32-U4WDH (as reported) |
 | Flash | 4 MB (partition table: the last partition ends at `0x400000`) |
 | Official package | 1.7.6 (Shelly's update API lists no 2.x for this model, checked 2026-10-29) |
 | Partition table | **`0x8000`** (ESP-IDF default) |
@@ -20,7 +22,7 @@ A classic ESP32 like the [Plus Uni](PlusUni.md): partition table at the ESP-IDF 
 | Bootloader `min_version` | `1.0.9` (set in the profile; the package carries loader 1.0.2) |
 
 > [!NOTE]
-> **Untested:** the package builds and verifies, nobody has flashed it yet. It is not known whether the AC version of the Plus i4 uses the same app name; this profile was only checked against the package for `PlusI4`.
+> **Partly checked:** flashed over OTA on a real Plus i4 DC (stock 1.7.6, `send` with `--esphome-factory`, October 2026): the installer replaced the bootloader (`Boot: cur 010002ff, min 010009ff`), reported the update as done, and the device came up as an ESPHome device in Home Assistant. The inputs and the LED are not mapped or tested yet, and a later ESPHome OTA was not reported. It is not known whether the AC version of the Plus i4 uses the same app name.
 
 ## Before you start
 
@@ -60,7 +62,7 @@ ota:
 
 ## Pins
 
-Not read yet: no stock dump of this device has been analysed. The four inputs are the part to map (the Plus i4 has no relay); whether the board has a status LED is not checked either. Please report what you find; pins read from the firmware are listed as "not confirmed" until someone has measured them. The UART header of the board is not documented here either: look at the board and check it with a multimeter before you connect anything ([Recovery over UART](../recovery-uart.md)).
+Not mapped yet: the tester has not tried the four physical inputs and the onboard LED, and no stock dump of this device has been analysed. The four inputs are the part to map (the Plus i4 has no relay); whether the board has a status LED is not checked either. Please report what you find; pins read from the firmware are listed as "not confirmed" until someone has measured them. The UART header of the board is not documented here either: look at the board and check it with a multimeter before you connect anything ([Recovery over UART](../recovery-uart.md)).
 
 ## Flash it
 
@@ -109,11 +111,17 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## Notes for this device
 
-**Bootloader `min_version`.** The official package carries Shelly OS loader 1.0.2, but a device that Shelly updated can report 1.0.3 (as on the Plus Uni), and the installer skips ESPHome's bootloader when the package value is not higher. The profile sets 1.0.9. Please report the line `Boot: cur ... min ... update?` of your run, with the installed loader ([why](../bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version)).
+**Bootloader `min_version`.** The unit ran Shelly OS loader **1.0.2** (`Boot: cur 010002ff`), the one in the official package. The profile sets `boot_min_version: 1.0.9`, so the installer replaced it (`min 010009ff`, update, `Installing the bootloader (25888 bytes)`). A device that Shelly updated can report 1.0.3 (as on the Plus Uni); the 1.0.9 covers that too ([why](../bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version)).
+
+**The slot.** The first dry run said the update would go to slot 1. The tester ran `python ota.py restore PlusI4` once; the second dry run then said slot 0, and the OTA went to slot 0. This is the same case as on the Plus Plug S: if `send` does not say `Update target slot: 0`, run `restore` first ([why](../bootloader-and-slots.md#the-app-must-land-in-slot-0)).
+
+**eFuse.** The log showed `FW signatures: want 07 got 00`, and the tester read it as refused eFuse writes. The update still completed ([eFuse note](../troubleshooting.md#efuse)).
 
 **ESPHome warnings.** As on other classic ESP32 devices, leave `minimum_chip_revision` and `sram1_as_iram` out of the config you build the package from: `build` refuses a bootloader whose header differs from Shelly's ([why](../troubleshooting.md#build-refuses-to-replace-the-bootloader)).
 
-Still open: a first run, the pins of the inputs and the LED, the loader version of this model.
+Reported size: the ESPHome app was 1,041,216 bytes, 64 % of the app slot.
+
+Still open: the pins of the four inputs and the LED, and a later ESPHome OTA. Please report the file written by `--log-file`, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
 
 ## Way back
 
