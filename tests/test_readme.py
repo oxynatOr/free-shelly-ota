@@ -55,7 +55,7 @@ class ReadmeTests(unittest.TestCase):
     def setUpClass(cls):
         cls.text = README.read_text(encoding="utf-8")
         cls.states = _table_states(README, state_cell=3)  # Device | Profile | Chip | State | Note: the confirmed devices
-        cls.overview = _table_states(DEVICE_OVERVIEW, state_cell=5)  # Device | Profile | Chip | Table | Slot | State: all of them
+        cls.overview = _table_states(DEVICE_OVERVIEW, state_cell=4)  # Device | Profile | Table | Slot | State: all of them, one table per generation
 
     def test_the_overview_has_every_profile_and_nothing_else(self):
         self.assertEqual(sorted(self.overview), profile.list_devices())
@@ -104,7 +104,7 @@ class DevicePageTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.pages = sorted(p for p in (ROOT / "docs" / "devices").glob("*.md") if p.name != "README.md")
-        cls.states = _table_states(DEVICE_OVERVIEW, state_cell=5)
+        cls.states = _table_states(DEVICE_OVERVIEW, state_cell=4)
 
     def _profiles(self, text):
         m = re.search(r"(?m)^\| Profile \| (.+) \|$", text)
@@ -170,6 +170,15 @@ class DevicePageTests(unittest.TestCase):
             text = page.read_text(encoding="utf-8")
             for name in self._profiles(text):
                 self.assertIn(BADGE[self.states[name]], text, f"{page.name}: {name}")
+
+    def test_generation_badge_matches_the_chip_badge(self):
+        """Gen2 is the classic ESP32, Gen3 the ESP32-C3, Gen4 the ESP32-C6: the overview groups its tables the same way."""
+        chips = {"2": "chip-ESP32-blue", "3": "chip-ESP32--C3-", "4": "chip-ESP32--C6-"}
+        for page in self.pages:
+            text = page.read_text(encoding="utf-8")
+            gens = re.findall(r"badge/gen-(\d)-", text)
+            self.assertEqual(len(gens), 1, page.name)
+            self.assertIn(chips[gens[0]], text, page.name)
 
     def test_a_page_that_links_the_esphome_device_page_has_it_as_a_row_of_the_table(self):
         """The link is in the Fact table once, as https://devices.esphome.io/devices/<slug>/, and every other link on the page goes to the same page."""
