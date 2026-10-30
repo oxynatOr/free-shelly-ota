@@ -91,13 +91,41 @@
     "revision": 2,
     "hash": "7d2bdda62aa5"
   },
+  "PlugUS": {
+    "revision": 1,
+    "hash": "679171db42dd"
+  },
   "PlugUSG4": {
     "revision": 2,
     "hash": "4e040fa7081f"
   },
+  "Plus1": {
+    "revision": 1,
+    "hash": "48ea1d04cf2e"
+  },
+  "Plus1Mini": {
+    "revision": 1,
+    "hash": "5f4b4d74ec1f"
+  },
+  "Plus1PM": {
+    "revision": 1,
+    "hash": "114c6e724f6f"
+  },
+  "Plus1PMMini": {
+    "revision": 1,
+    "hash": "1bfa7d4f8155"
+  },
+  "Plus2PM": {
+    "revision": 1,
+    "hash": "2aee631da969"
+  },
   "PlusI4": {
     "revision": 1,
     "hash": "edb87d0da41c"
+  },
+  "PlusPMMini": {
+    "revision": 1,
+    "hash": "87d3dcd32da0"
   },
   "PlusPlugIT": {
     "revision": 1,
@@ -106,6 +134,14 @@
   "PlusPlugS": {
     "revision": 2,
     "hash": "bc7faafcd5b9"
+  },
+  "PlusPlugUK": {
+    "revision": 1,
+    "hash": "9878604c63ba"
+  },
+  "PlusRGBWPM": {
+    "revision": 1,
+    "hash": "4d4a5809357a"
   },
   "PlusUni": {
     "revision": 1,
@@ -123,9 +159,37 @@
     "revision": 2,
     "hash": "a2bc698aef16"
   },
+  "Pro1": {
+    "revision": 1,
+    "hash": "7ac010aa312c"
+  },
+  "Pro1PM": {
+    "revision": 1,
+    "hash": "238436bee0cd"
+  },
+  "Pro2": {
+    "revision": 1,
+    "hash": "99ca822453ee"
+  },
+  "Pro2PM": {
+    "revision": 1,
+    "hash": "88993aab5ae8"
+  },
+  "Pro3": {
+    "revision": 1,
+    "hash": "1506111b0d5d"
+  },
   "Pro3EM": {
     "revision": 1,
     "hash": "0568d245279b"
+  },
+  "Pro4PM": {
+    "revision": 1,
+    "hash": "81b720f3e851"
+  },
+  "ProRGBWWPM": {
+    "revision": 1,
+    "hash": "c8307c55269f"
   },
   "RGBCCTBulbG3": {
     "revision": 2,

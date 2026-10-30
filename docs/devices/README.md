@@ -16,7 +16,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 ### Gen2 (ESP32)
 
-5 profiles: ✅ 2 · 🟡 2 · 🔬 0 · 🧪 1
+18 profiles: ✅ 2 · 🟡 2 · 🔬 0 · 🧪 14
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
@@ -25,10 +25,23 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [Plus i4 / i4 DC (Gen2)](PlusI4.md) | `PlusI4` | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA; the inputs and the LED not checked |
 | [Plus Uni (Gen2)](PlusUni.md) | `PlusUni` | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
 | [Pro 3EM (Gen2)](Pro3EM.md) | `Pro3EM` | **`0x8000`** | `0x200000` | 🧪 |  |
+| [Plus Plug US (Gen2)](PlugUS.md) | `PlugUS` | **`0x8000`** | `0x190000` | 🧪 |  |
+| [Plus 1 (Gen2)](Plus1.md) | `Plus1` | **`0x8000`** | `0x190000` | 🧪 |  |
+| [Plus 1PM (Gen2)](Plus1PM.md) | `Plus1PM` | **`0x8000`** | `0x190000` | 🧪 |  |
+| [Plus 2PM (Gen2)](Plus2PM.md) | `Plus2PM` | **`0x8000`** | `0x190000` | 🧪 |  |
+| [Plus Plug UK (Gen2)](PlusPlugUK.md) | `PlusPlugUK` | **`0x8000`** | `0x190000` | 🧪 |  |
+| [Plus RGBW PM (Gen2)](PlusRGBWPM.md) | `PlusRGBWPM` | **`0x8000`** | `0x190000` | 🧪 |  |
+| [Pro 1 (Gen2)](Pro1.md) | `Pro1` | **`0x8000`** | `0x200000` | 🧪 |  |
+| [Pro 1PM (Gen2)](Pro1PM.md) | `Pro1PM` | **`0x8000`** | `0x200000` | 🧪 |  |
+| [Pro 2 (Gen2)](Pro2.md) | `Pro2` | **`0x8000`** | `0x200000` | 🧪 |  |
+| [Pro 2PM (Gen2)](Pro2PM.md) | `Pro2PM` | **`0x8000`** | `0x200000` | 🧪 |  |
+| [Pro 3 (Gen2)](Pro3.md) | `Pro3` | **`0x8000`** | `0x200000` | 🧪 |  |
+| [Pro 4PM (Gen2)](Pro4PM.md) | `Pro4PM` | **`0x8000`** | `0x200000` | 🧪 |  |
+| [Pro RGBWW PM (Gen2)](ProRGBWWPM.md) | `ProRGBWWPM` | **`0x8000`** | `0x200000` | 🧪 |  |
 
 ### Gen3 (ESP32-C3)
 
-22 profiles: ✅ 8 · 🟡 5 · 🔬 0 · 🧪 9
+25 profiles: ✅ 8 · 🟡 5 · 🔬 0 · 🧪 12
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
@@ -54,6 +67,9 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [EM Gen3](EMG3.md) | `EMG3` | `0x10000` | `0x280000` | 🧪 |  |
 | [3EM-63 Gen3](S3EMG3.md) | `S3EMG3` | `0x10000` | `0x280000` | 🧪 |  |
 | [Outdoor Plug S Gen3](OutdoorPlugSG3.md) | `OutdoorPlugSG3` | `0x10000` | `0x2a0000` | 🧪 |  |
+| [Plus 1 Mini](Plus1Mini.md) | `Plus1Mini` | **`0x8000`** | `0x190000` | 🧪 | ESP32-C3 hardware, sold as Plus Mini |
+| [Plus 1PM Mini](Plus1PMMini.md) | `Plus1PMMini` | **`0x8000`** | `0x190000` | 🧪 | ESP32-C3 hardware, sold as Plus Mini |
+| [Plus PM Mini (no relay)](PlusPMMini.md) | `PlusPMMini` | **`0x8000`** | `0x190000` | 🧪 | ESP32-C3 hardware, sold as Plus Mini |
 
 ### Gen4 (ESP32-C6)
 

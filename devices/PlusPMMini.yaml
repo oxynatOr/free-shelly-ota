@@ -1,0 +1,9 @@
+# OTA profile for PlusPMMini, generated from the official 1.7.6 package.
+display_name: "PlusPMMini"
+platform: esp32c3
+update_id: PlusPMMini        # name used by https://updates.shelly.cloud/update/<update_id>
+app_ptn: app_0
+app_slot_size: 0x190000   # app_0 @0x10000
+pt_offset: 0x8000   # partition table address (default 0x10000)
+boot_min_version: "1.0.9"   # project default for new profiles: the package carries loader 1.0.2, but a device that was updated by Shelly can report 1.0.3, and a value that is not higher is skipped. Not checked on this model yet
+revision: 1   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)
