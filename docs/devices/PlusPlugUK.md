@@ -2,7 +2,7 @@
 
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
-![State: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![State: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
 ![Generation: 2](https://img.shields.io/badge/gen-2-lightgrey.svg?style=flat-square)
 ![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
 
@@ -101,7 +101,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## Notes for this device
 
-**Not tried on a device.** The profile is made from Shelly's package for the app name `PlusPlugUK`; nobody has flashed it yet. The stock partition table is in `partitions/PlusPlugUK-stock.csv`. The DevKit image `python ota.py devkit PlusPlugUK` is built for it, but it has not been run on a dev board either (so the state stays 🧪, see [DevKit](../devkit.md)).
+**Dev board only.** The OTA ran through on an ESP32 dev board with the DevKit image (2026-10-30, row in [Seen on a board](../devkit.md#seen-on-a-board)); no real device has been flashed. The board has no relay, meter or button, so nothing of the device's function is checked.
 
 **Pins.** Not mapped here. No stock dump of this device has been analysed here; pins read from firmware or templates are "not confirmed" until someone has measured them.
 

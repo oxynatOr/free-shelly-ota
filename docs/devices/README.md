@@ -16,7 +16,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 ### Gen2 (ESP32)
 
-18 profiles: ✅ 2 · 🟡 2 · 🔬 0 · 🧪 14
+18 profiles: ✅ 2 · 🟡 2 · 🔬 5 · 🧪 9
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
@@ -24,13 +24,13 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [Plus Plug IT (Gen2)](PlusPlugIT.md) | `PlusPlugIT` | **`0x8000`** | `0x190000` | ✅ | Flashed without UART |
 | [Plus i4 / i4 DC (Gen2)](PlusI4.md) | `PlusI4` | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA; the inputs and the LED not checked |
 | [Plus Uni (Gen2)](PlusUni.md) | `PlusUni` | **`0x8000`** | `0x190000` | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
+| [Plus 1 (Gen2)](Plus1.md) | `Plus1` | **`0x8000`** | `0x190000` | 🔬 |  |
+| [Plus 1PM (Gen2)](Plus1PM.md) | `Plus1PM` | **`0x8000`** | `0x190000` | 🔬 |  |
+| [Plus Plug US (Gen2)](PlugUS.md) | `PlugUS` | **`0x8000`** | `0x190000` | 🔬 |  |
+| [Plus Plug UK (Gen2)](PlusPlugUK.md) | `PlusPlugUK` | **`0x8000`** | `0x190000` | 🔬 |  |
+| [Plus RGBW PM (Gen2)](PlusRGBWPM.md) | `PlusRGBWPM` | **`0x8000`** | `0x190000` | 🔬 |  |
 | [Pro 3EM (Gen2)](Pro3EM.md) | `Pro3EM` | **`0x8000`** | `0x200000` | 🧪 |  |
-| [Plus Plug US (Gen2)](PlugUS.md) | `PlugUS` | **`0x8000`** | `0x190000` | 🧪 |  |
-| [Plus 1 (Gen2)](Plus1.md) | `Plus1` | **`0x8000`** | `0x190000` | 🧪 |  |
-| [Plus 1PM (Gen2)](Plus1PM.md) | `Plus1PM` | **`0x8000`** | `0x190000` | 🧪 |  |
-| [Plus 2PM (Gen2)](Plus2PM.md) | `Plus2PM` | **`0x8000`** | `0x190000` | 🧪 |  |
-| [Plus Plug UK (Gen2)](PlusPlugUK.md) | `PlusPlugUK` | **`0x8000`** | `0x190000` | 🧪 |  |
-| [Plus RGBW PM (Gen2)](PlusRGBWPM.md) | `PlusRGBWPM` | **`0x8000`** | `0x190000` | 🧪 |  |
+| [Plus 2PM (Gen2)](Plus2PM.md) | `Plus2PM` | **`0x8000`** | `0x190000` | 🧪 | Not run on the dev board: the stock app restarts in a loop without factory data |
 | [Pro 1 (Gen2)](Pro1.md) | `Pro1` | **`0x8000`** | `0x200000` | 🧪 |  |
 | [Pro 1PM (Gen2)](Pro1PM.md) | `Pro1PM` | **`0x8000`** | `0x200000` | 🧪 |  |
 | [Pro 2 (Gen2)](Pro2.md) | `Pro2` | **`0x8000`** | `0x200000` | 🧪 |  |
@@ -139,6 +139,11 @@ These profiles went through the whole update on a dev board with the [DevKit ima
 | [EM Mini Gen4](MiniEMG4.md) | `MiniEMG4` | ESP32-C6 dev board, 8 MB | 2026-10-21 |
 | [Mini 1PM Gen4](Mini1PMG4.md) | `Mini1PMG4` | ESP32-C6 dev board, 8 MB | 2026-10-23 |
 | [Mini 1PM Gen4 (Zigbee)](Mini1PMG4.md#zigbee-variant) | `Mini1PMG4ZB` | ESP32-C6 dev board, 8 MB | 2026-10-23 |
+| [Plus 1 (Gen2)](Plus1.md) | `Plus1` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
+| [Plus 1PM (Gen2)](Plus1PM.md) | `Plus1PM` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
+| [Plus Plug US (Gen2)](PlugUS.md) | `PlugUS` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
+| [Plus Plug UK (Gen2)](PlusPlugUK.md) | `PlusPlugUK` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
+| [Plus RGBW PM (Gen2)](PlusRGBWPM.md) | `PlusRGBWPM` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
 
 ## Where devices differ
 
