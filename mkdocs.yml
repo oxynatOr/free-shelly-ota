@@ -1,0 +1,62 @@
+site_name: FreeShelly OTA
+site_description: ESPHome onto a Shelly over the air, with the exact steps for every device
+site_url: https://oxynator.github.io/free-shelly-ota/
+repo_url: https://github.com/oxynatOr/free-shelly-ota
+repo_name: oxynatOr/free-shelly-ota
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+
+extra_css:
+  - assets/site.css
+
+plugins:
+  - search
+
+hooks:
+  - mkdocs_hooks.py
+
+# The nav is built in mkdocs_hooks.py: the top pages in reading order, the device pages grouped by generation.
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+markdown_extensions:
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - tables
+  - admonition
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.superfences
+  - md_in_html
+  - markdown_callouts.github_callouts
