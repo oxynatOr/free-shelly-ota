@@ -3,7 +3,7 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
-![State of the beta layout: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
+![State of the beta layout: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 ![Package: 2.1.0](https://img.shields.io/badge/package-2.1.0-lightgrey.svg?style=flat-square)
@@ -14,7 +14,7 @@
 
 The first device this tool was confirmed on. A second plug, reported by [815rx1](https://github.com/815rx1) (October 2026, thanks), went through the same chain with the 2.1.0 package.
 
-> **Not supported: 2.2.0-beta2.** Its partition table differs (app slots of `0x300000` instead of `0x2a0000`), found by [onkelfarmor](https://github.com/onkelfarmor) ([#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), thanks). `build` refuses a package with another layout; nothing was tested with it on a plug.
+> **Shelly's 2.2.0-beta2 has another layout** (app slots of `0x300000` instead of `0x2a0000`), found by [onkelfarmor](https://github.com/onkelfarmor) ([#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), thanks). It has its own profile, `PlugMG3-beta`, confirmed on a plug in the wall ([#122](https://github.com/oxynatOr/free-shelly-ota/issues/122)); see [Beta layout](#beta-layout). `build` refuses to mix the two layouts.
 
 | Fact | Value |
 | --- | --- |
@@ -72,7 +72,7 @@ Pins read from the stock firmware and tested on a real plug:
 | BL0942 power meter (UART, 9600 8N1) | TX GPIO4, RX GPIO5 |
 | BL0942 CF/ZX pin (multiplexed: CF by default, zero-cross after a register write the stock firmware does) | GPIO3 |
 | RGB LED (common anode, **active low**: `inverted: true` on every output) | red GPIO18, green GPIO10, blue GPIO19 |
-| NTC (beta 3950, 10 k at 25 C) | probably GPIO1 (ADC1_CH1), the reading looks right |
+| NTC (beta 3950, 10 k at 25 C) | GPIO1 (ADC1_CH1), 37.3 °C in ESPHome against 36.9 °C in Shelly's firmware a few minutes earlier ([#122](https://github.com/oxynatOr/free-shelly-ota/issues/122)) |
 
 ## Flash it
 
@@ -141,6 +141,18 @@ No `EFUSE write error` line appeared, only the `FW signatures` one ([eFuse note]
 - That plug ran Shelly OS loader 1.0.2 (factory firmware 1.8.99, `Boot: cur 010002ff`). `boot_min_version: 1.0.9` was enough there: `update? 1`, and ESPHome's bootloader was written. A plug that came back from ESPHome through the official 2.0.1 package runs loader 1.0.3 ([why the profile uses 1.0.9](../bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version)).
 - Without `--esphome-factory` Shelly's loader stays: ESPHome runs for three starts, then the old firmware comes back unless an ESPHome OTA arrived in time, and only the first
   such OTA can take effect. `send` refuses such a package without `--force` ([details](../bootloader-and-slots.md#without-esphomes-bootloader-plain-package)).
+- **BL0942 calibration (one unit, 2026-10-31, [#122](https://github.com/oxynatOr/free-shelly-ota/issues/122)):** with ESPHome's default references voltage and power read about 11 % low and the current was right. Measured against a second Plug M Gen3 on stock 1.8.99 in series (about 610 W resistive load, 25 samples over 2 minutes, spread below 0.1 %), the ESPHome plug read 0.8939 (voltage), 0.9951 (current) and 0.8892 (power) of Shelly's values. New reference = default × ratio, with the energy reference scaled like the power one:
+
+  ```yaml
+  sensor:
+    - platform: bl0942
+      voltage_reference: 14198.37
+      current_reference: 249839.95
+      power_reference: 553.98
+      energy_reference: 4754.98
+  ```
+
+  With these both plugs agreed within 0.5 % (235.35 V against 235.40 V, 2.54 A against 2.53 A, 597.5 W against 594.6 W). They are a starting point: calibrate your own unit. Shelly's factory voltage scale is nearly the same on every Gen3 plug dump compared (within about 0.5 %), so the voltage divider looks like a hardware constant and the default `voltage_reference` is low for this hardware in general; the [PM Mini Gen3](MiniPMG3.md) page shows the same (about 10 % low).
 
 ## Beta layout
 
@@ -149,17 +161,19 @@ Shelly's `2.2.0-beta2` for this plug (found by [onkelfarmor](https://github.com/
 > [!NOTE]
 > **Partly checked (2026-10-28, one plug):** Shelly's 2.2.0-beta2 was written over UART, then `restore` and `send PlugMG3-beta` with `--esphome-factory` (the installer wrote to slot 0 and replaced the loader 1.0.3), ESPHome started, and a second ESPHome OTA from the Home Assistant builder (ESPHome 2026.10.1) succeeded. ESPHome ran from `app_1` at `0x400000` and logged Shelly's beta table (`app_0` `0x20000` / `0x300000`, `app_1` `0x400000` / `0x300000`, `scratch` and `shelly` unchanged).
 >
-> **The way for a plug that runs Shelly's 2.0.x (2026-10-28, same plug, no UART):** stock 1.8.99, then `restore PlugMG3` (2.0.1), then `restore PlugMG3-beta` (the installer of 2.0.x writes the new table as `PT1` and the app to slot 1, the plug reported 2.2.0-beta2), then `send PlugMG3-beta` with the ESPHome package. ESPHome started with Shelly's beta table, joined the Wi-Fi and ran from `app_0` (`0x20000`) with the ESPHome bootloader.
+> **The way for a plug that runs Shelly's 2.0.x (2026-10-28, same plug, no UART):** stock 1.8.99, then `restore PlugMG3` (2.0.1), then `restore PlugMG3-beta` (the installer of 2.0.x writes the new table as `PT1` and the app to slot 1, the plug reported 2.2.0-beta2), then `send PlugMG3-beta` with the ESPHome package. ESPHome started with Shelly's beta table, joined the Wi-Fi and ran from `app_0` (`0x20000`) with the ESPHome bootloader. On another plug that ran 2.0.1 ([ABotond](https://github.com/ABotond), [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), thanks) the first run reported success but kept the version, and a second run flashed the beta; ESPHome with the beta table then ran there for days, with relay, Bluetooth, LED and Wi-Fi working. So from 2.0.x as well: run `restore PlugMG3-beta` again if the plug still reports the old version (about 130 s uptime between runs). Whether the number of runs depends on the slot the plug runs from was not tested.
 >
 > Relay and meter were not reported.
 >
-> **The way for a plug on stock 1.8.99: run `restore PlugMG3-beta` twice (2026-10-31, DevKit board).** Shelly's installer of 1.8.99 needs two runs, as reported in the Shelly forum for 2.2.0-beta1 ([thread 15141](https://community.shelly.cloud/topic/15141-update-m-plug-to-v-200-fails/), found by [onkelfarmor](https://github.com/onkelfarmor), [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)). Run 1: `Will write to slot 0`, `Slot switch is required`, `Skipping app`, `Skipping fs`; the plug reports success and comes back on 1.8.99, now on slot 0 instead of 1. Run 2: `Will write to slot 1`, `Installing new PT1`; the plug reports 2.2.0-beta2 on slot 1. Wait until the plug has been running for more than about 130 s before each run, otherwise it answers `Not committed`. Then `send PlugMG3-beta` with the ESPHome package went through (`The installer writes to slot 0`, loader `010002ff` replaced), and ESPHome's access point appeared. This was played on a DevKit board (ESP32-C3, 8 MB) flashed with a dump of a stock 1.8.99 plug, see [DevKit](../devkit.md#seen-on-a-board); not yet on a plug in the wall. Your 2026-10-28 attempt on 1.8.99 was therefore the first of the two runs.
+> **The way for a plug on stock 1.8.99: run `restore PlugMG3-beta` twice (2026-10-31, DevKit board).** Shelly's installer of 1.8.99 needs two runs, as reported in the Shelly forum for 2.2.0-beta1 ([thread 15141](https://community.shelly.cloud/topic/15141-update-m-plug-to-v-200-fails/), found by [onkelfarmor](https://github.com/onkelfarmor), [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)). Run 1: `Will write to slot 0`, `Slot switch is required`, `Skipping app`, `Skipping fs`; the plug reports success and comes back on 1.8.99, now on slot 0 instead of 1. Run 2: `Will write to slot 1`, `Installing new PT1`; the plug reports 2.2.0-beta2 on slot 1. Wait until the plug has been running for more than about 130 s before each run, otherwise it answers `Not committed`. Then `send PlugMG3-beta` with the ESPHome package went through (`The installer writes to slot 0`, loader `010002ff` replaced), and ESPHome's access point appeared. This was played on a DevKit board (ESP32-C3, 8 MB) flashed with a dump of a stock 1.8.99 plug, see [DevKit](../devkit.md#seen-on-a-board), and then confirmed on a plug in the wall (below). The 2026-10-28 attempt on 1.8.99 was therefore only the first of the two runs.
 >
 > ```
 > python ota.py restore PlugMG3-beta --watch 120     # run 1: stays on 1.8.99, slot 0
 > python ota.py restore PlugMG3-beta --watch 120     # run 2, after more than 130 s uptime: 2.2.0-beta2
 > python ota.py send PlugMG3-beta <esphome package>
 > ```
+>
+> **Confirmed on a plug in the wall (2026-10-31, [onkelfarmor](https://github.com/onkelfarmor), [#122](https://github.com/oxynatOr/free-shelly-ota/issues/122), thanks):** stock 1.8.99 on slot 1, no UART, the same three steps. Run 1 came back on 1.8.99 on slot 0 with the Wi-Fi settings kept; run 2 (at 144 s uptime) logged `Installing new PT1 (a00c9381)` and the plug reported 2.2.0-beta2 on slot 1; `send` wrote to slot 0 and replaced the loader (`010002ff`). ESPHome 2026.8.0 answered on the API about 5 s after the reboot and ran from `app_0` with Shelly's beta table. Working: relay, button (GPIO7), RGB LED, BL0942 (voltage, current, power, frequency) and the NTC. The relay did not switch until the plug had been without power for about 30 s (the LED already worked before that), as on the other plug. A regular ESPHome OTA afterwards (`esphome upload`, ESPHome 2026.8.0) took effect, and ESPHome then ran from `app_1` (`0x400000`): ESPHome's bootloader switches slots with the beta table, and the plug also starts on its own after power cuts. The BL0942 calibration is in [Notes for this device](#notes-for-this-device).
 
 > [!CAUTION]
 > **Do not send this package to a plug that still has the old layout** (Shelly 1.8.99, 2.0.1, 2.1.0). Take the step to Shelly's own beta package first (below), and send this package only to a plug that already runs the beta layout. Tried on 2026-10-28 with stock 1.8.99, in one run: the installer replaced the bootloader with ESPHome's, but wrote neither the new partition table nor the app (`Skipping app`, `Skipping fs` in its log). The plug then started the old stock app from `app_0` by luck, because ESPHome's bootloader with an unset `otadata` tries all slots; with an empty `app_0` it would not have started and only UART brings it back. `send` refuses this package on a plug whose firmware is older than 2.2.0 (`--force` overrides, with UART at hand).

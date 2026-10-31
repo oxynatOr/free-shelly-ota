@@ -53,7 +53,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [Mini 1 Gen3](Mini1G3.md) | `Mini1G3` | **`0xf000`** | `0x2a0000` | ✅ |  |
 | [1 Gen3](S1G3.md) | `S1G3` | **`0xf000`** | `0x2b0000` | ✅ |  |
 | [2PM Gen3](S2PMG3.md) | `S2PMG3` | `0x10000` | `0x2c0000` | ✅ | Relays and meter not reported |
-| [Plug M Gen3, beta layout](PlugMG3.md#beta-layout) | `PlugMG3-beta` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0-beta2 only |
+| [Plug M Gen3, beta layout](PlugMG3.md#beta-layout) | `PlugMG3-beta` | `0x10000` | `0x300000` | ✅ | Shelly 2.2.0-beta2 only |
 | [Plug PM Gen3 (no relay)](PlugPMG3.md) | `PlugPMG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
 | [Duo Bulb Gen3](DuoBulbG3.md) | `DuoBulbG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
 | [Mini 1PM Gen3](Mini1PMG3.md) | `Mini1PMG3` | **`0xf000`** | `0x2a0000` | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
