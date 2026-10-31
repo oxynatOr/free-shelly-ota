@@ -135,7 +135,7 @@ Shelly's `2.2.0-beta2` (checked 2026-10-28, all profiles) changes the flash layo
 
 - `fetch` and `inspect` warn about such a package, `build` refuses it, so no image for the wrong layout can be made.
 - Only the Plug M Gen3 has a profile for it so far (`PlugMG3-beta`, [device page](devices/PlugMG3.md#beta-layout)). The others get one when someone needs the beta or when Shelly ships the layout as a stable release.
-- The installer of Shelly 1.8.99 cannot change the layout (`Skipping app`), the one of 2.0.x can. The bootloaders in the beta differ between device groups; their `boot_min_version` has not been compared yet.
+- The installer of Shelly 1.8.99 changes the layout only on its second run (the first logs `Slot switch is required`, `Skipping app` and only switches the slot; checked 2026-10-31 on a DevKit board, see the [Plug M page](devices/PlugMG3.md#beta-layout)), the one of 2.0.x does it in one run. The bootloaders in the beta differ between device groups; their `boot_min_version` has not been compared yet.
 
 ---
 
