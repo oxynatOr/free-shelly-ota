@@ -9,7 +9,7 @@
 [![Issues][issues-shield]][issues-url]
 [![License][license-shield]][license-url]
 
-[Supported devices](#supported-devices) · [Download](https://github.com/oxynatOr/free-shelly-ota/releases) · [Quick start](#quick-start) · [Step-by-step guide](docs/guide.md) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Request a device](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml)
+[Supported devices](#supported-devices) · [Download](https://github.com/oxynatOr/free-shelly-ota/releases) · [Quick start](#quick-start) · [Step-by-step guide](docs/guide.md) · [Documentation](#documentation) · [Docs site](https://oxynator.github.io/free-shelly-ota/) · [Contributing](CONTRIBUTING.md) · [Request a device](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml)
 
 `free-shelly-ota` is a command-line tool for **Shelly Gen2 (ESP32)**, **Gen3 (ESP32-C3)** and **Gen4 (ESP32-C6)** devices.
 It turns your ESPHome firmware into an update the Shelly accepts, and sends it over the network:
@@ -141,7 +141,7 @@ python ota.py send PlugMG3 out/PlugMG3-app-<date>.zip --ip <device IP>
 
 ## Documentation
 
-Start with the [Step-by-step guide](docs/guide.md). The [documentation index](docs/README.md) lists everything; the pages you will need most:
+Start with the [Step-by-step guide](docs/guide.md). The same pages are on the [documentation site](https://oxynator.github.io/free-shelly-ota/), with search. The [documentation index](docs/README.md) lists everything; the pages you will need most:
 
 | Page | What is in it |
 | --- | --- |
