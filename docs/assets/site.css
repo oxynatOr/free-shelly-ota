@@ -1,0 +1,18 @@
+/* GitHub's [!IMPORTANT] alert has no counterpart in Material: give it the purple box GitHub uses. */
+:root {
+  --md-admonition-icon--important: var(--md-admonition-icon--warning);
+}
+
+.md-typeset .admonition.important {
+  border-color: #8957e5;
+}
+
+.md-typeset .important > .admonition-title {
+  background-color: #8957e51a;
+}
+
+.md-typeset .important > .admonition-title::before {
+  background-color: #8957e5;
+  -webkit-mask-image: var(--md-admonition-icon--important);
+  mask-image: var(--md-admonition-icon--important);
+}
