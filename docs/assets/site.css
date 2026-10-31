@@ -16,3 +16,13 @@
   -webkit-mask-image: var(--md-admonition-icon--important);
   mask-image: var(--md-admonition-icon--important);
 }
+
+/* The link rows under the page titles: keep each link in one piece, so a long row breaks between links, not inside one. */
+.md-typeset .navrow {
+  font-size: 0.75rem;
+  line-height: 1.9;
+}
+
+.md-typeset .navrow a {
+  white-space: nowrap;
+}

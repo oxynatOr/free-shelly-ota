@@ -27,6 +27,8 @@ TOP_PAGES = [
 ]
 
 _LINK = re.compile(r"(\]\()([^)\s#]+)((?:#[^)\s]*)?\))")
+# A line that is only links joined by " · ": the link rows under the page titles. They get a class, see assets/site.css.
+_NAV_ROW = re.compile(r"^(\[[^\n]*?\]\([^\n)]*\)(?: · \[[^\n]*?\]\([^\n)]*\))+)$", re.MULTILINE)
 _GEN = re.compile(r"badge/gen-(\d)")
 _TITLE = re.compile(r"^# (.+)$", re.MULTILINE)
 
@@ -70,7 +72,7 @@ def on_page_markdown(markdown, page, config, files):
         kind = "tree" if not repo_path.suffix else "blob"
         return f"{match.group(1)}{REPO_URL}/{kind}/{BRANCH}/{repo_path}{match.group(3)}"
 
-    return _LINK.sub(rewrite, markdown)
+    return _NAV_ROW.sub(r"\1\n{: .navrow }", _LINK.sub(rewrite, markdown))
 
 
 def _normalise(path: PurePosixPath):
