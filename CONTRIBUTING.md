@@ -19,7 +19,7 @@ Thank you for helping. The most valuable contribution is a **report from a real 
 - **Say how you know it.** A pin, a log line or a state (✅ 🟡 🔬 🧪) needs real evidence or a named source. Something read from firmware and not measured is written as *not confirmed*. Say what you did not check.
 - **Keep private data out.** No MAC addresses, SSIDs, passwords, keys, cloud keys or LAN addresses of real devices in files, issues, logs or commit messages.
 - **Never attach or commit** flash dumps, built ZIPs, DevKit images, Shelly firmware or a real `secrets.yaml`. They can hold credentials and per-device secrets.
-- **Credit people.** Reporters and testers are named in `CREDITS.md`, on the device page and in the CHANGELOG.
+- **Credit people.** Everyone who reports or tests is named on the device page and in the CHANGELOG, and listed once in `CREDITS.md` as contributor, tester, reporter or confirmation (the groups are explained there).
 - **State what your change breaks.** Say in the pull request and the CHANGELOG whether it is breaking or visible, and also when it is not, with the reason.
 - **Risky behavior is opt-in** (a flag), never a new default.
 - **Language:** docs, comments, commits and issues are in English.
