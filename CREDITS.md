@@ -6,70 +6,108 @@
 
 This tool builds on the research of other projects, and much of what it knows about single devices comes from the people who tested them. The rest was worked out here and on real devices: the loader's boot state, the slot rule, `min_version`, the pin tables, the DevKit. This page says who contributed what. The short version is in the [README](README.md#credits).
 
-> [!TIP]
-> Please visit and support these projects and people.
-
 ## People
 
-People are listed once, in the highest of these groups they reached. Newest first inside a group. The device page and the CHANGELOG name everyone who reported or tested something, whatever the group.
+People are listed once, in the highest of these groups they reached. Newest first inside a group. The device page links the details of each report.
 
-| Group | Who is in it |
-| --- | --- |
-| **Contributors** | Something from them went into the tool or the docs: a check, a fix, an idea, a finding |
-| **Testers** | They checked more than that it worked: pins, calibration, later OTAs, several devices, a diagnosis on the hardware |
-| **Reporters** | The first report for a device or a profile |
-| **Confirmations** | A later report for a device that is already confirmed |
+<table width="100%">
+<thead><tr><th align="left" width="150">Group</th><th align="left">Who is in it</th></tr></thead>
+<tbody>
+<tr><td><b>🛠 Contributors</b></td><td>Something from them went into the tool or the docs: a check, a fix, an idea, a finding</td></tr>
+<tr><td><b>🔬 Testers</b></td><td>They checked more than that it worked: pins, calibration, later OTAs, several devices, a diagnosis on the hardware</td></tr>
+<tr><td><b>📋 Reporters</b></td><td>The first report for a device or a profile</td></tr>
+<tr><td><b>✅ Confirmations</b></td><td>A later report for a device that is already confirmed</td></tr>
+</tbody></table>
 
 ### Contributors
 
-| Who | What |
-| --- | --- |
-| [onkelfarmor](https://github.com/onkelfarmor) | A bug report for the Plug M Gen3 (October 2026, [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)): the update API offers only 2.2.0-beta2, whose partition table differs from the profile; led to the layout check in `build`, `inspect` and `fetch`; later found in the Shelly forum that 1.8.99 reaches the beta with two runs of Shelly's installer ([#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)); then a device report of the Plug M Gen3 beta layout on a plug in the wall, without UART, with the full `send` log, the hardware check, a second ESPHome OTA and a measured BL0942 calibration against a second plug ([#122](https://github.com/oxynatOr/free-shelly-ota/issues/122)) |
-| [aanban](https://github.com/aanban) | A PM Mini Gen3 that stayed silent after the OTA (October 2026, [#113](https://github.com/oxynatOr/free-shelly-ota/issues/113)): the full `send` log, the config and the stock version pointed to the old stock updater (1.1.x), which most likely moves neither the layout nor the bootloader; led to the `layout_since` check on [MiniPMG3](docs/devices/MiniPMG3.md) |
-| [imsandli](https://github.com/imsandli) | The first external device report (PM Mini Gen3, October 2026): a successful OTA run with logs, the BL0942 RX pull-up and a voltage calibration for the [device page](docs/devices/MiniPMG3.md), and the idea for the check that the device can reach the PC |
+<table width="100%">
+<thead><tr>
+<th align="left" width="150">Who</th>
+<th align="left" width="330">Device</th>
+<th align="left">What</th>
+</tr></thead>
+<tbody>
+<tr><td valign="top"><a href="https://github.com/onkelfarmor"><b>onkelfarmor</b></a></td><td valign="top"><a href="docs/devices/PlugMG3#beta-layout.md"><img src="https://img.shields.io/badge/-Plug_M_Gen3_beta-0969da?style=flat-square" alt="Plug M Gen3 beta"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/102"><img src="https://img.shields.io/badge/-%23102-6e7781?style=flat-square" alt="#102"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/122"><img src="https://img.shields.io/badge/-%23122-6e7781?style=flat-square" alt="#122"></a></td><td valign="top">Layout finding · Two-run path · Second OTA · BL0942 measurement</td></tr>
+<tr><td valign="top"><a href="https://github.com/aanban"><b>aanban</b></a></td><td valign="top"><a href="docs/devices/MiniPMG3.md"><img src="https://img.shields.io/badge/-PM_Mini_Gen3-0969da?style=flat-square" alt="PM Mini Gen3"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/113"><img src="https://img.shields.io/badge/-%23113-6e7781?style=flat-square" alt="#113"></a></td><td valign="top">Silent-device diagnosis · Old-updater finding · layout_since check</td></tr>
+<tr><td valign="top"><a href="https://github.com/imsandli"><b>imsandli</b></a></td><td valign="top"><a href="docs/devices/MiniPMG3.md"><img src="https://img.shields.io/badge/-PM_Mini_Gen3-0969da?style=flat-square" alt="PM Mini Gen3"></a></td><td valign="top">First external report · RX pull-up · Voltage calibration · Reach-check idea</td></tr>
+</tbody></table>
 
 ### Testers
 
-| Who | What |
-| --- | --- |
-| [niki11euro](https://github.com/niki11euro) | A device request and the first run for the [Plus i4 DC](docs/devices/PlusI4.md) (October 2026, [#106](https://github.com/oxynatOr/free-shelly-ota/issues/106)): led to the `PlusI4` profile, then flashed it over OTA from stock 1.7.6 and reported the log, the loader (1.0.2), the slot case and the PCB |
-| [chusovich](https://github.com/chusovich) | A device report for the [1 Gen3](docs/devices/S1G3.md) (October 2026, [#98](https://github.com/oxynatOr/free-shelly-ota/issues/98)): two devices flashed over OTA from stock 1.4.0 with the full log (loader 1.0.1, the first seen on this device) and a later ESPHome OTA, and the config setup used with `S1G3-stock.csv` |
-| [WulffTech](https://github.com/WulffTech) | A device report for the [1PM Gen3](docs/devices/S1PMG3.md) and the [2PM Gen3](docs/devices/S2PMG3.md) (October 2026): one 1PM and two 2PM Gen3 converted over OTA from Shelly 2.0.1 without UART, with their own tooling; the device info, the stable ESPHome run across reboots and a later ESPHome OTA; and the observation that the installer writes a `pt` part from the package every time (it has no `min_version`), plus the finding that Shelly's CA is in the device filesystem |
-| [pienovi](https://github.com/pienovi) | Device reports for the [Mini 1PM Gen3](docs/devices/Mini1PMG3.md) (October 2026, [#82](https://github.com/oxynatOr/free-shelly-ota/issues/82)) and the [Plus Plug IT](docs/devices/PlusPlugIT.md) (October 2026, [#83](https://github.com/oxynatOr/free-shelly-ota/issues/83)): two Mini 1PM units flashed over OTA from stock 1.4.0 with the full log, the first loader 1.0.0 seen, and two [Mini 1 Gen3](docs/devices/Mini1G3.md) from stock 1.4.4; on the Plus Plug IT the OTA from Shelly 2.0.1 with the full log, the pins read from the stock firmware and checked on the hardware (relay, button, LEDs, BL0937, NTC), the power calibration factors, and a second unit going Shelly to Tasmota to ESPHome |
-| [jjanssen95](https://github.com/jjanssen95) | A device report for the [Mini 1 Gen3](docs/devices/Mini1G3.md) (October 2026, [#69](https://github.com/oxynatOr/free-shelly-ota/issues/69)): the OTA from Shelly 1.4.4 to ESPHome and a later ESPHome OTA, the pins checked on the hardware (relay, button, switch input, LED), the NTC reading that comes out high, and a second device with the `Boot:` lines of `restore` and the ESPHome flash, the slot-1 case and the timeout on a weak Wi-Fi |
-| [815rx1](https://github.com/815rx1) | A device report of a Plug M Gen3 (October 2026): the first run with the official 2.1.0 package and from factory firmware 1.8.99, with the full `--watch` log, the bootloader swap from loader 1.0.2, two later ESPHome OTAs (CLI and Home Assistant) and the power-cycle behaviour of relay and LED on the [device page](docs/devices/PlugMG3.md) |
-| [yasdfgr](https://github.com/yasdfgr) | A device report for the [Plus Uni](docs/devices/PlusUni.md) (October 2026, [#46](https://github.com/oxynatOr/free-shelly-ota/issues/46)): a successful OTA run with the full log, the first loader version seen on that device (1.0.3) and the eFuse lines; later the fix over UART and the measured pin table |
+<table width="100%">
+<thead><tr>
+<th align="left" width="150">Who</th>
+<th align="left" width="330">Device</th>
+<th align="left">What</th>
+</tr></thead>
+<tbody>
+<tr><td valign="top"><a href="https://github.com/niki11euro"><b>niki11euro</b></a></td><td valign="top"><a href="docs/devices/PlusI4.md"><img src="https://img.shields.io/badge/-Plus_i4_DC-0969da?style=flat-square" alt="Plus i4 DC"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/106"><img src="https://img.shields.io/badge/-%23106-6e7781?style=flat-square" alt="#106"></a></td><td valign="top">Device request · First OTA run · Loader and PCB notes</td></tr>
+<tr><td valign="top"><a href="https://github.com/chusovich"><b>chusovich</b></a></td><td valign="top"><a href="docs/devices/S1G3.md"><img src="https://img.shields.io/badge/-1_Gen3-0969da?style=flat-square" alt="1 Gen3"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/98"><img src="https://img.shields.io/badge/-%2398-6e7781?style=flat-square" alt="#98"></a></td><td valign="top">Two devices · Full log · Later ESPHome OTA · Config</td></tr>
+<tr><td valign="top"><a href="https://github.com/WulffTech"><b>WulffTech</b></a></td><td valign="top"><a href="docs/devices/S1PMG3.md"><img src="https://img.shields.io/badge/-1PM_Gen3-0969da?style=flat-square" alt="1PM Gen3"></a> <a href="docs/devices/S2PMG3.md"><img src="https://img.shields.io/badge/-2PM_Gen3-0969da?style=flat-square" alt="2PM Gen3"></a></td><td valign="top">Three devices, own tooling · Later OTA · pt part finding · Shelly CA finding</td></tr>
+<tr><td valign="top"><a href="https://github.com/pienovi"><b>pienovi</b></a></td><td valign="top"><a href="docs/devices/Mini1PMG3.md"><img src="https://img.shields.io/badge/-Mini_1PM_Gen3-0969da?style=flat-square" alt="Mini 1PM Gen3"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/82"><img src="https://img.shields.io/badge/-%2382-6e7781?style=flat-square" alt="#82"></a> <a href="docs/devices/Mini1G3.md"><img src="https://img.shields.io/badge/-Mini_1_Gen3-0969da?style=flat-square" alt="Mini 1 Gen3"></a> <a href="docs/devices/PlusPlugIT.md"><img src="https://img.shields.io/badge/-Plus_Plug_IT-0969da?style=flat-square" alt="Plus Plug IT"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/83"><img src="https://img.shields.io/badge/-%2383-6e7781?style=flat-square" alt="#83"></a></td><td valign="top">Four devices · Pins on hardware · Power calibration · Tasmota to ESPHome</td></tr>
+<tr><td valign="top"><a href="https://github.com/jjanssen95"><b>jjanssen95</b></a></td><td valign="top"><a href="docs/devices/Mini1G3.md"><img src="https://img.shields.io/badge/-Mini_1_Gen3-0969da?style=flat-square" alt="Mini 1 Gen3"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/69"><img src="https://img.shields.io/badge/-%2369-6e7781?style=flat-square" alt="#69"></a></td><td valign="top">Pins on hardware · NTC finding · Weak-Wi-Fi timeout · Later OTA</td></tr>
+<tr><td valign="top"><a href="https://github.com/815rx1"><b>815rx1</b></a></td><td valign="top"><a href="docs/devices/PlugMG3.md"><img src="https://img.shields.io/badge/-Plug_M_Gen3-0969da?style=flat-square" alt="Plug M Gen3"></a></td><td valign="top">First run on 1.8.99 · Bootloader swap · Two later OTAs · Power-cycle finding</td></tr>
+<tr><td valign="top"><a href="https://github.com/yasdfgr"><b>yasdfgr</b></a></td><td valign="top"><a href="docs/devices/PlusUni.md"><img src="https://img.shields.io/badge/-Plus_Uni-0969da?style=flat-square" alt="Plus Uni"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/46"><img src="https://img.shields.io/badge/-%2346-6e7781?style=flat-square" alt="#46"></a></td><td valign="top">Full log · Loader 1.0.3 seen · UART fix · Pin table</td></tr>
+</tbody></table>
 
 ### Reporters
 
-| Who | Device | Report |
-| --- | --- | --- |
-| [majoto85](https://github.com/majoto85) | [2PM Gen3](docs/devices/S2PMG3.md) | [#92](https://github.com/oxynatOr/free-shelly-ota/issues/92), October 2026: a successful OTA run from 1.4.99 with ESPHome's bootloader, a later ESPHome OTA, the log and the eFuse lines |
+<table width="100%">
+<thead><tr>
+<th align="left" width="150">Who</th>
+<th align="left" width="330">Device</th>
+<th align="left">What</th>
+</tr></thead>
+<tbody>
+<tr><td valign="top"><a href="https://github.com/majoto85"><b>majoto85</b></a></td><td valign="top"><a href="docs/devices/S2PMG3.md"><img src="https://img.shields.io/badge/-2PM_Gen3-0969da?style=flat-square" alt="2PM Gen3"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/92"><img src="https://img.shields.io/badge/-%2392-6e7781?style=flat-square" alt="#92"></a></td><td valign="top">OTA from 1.4.99 · Later OTA · eFuse lines</td></tr>
+</tbody></table>
 
 ### Confirmations
 
-| Who | Device | Report |
-| --- | --- | --- |
-| [ABotond](https://github.com/ABotond) | [Plug M Gen3, beta layout](docs/devices/PlugMG3.md#beta-layout) | [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), October 2026: from Shelly 2.0.1 the beta needed two runs of the updater, then ESPHome with the beta table ran for days with relay, Bluetooth, LED and Wi-Fi working |
-| [jumoog](https://github.com/jumoog) | [Plug M Gen3, beta layout](docs/devices/PlugMG3.md#beta-layout) | [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), November 2026: `send` of the ESPHome package without UART, the device confirmed it and ESPHome started; the relay switched after about 30 s without power |
+<table width="100%">
+<thead><tr>
+<th align="left" width="150">Who</th>
+<th align="left" width="330">Device</th>
+<th align="left">What</th>
+</tr></thead>
+<tbody>
+<tr><td valign="top"><a href="https://github.com/ABotond"><b>ABotond</b></a></td><td valign="top"><a href="docs/devices/PlugMG3#beta-layout.md"><img src="https://img.shields.io/badge/-Plug_M_Gen3_beta-0969da?style=flat-square" alt="Plug M Gen3 beta"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/102"><img src="https://img.shields.io/badge/-%23102-6e7781?style=flat-square" alt="#102"></a></td><td valign="top">Two runs from 2.0.1 · Days of uptime</td></tr>
+<tr><td valign="top"><a href="https://github.com/jumoog"><b>jumoog</b></a></td><td valign="top"><a href="docs/devices/PlugMG3#beta-layout.md"><img src="https://img.shields.io/badge/-Plug_M_Gen3_beta-0969da?style=flat-square" alt="Plug M Gen3 beta"></a> <a href="https://github.com/oxynatOr/free-shelly-ota/issues/102"><img src="https://img.shields.io/badge/-%23102-6e7781?style=flat-square" alt="#102"></a></td><td valign="top">OTA without UART · Relay after power cycle</td></tr>
+</tbody></table>
 
 ## Projects
 
-| Project | License | What we learned from it |
-| --- | --- | --- |
-| [tasmota/mgos32-to-tasmota32](https://github.com/tasmota/mgos32-to-tasmota32) | GPL-3.0 | Converting a Shelly OTA ZIP so the stock updater accepts third-party firmware |
-| [inventor7777/ESPHome-Shelly-Plus-Plug-US](https://github.com/inventor7777/ESPHome-Shelly-Plus-Plug-US) | MIT | Replacing only the app image in Shelly's ZIP; the partition table at `0x10000`; the follow-up bootloader step (see [Bootloader and slots](docs/bootloader-and-slots.md)) |
-| [automatous-io/shelly-gen4-esphome](https://github.com/automatous-io/shelly-gen4-esphome) | Apache-2.0 | Gen4 (ESP32-C6) partition layout, the A/B slot rule, install documentation |
+Software this tool learned from.
+
+> [!TIP]
+> Please visit and support these projects.
+
+<table width="100%">
+<thead><tr>
+<th align="left" width="300">Project</th>
+<th align="left" width="90">License</th>
+<th align="left">What we learned from it</th>
+</tr></thead>
+<tbody>
+<tr><td valign="top"><a href="https://github.com/tasmota/mgos32-to-tasmota32">tasmota/mgos32-to-tasmota32</a></td><td valign="top">GPL-3.0</td><td valign="top">Converting a Shelly OTA ZIP so the stock updater accepts third-party firmware</td></tr>
+<tr><td valign="top"><a href="https://github.com/inventor7777/ESPHome-Shelly-Plus-Plug-US">inventor7777/ESPHome-Shelly-Plus-Plug-US</a></td><td valign="top">MIT</td><td valign="top">Replacing only the app image in Shelly's ZIP; the partition table at <code>0x10000</code>; the follow-up bootloader step (see <a href="docs/bootloader-and-slots.md">Bootloader and slots</a>)</td></tr>
+<tr><td valign="top"><a href="https://github.com/automatous-io/shelly-gen4-esphome">automatous-io/shelly-gen4-esphome</a></td><td valign="top">Apache-2.0</td><td valign="top">Gen4 (ESP32-C6) partition layout, the A/B slot rule, install documentation</td></tr>
+</tbody></table>
 
 ## Third parties
 
-Sources and tools from outside this project. Their work is not redistributed here.
+Sources and tools from outside this project. Their work is not redistributed here. Where a device page uses another person's page, such as an ESPHome device page, it names the source there.
 
-| Who | What |
-| --- | --- |
-| Shelly / Allterco Robotics | The official OTA packages and the update API (not redistributed here) |
-| [ESPHome](https://esphome.io), Espressif (esptool, ESP-IDF) | The firmware framework and tooling everything builds on |
-| bobkersten | Author of the ESPHome device-database page for the [Shelly Plus Plug S](https://devices.esphome.io/devices/Shelly-Plus-Plug-S/), whose pins and config the [Plus Plug S page](docs/devices/PlusPlugS.md) uses (tested by the author, not by this project) |
+<table width="100%">
+<thead><tr>
+<th align="left" width="300">Who</th>
+<th align="left">What</th>
+</tr></thead>
+<tbody>
+<tr><td valign="top">Shelly / Allterco Robotics</td><td valign="top">The official OTA packages and the update API (not redistributed here)</td></tr>
+<tr><td valign="top"><a href="https://esphome.io">ESPHome</a>, Espressif (esptool, ESP-IDF)</td><td valign="top">The firmware framework and tooling everything builds on</td></tr>
+</tbody></table>
 
 ## Missing from this list?
 
