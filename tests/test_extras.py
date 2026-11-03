@@ -261,7 +261,7 @@ class VariantTests(unittest.TestCase):
 
     def test_alt_missing_in_reply_is_an_error(self):
         orig = firmware.query_update_api
-        firmware.query_update_api = lambda uid, insecure=False: {"stable": {"url": "https://x/y"}, "alt": {}}
+        firmware.query_update_api = lambda uid, insecure=False, cafile=None: {"stable": {"url": "https://x/y"}, "alt": {}}
         self.addCleanup(setattr, firmware, "query_update_api", orig)
         with self.assertRaises(builder.OtaError):
             firmware.fetch("NoSuchDevice", "Base", alt="Variant", fw_dir=Path(tempfile.mkdtemp()))

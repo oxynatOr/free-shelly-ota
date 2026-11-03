@@ -164,7 +164,7 @@ python ota.py build <Profile> firmware.ota.bin --esphome-factory firmware.factor
 
 ### What to watch in the output
 
-- `fetch` needs `--insecure`; the hash in the download URL is still checked. It keeps the package in `fw/` (keep that folder: Shelly can remove a version from its
+- `fetch` needs `--insecure` (or `--cafile PEM` with Shelly's CA, which keeps TLS on); the hash in the download URL is still checked. It keeps the package in `fw/` (keep that folder: Shelly can remove a version from its
   server, as happened with the Plug M Gen3 2.0.1 and 2.1.0).
 - `build` checks magic byte, chip id, segments, that the image fits the slot, the bootloader header and the partition table. A refusal is a reason to stop, not to force.
   The most common refusals are in [Build refuses to replace the bootloader](troubleshooting.md#build-refuses-to-replace-the-bootloader).

@@ -77,6 +77,7 @@ RESTORE_HELP = ("note: restore works only while Shelly firmware still runs; a de
                 "ESPHome does not answer (UART is the way back). The official package may reset NVS and\n"
                 "otadata: Wi-Fi and settings can be lost.")
 PC_GROUP = "this PC"
+CAFILE_HELP = "check TLS against the CA certificates in PEM only (e.g. Shelly's CA); TLS stays on, unlike --insecure"
 
 
 def cmd_list(args) -> None:
@@ -136,21 +137,22 @@ def cmd_profiles(args) -> None:
         raise builder.OtaError(f"{len(problems)} profile problem(s); see above.")
 
 
-def _fetch_official(p, *, refresh=False, version=None, insecure=False, channel="stable", from_version=None):
+def _fetch_official(p, *, refresh=False, version=None, insecure=False, cafile=None, channel="stable",
+                    from_version=None):
     """Fetch for a profile; variants (profile.parent) are looked up in their parent's update reply."""
     channel = "beta" if p.channel == "beta" else channel  # a -beta profile is for the beta channel
     if p.parent:
         parent = profile.load_profile(p.parent)
         return firmware.fetch(p.package_name, parent.update_id, refresh=refresh, version=version,
-                              insecure=insecure, alt=p.update_id, channel=channel,
+                              insecure=insecure, cafile=cafile, alt=p.update_id, channel=channel,
                               from_version=from_version)
     return firmware.fetch(p.package_name, p.update_id, refresh=refresh, version=version, insecure=insecure,
-                          channel=channel, from_version=from_version)
+                          cafile=cafile, channel=channel, from_version=from_version)
 
 
 def cmd_fetch(args) -> None:
     p = profile.load_profile(args.device)
-    path = _fetch_official(p, refresh=args.refresh, version=args.version, insecure=args.insecure,
+    path = _fetch_official(p, refresh=args.refresh, version=args.version, insecure=args.insecure, cafile=args.cafile,
                            channel=args.channel, from_version=args.from_version)
     ui.say(f"Official firmware: {path}")
     with zipfile.ZipFile(path) as zf:
@@ -261,8 +263,8 @@ def cmd_build(args) -> None:
             raise builder.OtaError(
                 f"No official {p.name} ZIP in {firmware.FW_DIR / p.name}. Put one there, pass --official <zip>, "
                 f"run 'ota.py fetch {p.name}', or add --download to build.")
-        official = _fetch_official(p, version=args.version, insecure=args.insecure, channel=args.channel,
-                                  from_version=args.from_version)
+        official = _fetch_official(p, version=args.version, insecure=args.insecure, cafile=args.cafile,
+                                  channel=args.channel, from_version=args.from_version)
 
     def run_build(target: Path) -> builder.BuildResult:
         return builder.build(p, args.app, official, target, drop=drop, tag=args.tag, factory=args.esphome_factory,
@@ -563,7 +565,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="release channel of the update API (default: %(default)s)")
     g.add_argument("--from-version", metavar="VER",
                    help="ask the update API as a device running VER would (e.g. 1.4.4 gets the 2.0.1 stable step)")
-    g.add_argument("--insecure", action="store_true", help="skip TLS check (Shelly uses a private CA)")
+    tls = g.add_mutually_exclusive_group()
+    tls.add_argument("--insecure", action="store_true", help="skip TLS check (Shelly uses a private CA)")
+    tls.add_argument("--cafile", type=Path, metavar="PEM", help=CAFILE_HELP)
     f.set_defaults(func=cmd_fetch)
 
     a = _command(sub, "add-device", epilog=_epilog("add-device NewDevice.zip", "add-device"))
@@ -640,7 +644,9 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--official", type=Path, metavar="ZIP", help="use this official ZIP")
     g.add_argument("--version", metavar="VER", help="use this cached version (default: the newest stable one)")
     g.add_argument("--download", action="store_true", help="download if nothing is cached")
-    g.add_argument("--insecure", action="store_true", help="with --download: skip TLS check")
+    tls = g.add_mutually_exclusive_group()
+    tls.add_argument("--insecure", action="store_true", help="with --download: skip TLS check")
+    tls.add_argument("--cafile", type=Path, metavar="PEM", help=f"with --download: {CAFILE_HELP}")
     g.add_argument("--channel", choices=["stable", "beta"], default="stable",
                    help="with --download: release channel of the update API (default: %(default)s)")
     g.add_argument("--from-version", metavar="VER", help="with --download: ask the update API as a device running VER would")
