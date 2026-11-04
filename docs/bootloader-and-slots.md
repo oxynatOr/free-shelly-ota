@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [Documentation](README.md) · [Device pages](devices/README.md) · [Troubleshooting](troubleshooting.md)
 
-[✅ Recommended](#recommended-ship-esphomes-bootloader) · [🔢 min_version](#is-the-new-bootloader-really-written-min_version) · [🎯 Slot 0](#the-app-must-land-in-slot-0) · [📦 Plain package](#without-esphomes-bootloader-plain-package) · [🧩 Beta layout](#beta-firmware-with-another-flash-layout)
+[✅ Recommended](#recommended-ship-esphomes-bootloader) · [🔢 min_version](#is-the-new-bootloader-really-written-min_version) · [🎯 Slot 0](#the-app-must-land-in-slot-0) · [🧪 Slot swap](#experimental-slot-swap-in-the-package) · [📦 Plain package](#without-esphomes-bootloader-plain-package) · [🧩 Beta layout](#beta-firmware-with-another-flash-layout)
 
 Two things decide whether an ESPHome image started from a Shelly package keeps working: whose **bootloader** runs, and which
 **slot** the installer writes the app to. Every [device page](devices/README.md) repeats the commands; this page explains the why.
@@ -89,6 +89,41 @@ predictor, so the check uses the log line. (On the Mini 1PM Gen4 Zigbee firmware
 >
 > Stuck anyway (ESPHome in `app_1`, old app in `app_0`, no way to run `restore`)? A UART step also works:
 > [Select slot 1 with a hand-made otadata](troubleshooting.md#select-slot-1-with-a-hand-made-otadata).
+
+## Experimental: slot swap in the package
+
+> [!WARNING]
+> **Experimental, not yet tried with this tool on a device.** `send --slot-swap` changes the partition table that the installer
+> writes to flash. If that goes wrong, a serial connection and a flash dump of the device are needed to bring it back
+> ([Recovery over UART](recovery-uart.md)). Going back to Shelly's firmware after such an install has not been tested.
+
+The installer and ESPHome's bootloader read different fields of the partition table. The installer finds the app slots by
+label and address (`app_0`, `app_1`). ESPHome's bootloader, with an `otadata` it cannot read, starts the app partition whose
+**subtype** is `ota_0`, and in Shelly's table that is `app_0`. That is why the app has to land in slot 0.
+
+With `--slot-swap`, `send` reads the target slot as above (`Storing core dumps to app_N`). If it is 1, the device gets a copy of
+the package whose partition table has the two app subtypes swapped: `app_1` is `ota_0`, `app_0` is `ota_1`. Labels, addresses,
+sizes, flags and every other entry stay Shelly's, so the layout checks of `build` and `send` (and the installer's own check of
+labels and addresses) see the same table; only the table's MD5 entry is recomputed. Nothing else in the package changes.
+ESPHome's bootloader then starts slot 1, where the installer wrote the app: one `send`, no `restore` before it.
+
+- Target slot 0: nothing to swap, the package goes out as it was built.
+- Target slot unknown (no log line, or a firmware that names `scratch`): `send` stops. The table is only swapped for a slot the
+  device has named.
+- Only for a package built with `--esphome-factory` (ESPHome's bootloader and a clean `otadata`). Not together with
+  `--ignore-slot`, and not for `restore`.
+- The swapped copy lives in a temporary folder for this one `send`; the package in `out/` stays as it is. `-v` shows the SHA-256
+  of the table before and after.
+- If the update log then says `Will write to slot N` for another slot than the one read before, `send` warns at once.
+
+What is known: the installer writes the package's `pt` part every time (the manifest has a `min_version` for `boot` only, not for
+`pt`), and it comes before the app in the manifest order (boot, pt, otadata, nvs, app, fs). The idea and these findings come from
+[#95](https://github.com/oxynatOr/free-shelly-ota/issues/95), where one 1PM Gen3 and two 2PM Gen3 were converted with the reporter's
+own tooling, not with `ota.py`. Not known yet ([#111](https://github.com/oxynatOr/free-shelly-ota/issues/111)), and to be tried
+on a dev board with [`ota.py devkit`](devkit.md) first:
+
+- whether the installer chooses its target slot again after it has written the new table;
+- what Shelly's official package (`restore`) does on a device with the swapped table.
 
 ## Without ESPHome's bootloader (plain package)
 

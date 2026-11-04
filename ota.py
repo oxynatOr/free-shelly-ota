@@ -8,6 +8,7 @@ are replaced as well.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import shutil
@@ -78,6 +79,11 @@ RESTORE_HELP = ("note: restore works only while Shelly firmware still runs; a de
                 "otadata: Wi-Fi and settings can be lost.")
 PC_GROUP = "this PC"
 CAFILE_HELP = "check TLS against the CA certificates in PEM only (e.g. Shelly's CA); TLS stays on, unlike --insecure"
+SLOT_SWAP_HELP = ("EXPERIMENTAL, not yet tried with this tool on a device: if the installer will write to slot 1, send the package with "
+                  "app_0/app_1 subtypes swapped in its partition table (labels and addresses stay Shelly's), so ESPHome's "
+                  "bootloader starts slot 1; no restore first. Needs a package built with --esphome-factory and a readable "
+                  "target slot. The installer writes the table to flash: if it goes wrong, a serial connection and a flash "
+                  "dump are needed to bring the device back. Going back to Shelly's firmware afterwards is not tested")
 
 
 def cmd_list(args) -> None:
@@ -323,10 +329,16 @@ def _send(args, zip_path: Path, log_name: str | None = None, restoring: bool = F
     level = _level(args, Level.normal)
     logfile = _open_logfile(args, level, log_name or f"{zip_path.stem}.send.log")
     try:
-        sender.send(p, zip_path, args.ip, host=args.host, port=args.port, timeout=args.timeout, max_wait=getattr(args, "max_wait", sender.MAX_WAIT),
-                    assume_yes=args.yes, dry_run=args.dry_run, force=args.force, user=args.user,
-                    password=args.password, watch=args.watch, log_port=args.log_port, ignore_slot=args.ignore_slot,
-                    wait=getattr(args, "wait", sender.DEFAULT_WAIT), restoring=restoring, level=level, logfile=logfile)
+        with contextlib.ExitStack() as stack:
+            # --slot-swap (experimental): the copy with the swapped partition table lives only for this send
+            slot_swap = (Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="free-shelly-ota-slotswap-",
+                                                                              ignore_cleanup_errors=True)))
+                         if getattr(args, "slot_swap", False) else None)
+            sender.send(p, zip_path, args.ip, host=args.host, port=args.port, timeout=args.timeout, max_wait=getattr(args, "max_wait", sender.MAX_WAIT),
+                        assume_yes=args.yes, dry_run=args.dry_run, force=args.force, user=args.user,
+                        password=args.password, watch=args.watch, log_port=args.log_port, ignore_slot=args.ignore_slot,
+                        wait=getattr(args, "wait", sender.DEFAULT_WAIT), restoring=restoring, level=level, logfile=logfile,
+                        slot_swap=slot_swap)
     finally:
         if logfile:
             logfile.close()
@@ -656,6 +668,8 @@ def build_parser() -> argparse.ArgumentParser:
                  epilog=_epilog("send DuoBulbG3 out/DuoBulbG3-app-<date>.zip --ip 192.168.1.50 --dry-run", "send"))
     t.add_argument("device", metavar="DEVICE", help=dev_help)
     t.add_argument("zip", type=Path, metavar="ZIP", help="the package made by build")
+    g = t.add_argument_group("experimental")
+    g.add_argument("--slot-swap", action="store_true", help=SLOT_SWAP_HELP)
     t.set_defaults(func=cmd_send)
 
     r = _command(sub, "restore", usage="ota.py restore DEVICE [options]", parents=[dev, snd, lvl],
