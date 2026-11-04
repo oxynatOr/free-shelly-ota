@@ -48,7 +48,8 @@ Downloads the official package to `fw/shelly/<Device>/<version>/` (with a `meta.
 URL.
 
 > [!NOTE]
-> Shelly's servers use a private CA, so TLS verification fails; `--insecure` skips it.
+> Shelly's servers use a private CA, so TLS verification fails; `--insecure` skips it. If you have that CA as a PEM file,
+> `--cafile PEM` checks against it instead and keeps TLS on.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -58,6 +59,7 @@ URL.
 | `--channel stable\|beta` | no | `stable` | Release channel of the update API |
 | `--from-version VER` | no | none | Ask the update API as a device running VER would. The server answers per installed version, which the device sends in the `Shelly-Info` header; a request without it, or from a device that already runs the newest package, may list no stable release (the H&T Gen3 looked removed that way). `fetch HTG3 --from-version 1.4.4` gets the stable 2.0.1 |
 | `--insecure` | no | off | Skip the TLS check (the URL hash only guards against transfer errors) |
+| `--cafile PEM` | no | none | Check TLS against the CA certificates in this file only, not the system store; the file may hold several. Meant for Shelly's CA: Python 3.13 and newer refuse it in their strict check (`VERIFY_X509_STRICT`), because it has no `CA:TRUE`, so that one check is off for this download. Host name, chain and dates are still checked. The tool ships no CA file. Not together with `--insecure` |
 
 ## build
 
@@ -93,6 +95,7 @@ file.
 | `--version VER` | Use this cached version (default: the newest stable one; a pre-release only with this option) |
 | `--download` | Download the official ZIP if none is cached (off by default) |
 | `--insecure` | With `--download`: skip the TLS check |
+| `--cafile PEM` | With `--download`: check TLS against the CA certificates in this file only (see [`fetch`](#fetch)) |
 | `--channel stable\|beta` | With `--download`: release channel of the update API |
 | `--from-version VER` | With `--download`: ask the update API as a device running VER would (see [`fetch`](#fetch)) |
 

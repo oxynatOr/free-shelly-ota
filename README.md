@@ -129,7 +129,7 @@ python ota.py send PlugMG3 out/PlugMG3-app-<date>.zip --ip <device IP>
 ```
 
 - `PlugMG3` is the example; use your device's profile from the table above.
-- `--insecure` is needed because Shelly's servers use a private CA; the hash in the download URL still guards against transfer errors ([`fetch`](docs/commands.md#fetch)).
+- `--insecure` is needed because Shelly's servers use a private CA (unless you have that CA as a PEM file: `--cafile PEM` keeps TLS on); the hash in the download URL still guards against transfer errors ([`fetch`](docs/commands.md#fetch)).
 - Add `--dry-run` first to check the device without sending anything ([`send`](docs/commands.md#send)).
 - A device without Wi-Fi (Zigbee firmware) needs [`ble wifi`](docs/commands.md#ble) first.
 
