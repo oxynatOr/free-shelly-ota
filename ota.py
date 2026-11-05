@@ -19,7 +19,7 @@ import textwrap
 import zipfile
 from pathlib import Path
 
-from shelly_ota import (MODULE_DIR, ble, buildinfo, builder, compile as compile_, devicegen, devkit, firmware, lint, logview, logwatch,
+from shelly_ota import (MODULE_DIR, ble, buildinfo, builder, cacert, compile as compile_, devicegen, devkit, firmware, lint, logview, logwatch,
                         profile, rpc, secrets_check, sender, ui)
 from shelly_ota.logview import Level
 
@@ -47,6 +47,7 @@ COMMANDS = [
     ("Tools", [
         ("inspect", "show and verify an OTA ZIP"),
         ("devkit", "write a flash image of a package for a dev board"),
+        ("ca", "take Shelly's root CA out of a package, for --cafile"),
         ("list", "show devices and cached firmware"),
         ("profiles", "list the device profiles with their revision, check devices/profiles.lock"),
         ("clean", "delete old ZIPs in out/ (shows what, needs --yes)"),
@@ -212,6 +213,40 @@ def cmd_devkit(args) -> None:
     if note:
         ui.say(f"{note[0]}: {note[1]}")
 
+
+def _newest_cached_package() -> Path | None:
+    """The cached package of any device that was written last (the root is the same in all of them)."""
+    found = [z for d in sorted(firmware.FW_DIR.iterdir()) if d.is_dir() and (z := firmware.cached_zip(d.name, fw_dir=firmware.FW_DIR))]         if firmware.FW_DIR.is_dir() else []
+    return max(found, key=lambda z: z.stat().st_mtime, default=None)
+
+
+def cmd_ca(args) -> None:
+    if args.zip:
+        source = args.zip
+    elif args.device:
+        p = profile.load_profile(args.device)
+        source = firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
+        if source is None:
+            raise builder.OtaError(f"No official {p.name} ZIP cached. Run 'ota.py fetch {p.name}' first, or pass --zip <package>.")
+    else:
+        source = _newest_cached_package()
+        if source is None:
+            raise builder.OtaError(f"No official ZIP cached in {firmware.FW_DIR}. Pass --zip <package> or run 'ota.py fetch <device>'.")
+    der = cacert.extract_from_zip(source)
+    output = args.output or MODULE_DIR / "fw" / "shelly-ca.pem"
+    if output.exists() and not args.force:
+        raise builder.OtaError(f"{output} already exists (use --force to overwrite).")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_bytes(cacert.to_pem(der))
+    ui.say(f"OK: {output}")
+    ui.say(f"  root CA from {source}")
+    ui.say(f"  SHA-256 {cacert.colon_hex(cacert.fingerprint(der))}")
+    ui.say(f"  valid until {cacert.SHELLY_ROOT_NOT_AFTER}")
+    ui.say(f"  use it with: python ota.py fetch <device> --cafile {output}")
+    ui.say("NOTE: the check above is against the fingerprint fixed in this tool. A package you got with --insecure was not "
+           "checked by TLS, so compare the fingerprint with the one in the documentation as well.")
+    if cacert.expired():
+        ui.say(f"WARNING: this root expired on {cacert.SHELLY_ROOT_NOT_AFTER}. Shelly has probably changed it: look for a newer tool version.")
 
 def _compile_for_build(args, p) -> None:
     """--compile YAML: build the binaries first and hand them to the build below as APP and --esphome-factory."""
@@ -622,6 +657,18 @@ def build_parser() -> argparse.ArgumentParser:
                    help="stop if the layout needs more flash than the board has: 4MB, 8MB or 16MB")
     g.add_argument("--port", default="COMx", metavar="PORT", help="serial port in the printed esptool commands (default: %(default)s)")
     dk.set_defaults(func=cmd_devkit)
+
+    ca = _command(sub, "ca", usage="ota.py ca [DEVICE] [options]",
+                  epilog=_epilog("ca", "ca",
+                                 "Writes fw/shelly-ca.pem. Check what is written against the fingerprint in docs/commands.md#ca."))
+    ca.add_argument("device", nargs="?", metavar="DEVICE", help="take the package of this device (default: any cached package)")
+    g = ca.add_argument_group("package")
+    g.add_argument("--zip", type=Path, metavar="ZIP", help="use this package instead of a cached one")
+    g.add_argument("--version", metavar="VER", help="with DEVICE: use this cached official version (default: the newest stable one)")
+    g = ca.add_argument_group("output")
+    g.add_argument("-o", "--output", type=Path, metavar="PEM", help="write to this file (default: fw/shelly-ca.pem)")
+    g.add_argument("--force", action="store_true", help="overwrite an existing output file")
+    ca.set_defaults(func=cmd_ca)
 
     b = _command(sub, "build", usage="ota.py build DEVICE (APP.bin | --compile YAML) [options]",
                  epilog=_epilog("build PlugMG3 app.ota.bin --esphome-factory app.factory.bin", "build"))
