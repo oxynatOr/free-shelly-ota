@@ -93,37 +93,62 @@ predictor, so the check uses the log line. (On the Mini 1PM Gen4 Zigbee firmware
 ## Experimental: slot swap in the package
 
 > [!WARNING]
-> **Experimental, not yet tried with this tool on a device.** `send --slot-swap` changes the partition table that the installer
-> writes to flash. If that goes wrong, a serial connection and a flash dump of the device are needed to bring it back
-> ([Recovery over UART](recovery-uart.md)). Going back to Shelly's firmware after such an install has not been tested.
+> **Experimental. Seen working on two dev boards (ESP32-C6 and ESP32-C3, 2026-11-05/06); not tried on a device.** The package moves the
+> partition table and `send --slot-swap` changes it, and the installer writes it to flash. If that goes wrong, a serial
+> connection and a flash dump of the device are needed to bring it back ([Recovery over UART](recovery-uart.md)). Going back to
+> Shelly's firmware after such an install has not been tested.
 
 The installer and ESPHome's bootloader read different fields of the partition table. The installer finds the app slots by
 label and address (`app_0`, `app_1`). ESPHome's bootloader, with an `otadata` it cannot read, starts the app partition whose
 **subtype** is `ota_0`, and in Shelly's table that is `app_0`. That is why the app has to land in slot 0.
 
-With `--slot-swap`, `send` reads the target slot as above (`Storing core dumps to app_N`). If it is 1, the device gets a copy of
-the package whose partition table has the two app subtypes swapped: `app_1` is `ota_0`, `app_0` is `ota_1`. Labels, addresses,
-sizes, flags and every other entry stay Shelly's, so the layout checks of `build` and `send` (and the installer's own check of
-labels and addresses) see the same table; only the table's MD5 entry is recomputed. Nothing else in the package changes.
-ESPHome's bootloader then starts slot 1, where the installer wrote the app: one `send`, no `restore` before it.
+**Why the table has to move.** A `pt` part for the address where Shelly's table already is (`0x10000`, `0xf000` on some
+devices) is not written there: the installer logs `Installing new PT1` and keeps the table in a journal that only Shelly's own
+loader reads. ESPHome's bootloader reads the address it was built for, finds Shelly's old table and starts `app_0`, although the
+update reports success. This was seen on a Gen4 dev board (stock 2.1.1) and on Gen3 dev boards (stock 2.0.1 and 2.1.0). A `pt`
+part with another address is written there (log: `PT is being moved from 0x10000 to 0x8000`, `Installing PT ... -> pt(0x8000)`),
+and Shelly's own table stays where it is, untouched. The idea and the first log of this come from
+[WulffTech](https://github.com/WulffTech) ([#95](https://github.com/oxynatOr/free-shelly-ota/issues/95)).
 
-- Target slot 0: nothing to swap, the package goes out as it was built.
+**How it fits together.**
+
+1. Build the ESPHome config **without** `CONFIG_PARTITION_TABLE_OFFSET` (ESP-IDF's default `0x8000`; keep `partitions:` with the
+   stock CSV). Its bootloader then reads the table at `0x8000`.
+2. `python ota.py build DEVICE --compile app.yaml --pt-addr 0x8000` (or `APP.bin --esphome-factory FACTORY.bin --pt-addr 0x8000`)
+   ships that bootloader and Shelly's table with the address `0x8000`. `0x8000` is the only value for now: it is free on the
+   Gen3/Gen4 flash maps. A profile whose table is at `0x8000` already has nothing to move.
+3. `send DEVICE package.zip --slot-swap` reads the target slot as above (`Storing core dumps to app_N`). If it is 1, the device
+   gets a copy of the package whose table has the two app subtypes swapped: `app_1` is `ota_0`, `app_0` is `ota_1`. Labels,
+   addresses, sizes, flags and every other entry stay Shelly's; only the table's MD5 entry is recomputed. ESPHome's bootloader
+   then starts slot 1, where the installer wrote the app: one `send`, no `restore` before it.
+
+- Target slot 0: the table is not swapped, but it is still moved: the package goes out as built.
 - Target slot unknown (no log line, or a firmware that names `scratch`): `send` stops. The table is only swapped for a slot the
   device has named.
-- Only for a package built with `--esphome-factory` (ESPHome's bootloader and a clean `otadata`). Not together with
-  `--ignore-slot`, and not for `restore`.
+- `send --slot-swap` refuses a package whose table was not moved, one without ESPHome's bootloader and a clean `otadata`, and
+  `--ignore-slot`; it is not for `restore`.
 - The swapped copy lives in a temporary folder for this one `send`; the package in `out/` stays as it is. `-v` shows the SHA-256
   of the table before and after.
-- If the update log then says `Will write to slot N` for another slot than the one read before, `send` warns at once.
+- If the update log then says `Will write to slot N` for another slot than the one read before, or does not show the table being
+  moved, `send` warns at once.
 
-What is known: the installer writes the package's `pt` part every time (the manifest has a `min_version` for `boot` only, not for
-`pt`), and it comes before the app in the manifest order (boot, pt, otadata, nvs, app, fs). The idea and these findings come from
-[#95](https://github.com/oxynatOr/free-shelly-ota/issues/95), where one 1PM Gen3 and two 2PM Gen3 were converted with the reporter's
-own tooling, not with `ota.py`. Not known yet ([#111](https://github.com/oxynatOr/free-shelly-ota/issues/111)), and to be tried
-on a dev board with [`ota.py devkit`](devkit.md) first:
+What was seen (2026-11-05/06, dev boards with the DevKit images, `build --compile ... --pt-addr 0x8000` and `send --slot-swap`):
 
-- whether the installer chooses its target slot again after it has written the new table;
-- what Shelly's official package (`restore`) does on a device with the swapped table.
+| Board | Profile (stock) | Result |
+| --- | --- | --- |
+| ESP32-C6, 8 MB | `S1PMG4` (2.1.0) | Target slot 1. `PT is being moved from 0x10000 to 0x8000`, `Installing PT ... -> pt(0x8000)`. ESPHome's bootloader printed the swapped table, started `app_1`, the access point of the ESPHome config came up. A second ESPHome OTA (another build) took effect and the board then started from `app_0`. |
+| ESP32-C3, 8 MB | `S1PMG3` (2.1.0) | Target slot 1. `PT is being moved from 0xf000 to 0x8000`, `Installing PT 4096@fs_1(0x660000) -> pt(0x8000)`. Bootloader started `app_1`, the access point of the ESPHome config came up. |
+
+Without the move (the table at Shelly's own address) the same boards, and a Gen3 board on stock 2.0.1, ended on the old app after
+a reported success.
+
+Not known yet:
+
+- what Shelly's official package (`restore`) does on a device with the moved table. While ESPHome runs there is no Shelly
+  installer to send it to, so the way back is UART, as for every ESPHome install ([Recovery over UART](recovery-uart.md)); Shelly's
+  own table is still at its address;
+- whether the installer chooses its target slot again after it has written the new table: in the runs above it did not;
+- devices: all of this was seen on dev boards only, not on a device in a wall or a socket.
 
 ## Without ESPHome's bootloader (plain package)
 

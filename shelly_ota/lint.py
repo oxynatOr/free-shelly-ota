@@ -9,6 +9,7 @@ from pathlib import Path
 
 import yaml
 
+from .builder import RELOCATED_PT_ADDR
 from .profile import Profile
 
 
@@ -41,8 +42,11 @@ def has_esp32_block(cfg: dict) -> bool:
     return isinstance(cfg.get("esp32"), dict)
 
 
-def lint_esphome(yaml_path: Path, profile: Profile, cfg: dict | None = None) -> list[str]:
+def lint_esphome(yaml_path: Path, profile: Profile, cfg: dict | None = None, relocated: bool = False) -> list[str]:
     """Return a list of problems (empty = looks fine).
+
+    relocated: the package moves the partition table (build --pt-addr), so the bootloader has to read it from
+    RELOCATED_PT_ADDR (ESP-IDF's default: the offset option must be left unset or be that value).
 
     cfg: the config as ESPHome resolved it (`compile.resolve_config`), for a YAML that gets its `esp32:` block from
     `packages:` or `!include`. Without it the file itself is read, and those are not followed.
@@ -62,10 +66,15 @@ def lint_esphome(yaml_path: Path, profile: Profile, cfg: dict | None = None) -> 
     value = (framework.get("sdkconfig_options") or {}).get("CONFIG_PARTITION_TABLE_OFFSET")
     # Not set means ESP-IDF's default 0x8000, which is right for devices that keep their table there (classic ESP32).
     offset = int(str(value), 0) if value is not None and str(value).strip() else 0x8000
-    if offset != profile.pt_offset:  # Gen3/Gen4 keep their table elsewhere (0x10000, H&T 0xf000)
-        problems.append("esp32.framework.sdkconfig_options.CONFIG_PARTITION_TABLE_OFFSET must be "
-                        f"\"0x{profile.pt_offset:x}\" (found: {value!r}). "
-                        "Without it the app looks for its partitions at 0x8000.")
+    expected = RELOCATED_PT_ADDR if relocated else profile.pt_offset
+    if offset != expected:  # Gen3/Gen4 keep their table elsewhere (0x10000, H&T 0xf000)
+        if relocated:
+            problems.append("esp32.framework.sdkconfig_options.CONFIG_PARTITION_TABLE_OFFSET must be left out (or "
+                            f"\"0x{expected:x}\") with --pt-addr, because the table is moved there (found: {value!r}).")
+        else:
+            problems.append("esp32.framework.sdkconfig_options.CONFIG_PARTITION_TABLE_OFFSET must be "
+                            f"\"0x{expected:x}\" (found: {value!r}). "
+                            "Without it the app looks for its partitions at 0x8000.")
 
     partitions = esp32.get("partitions")
     if not partitions:

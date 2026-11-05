@@ -458,15 +458,23 @@ def unread_slot_reason(probe: SlotProbe, probe_failed: bool, log_port: int, prob
 SLOT_SWAP_WARNING = (
     "--slot-swap is EXPERIMENTAL (issue #111). If the installer writes to slot 1, this send changes the package's partition "
     "table so that slot 1 is the one ESPHome's bootloader starts: the app_0/app_1 subtypes are swapped, labels and addresses "
-    "stay Shelly's. The installer writes that table to flash. If it goes wrong, a serial connection and a flash dump are needed "
-    "to bring the device back. Going back to Shelly's firmware after such an install has not been tested.")
+    "stay Shelly's. The installer writes that table to the new address in the package (Shelly's own table stays where it is). "
+    "If it goes wrong, a serial connection and a flash dump are needed to bring the device back. Going back to Shelly's "
+    "firmware after such an install has not been tested.")
 SLOT_SWAP_DOC = "docs/bootloader-and-slots.md#experimental-slot-swap-in-the-package"
 
 
-def slot_swap_after_text(target: int) -> str:
-    return (f"The partition table on the device now has app_{target} as ota_0 (--slot-swap, experimental). Going back to "
+def slot_swap_after_text(target: int, swapped: bool = True) -> str:
+    now = (f"has app_{target} as ota_0" if swapped else f"is Shelly's table (app_{target} is ota_0)")
+    return (f"The partition table the bootloader reads on the device now {now} (--slot-swap, experimental). Going back to "
             f"Shelly's firmware from here has not been tested; if anything goes wrong, a serial connection and a flash dump "
             f"are needed. See {SLOT_SWAP_DOC}.")
+
+
+def table_not_moved_text() -> str:
+    return ("the update log did not show the installer moving the partition table (expected: 'PT is being moved' and "
+            "'Installing PT ... -> pt(0x8000)'). Without that, ESPHome's bootloader finds no table at 0x8000 or reads an old "
+            "one, and the old app may start. If the device does not start ESPHome, a serial connection and a flash dump are needed.")
 
 
 def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str | None = None,
@@ -768,8 +776,15 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
                     say(Level.verbose, "After the first ESPHome boot: the log line 'ota data invalid, no current app. Assuming "
                                        "factory' is expected. The package carried ESPHome's bootloader, so no separate "
                                        "bootloader update is needed.")
-                    if serve_path != zip_path:
-                        say(Level.quiet, "WARNING: " + slot_swap_after_text(session.slot_swap_target))
+                    if slot_swap is not None:
+                        if session.table_moved:
+                            say(Level.normal, "The installer moved the partition table (log: 'PT is being moved').")
+                        elif session.update_seen:
+                            say(Level.quiet, "WARNING: " + table_not_moved_text())
+                        else:
+                            say(Level.quiet, "NOTE: the device log did not reach this PC, so it is not known whether the installer "
+                                             "moved the partition table (the package asks it to).")
+                        say(Level.quiet, "WARNING: " + slot_swap_after_text(session.slot_swap_target, serve_path != zip_path))
                 elif keeps_loader:
                     say(Level.quiet, "WARNING: this package keeps Shelly's bootloader: ESPHome gets three starts, then Shelly's "
                                      "loader goes back to the other slot (the old firmware) and keeps it. Only an ESPHome OTA "

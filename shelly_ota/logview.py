@@ -135,6 +135,7 @@ RULES = (
 
 _EVENT = re.compile(r"Event from (\w+): (\{.*\})")
 _WILL_WRITE = re.compile(r"Will write to slot (\d)")
+_TABLE_MOVED = re.compile(r"Installing PT .*-> pt\(0x[0-9a-fA-F]+\)|PT is being moved")
 
 
 def _classify_event(m: re.Match, record: LogRecord) -> Entry:
@@ -229,6 +230,8 @@ class Session:
         # --slot-swap (experimental): the slot the partition table was swapped for. If the installer then names another slot in
         # "Will write to slot N", that is said at once: the swapped table would make the other slot the one that starts.
         self.slot_swap_target: int | None = None
+        # --slot-swap: the installer's log line that says it writes the table to the new address (set by _check_slot_swap).
+        self.table_moved = False
         self._tail: collections.deque[tuple[LogRecord | str, Entry]] = collections.deque(maxlen=tail)
         self._hidden: collections.Counter[str] = collections.Counter()
         self._shown_keys: set[str] = set()
@@ -276,7 +279,10 @@ class Session:
     def _check_slot_swap(self, item: LogRecord | str) -> None:
         if self.slot_swap_target is None:
             return
-        m = _WILL_WRITE.search(item.message if isinstance(item, LogRecord) else item)
+        text = item.message if isinstance(item, LogRecord) else item
+        if _TABLE_MOVED.search(text):
+            self.table_moved = True
+        m = _WILL_WRITE.search(text)
         if m and int(m.group(1)) != self.slot_swap_target and "slot_swap" not in self._shown_keys:
             self._shown_keys.add("slot_swap")
             self.say(Level.quiet, f"WARNING: the installer writes to slot {m.group(1)}, but --slot-swap made the partition table "

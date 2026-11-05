@@ -5,9 +5,14 @@ cannot read, starts the app partition whose *subtype* is ota_0. In Shelly's tabl
 slot 0. Here the table keeps every label, address, size and flag and only swaps the two app subtypes, so that the slot the
 installer writes to is ota_0.
 
+Only a table at a NEW address works: a `pt` part for the address where Shelly's table already is (0x10000) is stored by the
+installer in a journal (`Installing new PT1`) that only Shelly's own loader reads, and the old app keeps starting (seen on
+Gen3 2.0.1/2.1.0 and Gen4 2.1.1 dev boards). A package made with `build --pt-addr 0x8000` makes the installer log
+`PT is being moved from 0x10000 to 0x8000` and write the table there; ESPHome's bootloader (built to read 0x8000) then starts
+the swapped slot. Shelly's own table stays at its address, untouched.
+
 The installer writes the `pt` part to flash, so a wrong table cannot be undone over the network: only a serial connection
-and a flash dump bring the device back. Not tried yet: whether the installer picks its target slot again after it has
-written the new table, and going back to Shelly's firmware afterwards.
+and a flash dump bring the device back. Not tried yet: going back to Shelly's firmware afterwards (`restore`).
 """
 
 from __future__ import annotations
@@ -19,7 +24,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from .bootswap import CRITICAL_PARTITIONS
-from .builder import OtaError, read_official_manifest, require_zip
+from .builder import RELOCATED_PT_ADDR, OtaError, read_official_manifest, require_zip
 from .devicegen import APP_TYPE, ENTRY, parse_partitions
 
 APP_SLOTS = ("app_0", "app_1")   # the labels Shelly's installer writes to; slot N is app_N
@@ -116,6 +121,13 @@ def check_package(zf: zipfile.ZipFile, manifest: dict) -> None:
     if not clean:
         raise OtaError("--slot-swap needs a package with a clean (erased) otadata, as `build --esphome-factory` makes "
                        "it; this one carries another boot state.")
+    addr = parts["pt"].get("addr")
+    if addr != RELOCATED_PT_ADDR:
+        raise OtaError("--slot-swap needs a package whose partition table is moved to a new address: for the address Shelly's "
+                       "table is at, the installer only stores the table in a journal that ESPHome's bootloader does not read "
+                       "(log: 'Installing new PT1'), and the old app would start. Build the package with "
+                       f"--esphome-factory and --pt-addr 0x{RELOCATED_PT_ADDR:x}, from an ESPHome build that leaves "
+                       "CONFIG_PARTITION_TABLE_OFFSET unset (docs/bootloader-and-slots.md#experimental-slot-swap-in-the-package).")
     swap_table(zf.read(parts["pt"]["src"]), 1)   # the table must be one that can be swapped, before the device is asked
 
 

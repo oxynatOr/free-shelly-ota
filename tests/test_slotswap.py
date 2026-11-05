@@ -6,6 +6,7 @@ those packages), and the packages are small stand-ins with the same layout.
 """
 
 import contextlib
+import dataclasses
 import hashlib
 import io
 import json
@@ -21,7 +22,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import ota  # noqa: E402
-from shelly_ota import bootswap, builder, devicegen, firmware, logview, profile, sender, slotswap  # noqa: E402
+from shelly_ota import bootswap, builder, devicegen, firmware, lint, logview, profile, sender, slotswap  # noqa: E402
 from shelly_ota.devicegen import parse_partitions  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 from test_extras import FakeRpcShelly, free_udp_port  # noqa: E402
@@ -227,8 +228,9 @@ def official_package(path: Path, device: str = "S1PMG3", table: bytes | None = N
     })
 
 
-def esphome_package(tmp: Path, official: Path, device: str = "S1PMG3") -> Path:
-    """What `build --esphome-factory` makes of the stand-in: through the real build and bootswap.prepare."""
+def esphome_package(tmp: Path, official: Path, device: str = "S1PMG3", pt_addr: int | None = builder.RELOCATED_PT_ADDR) -> Path:
+    """What `build --esphome-factory --pt-addr` makes of the stand-in: through the real build and bootswap.prepare.
+    pt_addr=None: the table stays where Shelly's is (plain `build --esphome-factory`)."""
     p = profile.load_profile(device)
     app = fake_app(100_000)
     with zipfile.ZipFile(official) as z:
@@ -237,11 +239,11 @@ def esphome_package(tmp: Path, official: Path, device: str = "S1PMG3") -> Path:
     factory = bytearray(b"\xff" * rows["app_0"]["offset"])
     boot = fake_bootloader(2)
     factory[0:len(boot)] = boot
-    factory[p.pt_offset:p.pt_offset + len(pt)] = pt
+    factory[pt_addr or p.pt_offset:(pt_addr or p.pt_offset) + len(pt)] = pt
     (tmp / "app.bin").write_bytes(app)
     (tmp / "factory.bin").write_bytes(bytes(factory) + app)
     out = tmp / "esphome.zip"
-    builder.build(p, tmp / "app.bin", official, out, factory=tmp / "factory.bin")
+    builder.build(p, tmp / "app.bin", official, out, factory=tmp / "factory.bin", pt_addr=pt_addr)
     return out
 
 
@@ -268,7 +270,8 @@ class SwapPackageTests(unittest.TestCase):
             self.assertEqual(m_new, m_old)                            # boot min_version, app, addresses: all as built
             self.assertEqual(by_name(new.read("partition-table.bin"))["app_1"]["subtype"], 0x10)
             # the check `build` and `send` already do on a package's table still passes
-            self.assertEqual(builder.package_layout_problems(profile.load_profile("S1PMG3"), new, m_new), [])
+            self.assertEqual(builder.package_layout_problems(profile.load_profile("S1PMG3"), new, m_new, allow_relocated=True), [])
+            self.assertEqual(m_new["parts"]["pt"]["addr"], builder.RELOCATED_PT_ADDR)       # the move stays
         self.assertEqual(slotswap.describe(res), "app_1 (0x3a0000) is ota_0, app_0 (0x20000) is ota_1")
 
     def test_slot_0_writes_nothing(self):
@@ -426,11 +429,119 @@ class InstallerSlotWatchTests(unittest.TestCase):
             self.assertFalse(any("--slot-swap" in l for l in lines), (target, slot, lines))
 
 
+class RelocatedTableTests(unittest.TestCase):
+    """build --pt-addr: Shelly's table is shipped at 0x8000 and the bootloader comes from a build that reads it there."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.official = official_package(self.tmp / "official.zip")
+
+    def test_build_moves_the_table_and_keeps_it_shellys(self):
+        package = esphome_package(self.tmp, self.official)
+        with zipfile.ZipFile(package) as new, zipfile.ZipFile(self.official) as old:
+            m_new = builder.read_official_manifest(new, "S1PMG3")
+            self.assertEqual(m_new["parts"]["pt"]["addr"], 0x8000)
+            self.assertEqual(new.read("partition-table.bin"), old.read("partition-table.bin"))   # not swapped at build time
+            self.assertEqual(new.read("bootloader.bin"), fake_bootloader(2))                      # from the factory image's 0x0..0x8000
+            self.assertEqual(m_new["parts"]["boot"]["addr"], 0)
+            p = profile.load_profile("S1PMG3")
+            self.assertEqual(builder.package_layout_problems(p, new, m_new), [
+                f"the partition table is at 0x8000, the profile says 0x{p.pt_offset:x}"])
+            self.assertEqual(builder.package_layout_problems(profile.load_profile("S1PMG3"), new, m_new, allow_relocated=True), [])
+
+    def test_without_the_option_the_table_stays_where_it_was(self):
+        package = esphome_package(self.tmp, self.official, pt_addr=None)
+        with zipfile.ZipFile(package) as z:
+            self.assertEqual(json.loads(z.read("manifest.json"))["parts"]["pt"]["addr"],
+                             profile.load_profile("S1PMG3").pt_offset)
+
+    def test_build_refusals(self):
+        p = profile.load_profile("S1PMG3")
+        app = self.tmp / "app.bin"
+        app.write_bytes(fake_app(100_000))
+        out = self.tmp / "x.zip"
+        with self.assertRaises(builder.OtaError) as cm:
+            builder.build(p, app, self.official, out, pt_addr=0x8000)                   # no factory image
+        self.assertIn("--esphome-factory", str(cm.exception))
+        with self.assertRaises(builder.OtaError) as cm:
+            builder.build(p, app, self.official, out, factory=app, pt_addr=0x9000)
+        self.assertIn("only 0x8000", str(cm.exception))
+        with self.assertRaises(builder.OtaError) as cm:
+            builder.build(p, app, self.official, out, factory=app, pt_addr=0x8000, drop=("pt",))
+        self.assertIn("drop 'pt'", str(cm.exception))
+        at_8000 = dataclasses.replace(p, pt_offset=0x8000)
+        with self.assertRaises(builder.OtaError) as cm:
+            builder.build(at_8000, app, self.official, out, factory=app, pt_addr=0x8000)
+        self.assertIn("nothing to move", str(cm.exception))
+
+    def test_a_partition_on_the_new_address_is_refused(self):
+        rows = parse_partitions(stock_table("S1PMG3"))
+        table = b"".join(devicegen.ENTRY.pack(devicegen.MAGIC, e["type"], e["subtype"], e["offset"], e["size"],
+                                               e["name"].encode(), 0) for e in rows)
+        table += devicegen.ENTRY.pack(devicegen.MAGIC, 1, 0x82, 0x8800, 0x1000, b"in_the_way", 0)
+        table += b"\xeb\xeb" + b"\xff" * 14 + hashlib.md5(table).digest()
+        official = official_package(self.tmp / "other.zip", table=table + b"\xff" * (0xC00 - len(table)))
+        with self.assertRaises(builder.OtaError) as cm:
+            esphome_package(self.tmp, official)
+        self.assertIn("overlap", str(cm.exception))
+        self.assertIn("in_the_way", str(cm.exception))
+
+    def test_slot_swap_refuses_a_package_whose_table_was_not_moved(self):
+        plain = esphome_package(self.tmp, self.official, pt_addr=None)
+        with self.assertRaises(builder.OtaError) as cm:
+            slotswap.swap_package(plain, self.tmp / "x.zip", 1)
+        text = str(cm.exception)
+        self.assertIn("PT1", text)
+        self.assertIn("--pt-addr 0x8000", text)
+        self.assertFalse((self.tmp / "x.zip").exists())
+
+    def test_lint_expects_the_default_offset_when_the_table_moves(self):
+        p = profile.load_profile("S1PMG3")
+        y = self.tmp / "app.yaml"
+        base = "esp32:\n  partitions: p.csv\n  framework:\n    type: esp-idf\n"
+        (self.tmp / "p.csv").write_text("app_0, app, ota_0, 0x20000, 0x%x\n" % p.app_slot_size, encoding="utf-8")
+        unset, at_own = base, base + '    sdkconfig_options:\n      CONFIG_PARTITION_TABLE_OFFSET: "0x%x"\n' % p.pt_offset
+        for text, relocated, ok in ((unset, True, True), (at_own, True, False), (unset, False, False), (at_own, False, True)):
+            y.write_text(text, encoding="utf-8")
+            problems = [x for x in lint.lint_esphome(y, p, relocated=relocated) if "CONFIG_PARTITION_TABLE_OFFSET" in x]
+            self.assertEqual(problems == [], ok, (relocated, text, problems))
+
+
+class TableMovedLogTests(unittest.TestCase):
+    def _session(self):
+        lines = []
+        session = logview.Session(level=logview.Level.normal, out=lines.append, device_id="shelly1pmg3-aabbcc")
+        session.slot_swap_target = 1
+        return session
+
+    def _feed(self, session, text):
+        session.device(f"shelly1pmg3-aabbcc 12 34.567 2 2|2xx_ota_backend.cpp:171 {text}")
+
+    def test_the_move_is_recognised(self):
+        for text in ("Installing PT 4096@fs_1(0x700000) -> pt(0x8000)...", "PT is being moved from 0x10000 to 0x8000"):
+            session = self._session()
+            self._feed(session, text)
+            self.assertTrue(session.table_moved, text)
+
+    def test_the_journal_is_not_a_move(self):
+        session = self._session()
+        self._feed(session, "Installing new PT1 (6e4c9cb1) ")
+        self.assertFalse(session.table_moved)
+
+    def test_texts(self):
+        self.assertIn("did not show", sender.table_not_moved_text())
+        self.assertIn("Shelly's table", sender.slot_swap_after_text(0, swapped=False))
+        self.assertIn("app_1 as ota_0", sender.slot_swap_after_text(1))
+
+
 class CommandLineTests(unittest.TestCase):
     def test_option_is_off_by_default_and_only_on_send(self):
         parser = ota.build_parser()
         self.assertFalse(parser.parse_args(["send", "S1PMG3", "x.zip"]).slot_swap)
         self.assertTrue(parser.parse_args(["send", "S1PMG3", "x.zip", "--slot-swap"]).slot_swap)
+        self.assertIsNone(parser.parse_args(["build", "S1PMG3", "app.bin"]).pt_addr)
+        self.assertEqual(parser.parse_args(["build", "S1PMG3", "app.bin", "--pt-addr", "0x8000"]).pt_addr, 0x8000)
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             parser.parse_args(["restore", "S1PMG3", "--slot-swap"])
 

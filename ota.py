@@ -79,11 +79,18 @@ RESTORE_HELP = ("note: restore works only while Shelly firmware still runs; a de
                 "otadata: Wi-Fi and settings can be lost.")
 PC_GROUP = "this PC"
 CAFILE_HELP = "check TLS against the CA certificates in PEM only (e.g. Shelly's CA); TLS stays on, unlike --insecure"
-SLOT_SWAP_HELP = ("EXPERIMENTAL, not yet tried with this tool on a device: if the installer will write to slot 1, send the package with "
+SLOT_SWAP_HELP = ("EXPERIMENTAL, seen working on two dev boards only: if the installer will write to slot 1, send the package with "
                   "app_0/app_1 subtypes swapped in its partition table (labels and addresses stay Shelly's), so ESPHome's "
-                  "bootloader starts slot 1; no restore first. Needs a package built with --esphome-factory and a readable "
-                  "target slot. The installer writes the table to flash: if it goes wrong, a serial connection and a flash "
+                  "bootloader starts slot 1; no restore first. Needs a package built with --esphome-factory and --pt-addr "
+                  "0x8000 (the table has to be moved: at Shelly's address it would not work) and a readable target slot. The installer writes the table to flash: if it goes wrong, a serial connection and a flash "
                   "dump are needed to bring the device back. Going back to Shelly's firmware afterwards is not tested")
+
+
+PT_ADDR_HELP = ("EXPERIMENTAL, seen working on two dev boards only: move the partition table to ADDR (only 0x8000) instead of "
+                "writing it where Shelly's is. Needs --esphome-factory from an ESPHome build that leaves "
+                "CONFIG_PARTITION_TABLE_OFFSET unset. Shelly's own table stays untouched. For send --slot-swap. The installer "
+                "writes the table to flash: if it goes wrong, a serial connection and a flash dump are needed. Going back to "
+                "Shelly's firmware afterwards is not tested")
 
 
 def cmd_list(args) -> None:
@@ -218,7 +225,7 @@ def _compile_for_build(args, p) -> None:
         # The esp32: block may come from packages or !include: let ESPHome put the config together (kept in memory only)
         ui.say("No esp32: block in the file: asking ESPHome for the full config (github:// packages need the network) ...")
         cfg = args.resolved_cfg = lint.load_config(compile_.resolve_config(args.compile, args.runner, image))
-    problems = lint.lint_esphome(args.compile, p, cfg=cfg)
+    problems = lint.lint_esphome(args.compile, p, cfg=cfg, relocated=args.pt_addr is not None)
     if problems:      # before the compile, which takes minutes
         raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
     ui.say(f"ESPHome config check OK ({args.compile.name})")
@@ -248,7 +255,7 @@ def cmd_build(args) -> None:
         _compile_for_build(args, p)
     resolved = getattr(args, "resolved_cfg", None) if args.esphome_yaml == args.compile else None
     if args.esphome_yaml:
-        problems = lint.lint_esphome(args.esphome_yaml, p, cfg=resolved)
+        problems = lint.lint_esphome(args.esphome_yaml, p, cfg=resolved, relocated=args.pt_addr is not None)
         if problems:
             raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
         if not args.compile:      # --compile has said it before the compile
@@ -275,7 +282,7 @@ def cmd_build(args) -> None:
     def run_build(target: Path) -> builder.BuildResult:
         return builder.build(p, args.app, official, target, drop=drop, tag=args.tag, factory=args.esphome_factory,
                              boot_min_version=args.boot_min_version, secrets=secrets,
-                             fail_on_secrets=args.fail_on_secrets)
+                             fail_on_secrets=args.fail_on_secrets, pt_addr=args.pt_addr)
 
     if args.dry_run:
         # Build in a scratch directory, so that an existing package (or its .sha256 and .report.json) stays untouched.
@@ -637,6 +644,8 @@ def build_parser() -> argparse.ArgumentParser:
                         "else one patch above the official one). 'update? 0' in the log: use a higher value; "
                         "'keep' leaves it unchanged")
     g.add_argument("--esphome-yaml", type=Path, metavar="YAML", help="also check this ESPHome config")
+    g = b.add_argument_group("experimental")
+    g.add_argument("--pt-addr", type=lambda s: int(s, 0), metavar="ADDR", help=PT_ADDR_HELP)
     g = b.add_argument_group("secrets")
     g.add_argument("--secrets", type=Path, metavar="FILE",
                    help="secrets.yaml to compare the image with (default: next to --esphome-yaml)")
