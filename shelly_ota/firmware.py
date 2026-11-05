@@ -89,7 +89,7 @@ def _http_get(url: str, timeout: int = 60, insecure: bool = False, headers: dict
         hint = ""
         if "CERTIFICATE_VERIFY" in str(e):
             hint = (f" (checked against --cafile {cafile})" if cafile
-                    else " (Shelly uses a private CA; retry with --cafile PEM or --insecure)")
+                    else " (Shelly uses a private CA; retry with --cafile PEM or --insecure; 'ota.py ca' writes the PEM)")
         raise OtaError(f"Download failed for {url}: {e}{hint}") from e
 
 

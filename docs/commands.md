@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [Documentation](README.md) · [Device pages](devices/README.md) · [Troubleshooting](troubleshooting.md)
 
-[📥 fetch](#fetch) · [🔨 build](#build) · [📤 send](#send) · [↩️ restore](#restore) · [📶 ble](#ble) · [➕ add-device](#add-device) · [📋 partition-csv](#partition-csv) · [🔍 inspect](#inspect) · [🧪 devkit](#devkit) · [📃 list](#list) · [🧹 clean](#clean) · [📜 log](#log) · [🎨 Colors](#colors)
+[📥 fetch](#fetch) · [🔨 build](#build) · [📤 send](#send) · [↩️ restore](#restore) · [📶 ble](#ble) · [➕ add-device](#add-device) · [📋 partition-csv](#partition-csv) · [🔍 inspect](#inspect) · [🧪 devkit](#devkit) · [🔐 ca](#ca) · [📃 list](#list) · [🧹 clean](#clean) · [📜 log](#log) · [🎨 Colors](#colors)
 
 The usual workflow is three steps:
 
@@ -24,6 +24,7 @@ python ota.py send  PlugMG3 out/<file>.zip              # 3. send it to the devi
 | Deploy | [`log`](#log) | Show the device's live debug log |
 | Tools | [`inspect`](#inspect) | Show and verify a ZIP |
 | Tools | [`devkit`](#devkit) | Write a flash image of a package for a dev board and print the `esptool` commands |
+| Tools | [`ca`](#ca) | Take Shelly's root CA out of a package and write it as a PEM file for `--cafile` |
 | Tools | `list` | Show devices and cached firmware |
 | Tools | `profiles` | List the profiles with their revision, check `devices/profiles.lock` (`--update-lock` writes it) |
 | Tools | [`clean`](#clean) | Delete old ZIPs in `out/` (needs `--yes`) |
@@ -49,7 +50,7 @@ URL.
 
 > [!NOTE]
 > Shelly's servers use a private CA, so TLS verification fails; `--insecure` skips it. If you have that CA as a PEM file,
-> `--cafile PEM` checks against it instead and keeps TLS on.
+> `--cafile PEM` checks against it instead and keeps TLS on; [`ca`](#ca) writes that PEM from a package.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -294,6 +295,34 @@ Writes a flash image of a package, to play the whole update through on a dev boa
 
 > [!WARNING]
 > The image overwrites the whole flash of a board and holds Shelly's firmware. Use a spare board, not a device, and do not share the file.
+
+## ca
+
+Takes Shelly's root CA out of an official package and writes it as a PEM file, so `fetch` and `build --download` can keep TLS on
+(`--cafile`): `python ota.py ca`. Shelly's servers send only the leaf certificate; the root is in the `fs.img` of every package.
+The tool finds it by its fingerprint, not by parsing the file system, and writes nothing if the fingerprint does not match.
+
+```
+python ota.py ca                                   # any cached package; writes fw/shelly-ca.pem
+python ota.py fetch PlugMG3 --cafile fw/shelly-ca.pem
+```
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `DEVICE` | any cached package | Take the cached package of this device |
+| `--zip ZIP` | none | Use this package instead |
+| `--version VER` | the newest stable one | With `DEVICE`: use this cached official version |
+| `-o`, `--output PEM` | `fw/shelly-ca.pem` | Write to this file |
+| `--force` | off | Overwrite an existing output file |
+
+- **Fingerprint.** The root is `O=Allterco`, self-signed, valid from 2020-08-04 to 2030-08-02. Its SHA-256 is
+  `5A:7E:E2:FA:F8:2B:D4:3B:EE:F6:58:1F:48:BB:D4:A1:34:45:64:88:A7:90:4E:EC:52:A1:5C:57:2F:53:09:3E`; the command prints it, compare it by hand if you like (`openssl x509 -in fw/shelly-ca.pem -noout -fingerprint -sha256`).
+- **How we know.** Measured on 2026-11-03 in 108 cached packages: 107 hold this certificate as DER in `fs.img`, the old `MiniPMG3` 1.3.3 as PEM text.
+  With it `openssl s_client` verified `updates.shelly.cloud`. Not confirmed: packages that were not in that cache.
+- **The first package.** If your only package came from `fetch --insecure`, TLS did not protect that download (only the hash in the URL
+  did, and it comes from the same reply). The fingerprint above is what the trust rests on, not the package the certificate came from.
+- **Expiry.** The root expires on 2030-08-02. The tool then prints a warning; a newer version of the tool carries the new fingerprint.
+- **Not in the repository.** The PEM is written on your PC from your package; `fw/` is not committed.
 
 ## list
 
