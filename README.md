@@ -44,7 +44,7 @@ flowchart LR
 
 ## Supported devices
 
-**60 profiles:** ✅ 11 confirmed · 🟡 7 partly checked · 🔬 12 DevKit-tested · 🧪 30 untested
+**60 profiles:** ✅ 12 confirmed · 🟡 7 partly checked · 🔬 12 DevKit-tested · 🧪 29 untested
 
 Click the profile for the device page: ESPHome config, the exact commands and what to expect. This table shows the devices that ran on
 real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and the untested (🧪) ones, are on the
@@ -65,6 +65,7 @@ real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and th
 | 1 Gen3 | [`S1G3`](docs/devices/S1G3.md) | ESP32&#8209;C3 | ✅ | |
 | 2PM Gen3 | [`S2PMG3`](docs/devices/S2PMG3.md) | ESP32&#8209;C3 | ✅ | Relays and meter not reported |
 | Plug M Gen3, beta layout | [`PlugMG3-beta`](docs/devices/PlugMG3.md#beta-layout) | ESP32&#8209;C3 | ✅ | Shelly 2.2.0-beta2 only |
+| 1 Gen4 | [`S1G4`](docs/devices/S1G4.md) | ESP32&#8209;C6 | ✅ | |
 | Plug PM Gen3 | [`PlugPMG3`](docs/devices/PlugPMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
 | Duo Bulb Gen3 | [`DuoBulbG3`](docs/devices/DuoBulbG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
 | Mini 1PM Gen3 | [`Mini1PMG3`](docs/devices/Mini1PMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
