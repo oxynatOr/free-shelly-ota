@@ -459,16 +459,16 @@ SLOT_SWAP_WARNING = (
     "--slot-swap is EXPERIMENTAL (issue #111). If the installer writes to slot 1, this send changes the package's partition "
     "table so that slot 1 is the one ESPHome's bootloader starts: the app_0/app_1 subtypes are swapped, labels and addresses "
     "stay Shelly's. The installer writes that table to the new address in the package (Shelly's own table stays where it is). "
-    "If it goes wrong, a serial connection and a flash dump are needed to bring the device back. Going back to Shelly's "
-    "firmware after such an install has not been tested.")
+    "If it goes wrong, a serial connection and a flash dump are needed to bring the device back. "
+    "Going back to Shelly's firmware afterwards worked once on a dev board (ESPHome OTA of Shelly's app image, then restore; see the docs).")
 SLOT_SWAP_DOC = "docs/bootloader-and-slots.md#experimental-slot-swap-in-the-package"
 
 
 def slot_swap_after_text(target: int, swapped: bool = True) -> str:
     now = (f"has app_{target} as ota_0" if swapped else f"is Shelly's table (app_{target} is ota_0)")
     return (f"The partition table the bootloader reads on the device now {now} (--slot-swap, experimental). Going back to "
-            f"Shelly's firmware from here has not been tested; if anything goes wrong, a serial connection and a flash dump "
-            f"are needed. See {SLOT_SWAP_DOC}.")
+            f"Shelly's firmware worked once on a dev board (ESPHome OTA of Shelly's app image, then restore); if anything "
+            f"goes wrong, a serial connection and a flash dump are needed. See {SLOT_SWAP_DOC}.")
 
 
 def table_not_moved_text() -> str:

@@ -96,7 +96,7 @@ predictor, so the check uses the log line. (On the Mini 1PM Gen4 Zigbee firmware
 > **Experimental. Seen working on two dev boards (ESP32-C6 and ESP32-C3, 2026-11-05/06); not tried on a device.** The package moves the
 > partition table and `send --slot-swap` changes it, and the installer writes it to flash. If that goes wrong, a serial
 > connection and a flash dump of the device are needed to bring it back ([Recovery over UART](recovery-uart.md)). Going back to
-> Shelly's firmware after such an install has not been tested.
+> Shelly's firmware after such an install worked once on a dev board, over the network ([see below](#the-way-back-over-the-network-seen-once)).
 
 The installer and ESPHome's bootloader read different fields of the partition table. The installer finds the app slots by
 label and address (`app_0`, `app_1`). ESPHome's bootloader, with an `otadata` it cannot read, starts the app partition whose
@@ -144,11 +144,28 @@ a reported success.
 
 Not known yet:
 
-- what Shelly's official package (`restore`) does on a device with the moved table. While ESPHome runs there is no Shelly
-  installer to send it to, so the way back is UART, as for every ESPHome install ([Recovery over UART](recovery-uart.md)); Shelly's
-  own table is still at its address;
+- whether the way back below works on other models (it was seen on one C6 board; a Plug M Gen3 once stopped with
+  `no valid boot state!` after the same first step, see [Recovery over UART](recovery-uart.md));
 - whether the installer chooses its target slot again after it has written the new table: in the runs above it did not;
 - devices: all of this was seen on dev boards only, not on a device in a wall or a socket.
+
+### The way back over the network (seen once)
+
+Seen on the ESP32-C6 dev board (`S1PMG4`, stock 2.1.1, 2026-11-06), after a `--slot-swap` install, without UART:
+
+1. Push **Shelly's own app image** (the `app` part of the official package, `S1PMG4.bin`) to the running ESPHome with its normal OTA
+   (`esphome upload YOUR.yaml --device IP --file S1PMG4.bin`). ESPHome writes it to the other slot and restarts into it.
+2. **Leave the board alone for at least 90 s.** Shelly's firmware starts under ESPHome's bootloader, writes a fresh boot state and
+   commits it after 90 s (log: `Commit after 90 seconds`). A reset or power cycle before that sends the board back to ESPHome.
+3. Join the board's Shelly access point and run `python ota.py restore DEVICE --ip 192.168.33.1`. The installer logs
+   `The bootloader will be replaced (current 00000000, ...)`, writes Shelly's bootloader and firmware to the other slot, and the
+   board then boots `Shelly OS loader 1.0.3` with the original table from `0x10000` and Shelly's app.
+
+Do **not** use `esphome upload --bootloader` for this: it stages the bootloader in the other app slot and destroys the Shelly app
+there; with Shelly's loader in place the board then loops (`slot 0 is not bootable`) and only UART helps.
+After the way back, another `--slot-swap` install worked too (this time with target slot 0: the table moves, nothing to swap).
+
+Tested on one board and one firmware only; not on a device in a wall or a socket.
 
 ## Without ESPHome's bootloader (plain package)
 
