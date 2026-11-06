@@ -73,7 +73,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 ### Gen4 (ESP32-C6)
 
-17 profiles: ✅ 0 · 🟡 1 · 🔬 7 · 🧪 9
+17 profiles: ✅ 1 · 🟡 1 · 🔬 7 · 🧪 8
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
@@ -86,7 +86,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [1 Mini Gen4](Mini1G4.md) | `Mini1G4` | `0x10000` | `0x300000` | 🔬 |  |
 | [EM Mini Gen4](MiniEMG4.md) | `MiniEMG4` | `0x10000` | `0x2f0000` | 🔬 |  |
 | [Power Strip 4 Gen4 (Zigbee)](PowerStripZB.md) | `PowerStripZB` | `0x10000` | `0x300000` | 🧪 |  |
-| [1 Gen4](S1G4.md) | `S1G4` | `0x10000` | `0x300000` | 🧪 |  |
+| [1 Gen4](S1G4.md) | `S1G4` | `0x10000` | `0x300000` | ✅ |  |
 | [1PM Gen4](S1PMG4.md) | `S1PMG4` | `0x10000` | `0x300000` | 🧪 |  |
 | [2PM Gen4](S2PMG4.md) | `S2PMG4` | `0x10000` | `0x300000` | 🧪 |  |
 | [1L Gen4](S1LG4.md) | `S1LG4` | `0x10000` | `0x300000` | 🧪 |  |
