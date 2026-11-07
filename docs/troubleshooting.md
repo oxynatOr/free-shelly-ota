@@ -149,6 +149,7 @@ shared with `Not committed` (above), so `send` tells them apart by the message t
   (a rule of thumb, not measured), then reconnect. Do not open a device that is connected to mains. On the Plug M Gen3,
   ESPHome came up after a power-off of about 30 seconds; on a second Plug M it ran at once (Wi-Fi, API, sensors), but the relay and the LED
   reacted only after such a power-off.
+- On a **Gen4 (ESP32-C6)** the relay may not react at all after the update although ESPHome is running and Wi-Fi works: Shelly OS leaves the pad hold on some pins enabled and the update only soft-resets. Release the holds at boot or power-cycle once; the snippet is on the [Shelly 1 Gen4 page](devices/S1G4.md#pins). The same may be behind the Plug M Gen3 case above (relay and LED reacted only after a power-off); that is a guess, nobody has tried it there.
 - UART shows what runs: `ESP-IDF ... 2nd stage bootloader` and `Loaded app from partition at offset 0x20000` are good signs.
 
 ### ESPHome OTAs "work" but the version does not change
