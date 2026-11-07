@@ -290,6 +290,44 @@ def free_udp_port() -> int:
         return s.getsockname()[1]
 
 
+class LogSocketTests(unittest.TestCase):
+    def _shelly(self, **kw):
+        s = FakeRpcShelly(**kw)
+        self.addCleanup(s.close)
+        return s
+
+    def test_log_port_is_free_right_after_the_block(self):
+        # send binds the port for the slot probe and again for the update log right after; on Linux a socket stays bound
+        # while the reader is still blocked in recvfrom(), which showed up as "Address already in use" (#133)
+        s = self._shelly()
+        port = free_udp_port()
+        for _ in range(5):
+            with logwatch.udp_log(s.addr, "127.0.0.1", port, lambda t: None):
+                pass
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+                probe.bind(("0.0.0.0", port))
+
+    def test_log_port_is_freed_when_putting_the_setting_back_fails_unexpectedly(self):
+        s = self._shelly()
+        port = free_udp_port()
+        real_call = rpc.call
+
+        def call(addr, method, params=None, **auth):
+            if method == "Sys.SetConfig" and params["config"]["debug"]["udp"]["addr"] is None:
+                raise RuntimeError("unexpected")
+            return real_call(addr, method, params, **auth)
+
+        rpc.call = call
+        try:
+            with self.assertRaises(RuntimeError):
+                with logwatch.udp_log(s.addr, "127.0.0.1", port, lambda t: None):
+                    pass
+        finally:
+            rpc.call = real_call
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            probe.bind(("0.0.0.0", port))
+
+
 class NetworkTests(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
