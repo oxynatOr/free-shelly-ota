@@ -99,8 +99,13 @@ def _entry_key(e: dict) -> tuple:
     return (e["name"], e["type"], e["subtype"], e["offset"], e["size"])
 
 
-def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: bytes) -> tuple[dict, list[str]]:
-    """Return ({zip file name: new bytes}, warnings) for the boot and otadata parts, or raise OtaError."""
+def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: bytes,
+            pt_addr: int | None = None) -> tuple[dict, list[str]]:
+    """Return ({zip file name: new bytes}, warnings) for the boot and otadata parts, or raise OtaError.
+
+    pt_addr (EXPERIMENTAL, build --pt-addr): the package moves the partition table there, so the factory image has to carry
+    its bootloader and table at that address (an ESPHome build without CONFIG_PARTITION_TABLE_OFFSET: 0x8000). Without it
+    the table is expected where the official package keeps it."""
     parts = manifest["parts"]
     for key in ("boot", "pt", "otadata"):
         if key not in parts or "src" not in parts[key]:
@@ -109,7 +114,8 @@ def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: byte
 
     shelly_boot = official.read(parts["boot"]["src"])
     shelly_pt = official.read(parts["pt"]["src"])
-    pt_offset = parts["pt"].get("addr", 0x10000)
+    shelly_pt_addr = parts["pt"].get("addr", 0x10000)
+    pt_offset = shelly_pt_addr if pt_addr is None else pt_addr   # where the factory image keeps bootloader and table
     boot_addr = parts["boot"].get("addr", 0)  # 0 on ESP32-C3/C6, 0x1000 on the classic ESP32
     if len(factory) < pt_offset + 4096:
         raise OtaError("The factory image is too small (it must contain the bootloader and the partition table).")
@@ -125,6 +131,10 @@ def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: byte
             raise OtaError(_header_mismatch_message(label, boot[sl], shelly_boot[sl], str(manifest.get("platform", ""))))
 
     shelly_entries = parse_partitions(shelly_pt)
+    if pt_addr is not None:
+        for e in shelly_entries:   # the moved table must not sit on a partition
+            if e["offset"] < pt_addr + 4096 and pt_addr < e["offset"] + e["size"]:
+                raise OtaError(f"The partition table cannot move to 0x{pt_addr:x}: it would overlap the partition '{e['name']}'.")
     esphome_entries = parse_partitions(factory[pt_offset:pt_offset + 4096])
     shelly_by_name = {e["name"]: e for e in shelly_entries}
     esphome_by_name = {e["name"]: e for e in esphome_entries}
@@ -135,10 +145,12 @@ def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: byte
                    f"{_entry_key(ee)[2:] if ee else 'missing'}")
             if name in CRITICAL_PARTITIONS:
                 name = manifest.get("name", "<Device>")
+                offset_hint = ("CONFIG_PARTITION_TABLE_OFFSET as the CSV header says." if pt_addr is None else
+                               f"leave CONFIG_PARTITION_TABLE_OFFSET unset (the table is at 0x{pt_addr:x}).")
                 raise OtaError(f"The ESPHome build uses another partition layout than the device: {msg}.\n"
                                f"  Fix: build with Shelly's table: `esp32: partitions: {name}-stock.csv` (the file is in "
                                f"partitions/, or `python ota.py partition-csv {name}` writes it) and set "
-                               f"CONFIG_PARTITION_TABLE_OFFSET as the CSV header says.")
+                               + offset_hint)
             warnings.append(f"{msg}. Harmless here because Shelly's partition table is kept, but fix your "
                             f"partitions CSV.")
 

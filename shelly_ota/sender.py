@@ -21,7 +21,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable, NamedTuple
 
-from . import buildinfo, firmware, logview, logwatch, rpc, secrets_check, ui
+from . import buildinfo, firmware, logview, logwatch, rpc, secrets_check, slotswap, ui
 from .builder import OtaError, read_official_manifest, require_zip
 from .logview import Level
 from .profile import Profile
@@ -444,6 +444,39 @@ def old_layout_text(profile: Profile, device_version: str, forced: bool = False)
             "package.\n" + ("  --force given: sending anyway." if forced else "  Only with UART at hand and a flash backup: add --force."))
 
 
+def unread_slot_reason(probe: SlotProbe, probe_failed: bool, log_port: int, probe_wait: float) -> str:
+    """Why probe_slot found no slot line: '' (the probe itself failed, already said), or a sentence with a leading space."""
+    if probe_failed:
+        return ""
+    if probe.datagrams == 0:
+        return (f" No UDP datagram arrived from the device: check that incoming UDP on port {log_port} is "
+                f"allowed (Windows Firewall: the Python program), and --log-port and --host.")
+    return (f" The device log arrives, but the slot line did not show up within {probe_wait:.0f} s; a "
+            f"device that has just started often needs longer. Wait a minute and send again.")
+
+
+SLOT_SWAP_WARNING = (
+    "--slot-swap is EXPERIMENTAL (issue #111). If the installer writes to slot 1, this send changes the package's partition "
+    "table so that slot 1 is the one ESPHome's bootloader starts: the app_0/app_1 subtypes are swapped, labels and addresses "
+    "stay Shelly's. The installer writes that table to the new address in the package (Shelly's own table stays where it is). "
+    "If it goes wrong, a serial connection and a flash dump are needed to bring the device back. "
+    "Going back to Shelly's firmware afterwards worked once on a dev board (ESPHome OTA of Shelly's app image, then restore; see the docs).")
+SLOT_SWAP_DOC = "docs/bootloader-and-slots.md#experimental-slot-swap-in-the-package"
+
+
+def slot_swap_after_text(target: int, swapped: bool = True) -> str:
+    now = (f"has app_{target} as ota_0" if swapped else f"is Shelly's table (app_{target} is ota_0)")
+    return (f"The partition table the bootloader reads on the device now {now} (--slot-swap, experimental). Going back to "
+            f"Shelly's firmware worked once on a dev board (ESPHome OTA of Shelly's app image, then restore); if anything "
+            f"goes wrong, a serial connection and a flash dump are needed. See {SLOT_SWAP_DOC}.")
+
+
+def table_not_moved_text() -> str:
+    return ("the update log did not show the installer moving the partition table (expected: 'PT is being moved' and "
+            "'Installing PT ... -> pt(0x8000)'). Without that, ESPHome's bootloader finds no table at 0x8000 or reads an old "
+            "one, and the old app may start. If the device does not start ESPHome, a serial connection and a flash dump are needed.")
+
+
 def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str | None = None,
          port: int = 8000, timeout: float = 300, max_wait: float = MAX_WAIT, assume_yes: bool = False, dry_run: bool = False,
          force: bool = False, user: str | None = None, password: str | None = None,
@@ -451,7 +484,7 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
          wait: float = DEFAULT_WAIT, sleep: Callable[[float], None] = time.sleep,
          ask: Callable[[str], str] = input, out: Callable[[str], None] = ui.say, restoring: bool = False,
          level: Level = Level.verbose, logfile: logview.LogFile | None = None,
-         session: logview.Session | None = None) -> bool:
+         session: logview.Session | None = None, slot_swap: Path | None = None) -> bool:
     """Returns True if the device downloaded the whole ZIP (or on a successful dry run).
 
     A device that has only just started refuses the update ("Not committed"). send() notices that from the uptime and
@@ -463,12 +496,23 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     While the update runs the device log is read (it is switched on and off again); that gives the progress and the
     device's own confirmation ("update succeeded"), without --watch. If the log does not reach this PC, send() falls back
     to reporting that the device downloaded the ZIP.
+
+    `slot_swap` (EXPERIMENTAL, issue #111): a directory the caller owns and removes. With it, a package that carries
+    ESPHome's bootloader goes out with a partition table in which the slot the installer will write to is ota_0 (see
+    slotswap); the swapped copy is written there. None (the default) sends the package exactly as it is.
     """
     session = session or logview.Session(level=level, out=out, logfile=logfile)
     say = session.say
     zip_path = require_zip(zip_path)
     with zipfile.ZipFile(zip_path) as zf:
         manifest = read_official_manifest(zf, profile.package_name)
+        if slot_swap is not None:
+            if restoring:
+                raise OtaError("--slot-swap is not for restore: the official package keeps Shelly's own partition table.")
+            if ignore_slot:
+                raise OtaError("--slot-swap and --ignore-slot do not go together: --slot-swap needs the target slot.")
+            slotswap.check_package(zf, manifest)
+    serve_path = zip_path   # what the device downloads: the package, or with --slot-swap its copy with the swapped table
 
     info = device_info(addr)
     session.device_id = session.device_id or info.get("id")
@@ -504,7 +548,13 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     for line in package_info(zip_path, profile):
         say(Level.normal if line.startswith(("NOTE", "WARNING")) else Level.verbose, line)
     say(Level.verbose, f"Download URL for the device: {url}")
+    if slot_swap is not None:
+        say(Level.quiet, f"WARNING: {SLOT_SWAP_WARNING}")
     official_zip = firmware.cached_zip(profile.package_name, prerelease=profile.channel == "beta")
+    if slot_swap is not None and not official_zip:
+        server.httpd.server_close()
+        raise OtaError(f"--slot-swap needs the official {profile.name} ZIP in the cache, to tell that this package carries "
+                       f"ESPHome's bootloader. Fetch it first:\n\n  python ota.py fetch {profile.name} --insecure")
     boot_replaced: bool | None = None  # None: cannot tell (no cached official ZIP to compare with)
     keeps_loader = False  # an ESPHome app in a package that leaves Shelly's bootloader in place (no --esphome-factory)
     if official_zip:
@@ -520,6 +570,10 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
                 server.httpd.server_close()
                 raise OtaError(plain_package_text(profile.name))
             say(Level.quiet, "WARNING: " + plain_package_text(profile.name, forced=True))
+        if slot_swap is not None and not boot_replaced:
+            server.httpd.server_close()
+            raise OtaError("--slot-swap only works with a package that carries ESPHome's bootloader (built with "
+                           "--esphome-factory): the swap relies on ESPHome's bootloader starting the app marked ota_0.")
         if boot_replaced:
             say(Level.quiet, "WARNING: this package replaces Shelly's bootloader. If it does not suit the device, only UART "
                               "can bring it back. Do not interrupt the power during the update.")
@@ -537,21 +591,41 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
             if session.out is ui.say:
                 ui.live_end()
             target = probe.slot
-            if target is None and probe.core_dump_target:
+            if slot_swap is not None:
+                if target is None:
+                    server.httpd.server_close()
+                    seen = (f" (its log says 'Storing core dumps to {probe.core_dump_target}', not app_N)"
+                            if probe.core_dump_target else unread_slot_reason(probe, probe_failed, log_port, probe_wait))
+                    raise OtaError(f"--slot-swap needs the update target slot, and it could not be read{seen}. Nothing was "
+                                   "sent: the table is only swapped for a slot the device has named.")
+                try:
+                    swap = slotswap.swap_package(zip_path, slot_swap / f"{zip_path.stem}.slot-swap-{target}.zip", target)
+                except OtaError:
+                    server.httpd.server_close()
+                    raise
+                session.slot_swap_target = target
+                if not swap.changed:
+                    say(Level.normal, f"Update target slot: {target} (the slot ESPHome's bootloader starts). --slot-swap: "
+                                      "nothing to swap, the package goes out as it was built.")
+                else:
+                    say(Level.quiet, f"WARNING: --slot-swap: the installer will write to slot {target}. This send carries a "
+                                      f"partition table with {slotswap.describe(swap)}; labels and addresses as Shelly's. "
+                                      f"Nothing else in the package changes.")
+                    say(Level.verbose, f"  partition table SHA-256 {swap.pt_sha256[0]} -> {swap.pt_sha256[1]}; "
+                                       f"package sent from {swap.output}")
+                    server.httpd.server_close()
+                    serve_path = swap.output
+                    server = FileServer(serve_path, port)
+                    url = server.url(host)
+                    say(Level.verbose, f"Download URL for the device: {url}")
+            elif target is None and probe.core_dump_target:
                 # The log works, this firmware just does not say: do not send the user to the firewall.
                 say(Level.normal, "WARNING: this firmware does not reveal the update target slot before the update (its log says "
                                   f"'Storing core dumps to {probe.core_dump_target}', not app_N), so the slot could not be checked. "
                                   "If the installer writes to slot 1, the old app starts instead.\n"
                                   "         With --watch the log line 'Will write to slot N' shows which slot it uses.")
             elif target is None:
-                if probe_failed:
-                    reason = ""
-                elif probe.datagrams == 0:
-                    reason = (f" No UDP datagram arrived from the device: check that incoming UDP on port {log_port} is "
-                              f"allowed (Windows Firewall: the Python program), and --log-port and --host.")
-                else:
-                    reason = (f" The device log arrives, but the slot line did not show up within {probe_wait:.0f} s; a "
-                              f"device that has just started often needs longer. Wait a minute and send again.")
+                reason = unread_slot_reason(probe, probe_failed, log_port, probe_wait)
                 say(Level.normal, f"WARNING: the update target slot could not be read.{reason} "
                                   f"If the installer writes to slot 1, the old app starts instead.")
             elif target == 0:
@@ -702,6 +776,15 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
                     say(Level.verbose, "After the first ESPHome boot: the log line 'ota data invalid, no current app. Assuming "
                                        "factory' is expected. The package carried ESPHome's bootloader, so no separate "
                                        "bootloader update is needed.")
+                    if slot_swap is not None:
+                        if session.table_moved:
+                            say(Level.normal, "The installer moved the partition table (log: 'PT is being moved').")
+                        elif session.update_seen:
+                            say(Level.quiet, "WARNING: " + table_not_moved_text())
+                        else:
+                            say(Level.quiet, "NOTE: the device log did not reach this PC, so it is not known whether the installer "
+                                             "moved the partition table (the package asks it to).")
+                        say(Level.quiet, "WARNING: " + slot_swap_after_text(session.slot_swap_target, serve_path != zip_path))
                 elif keeps_loader:
                     say(Level.quiet, "WARNING: this package keeps Shelly's bootloader: ESPHome gets three starts, then Shelly's "
                                      "loader goes back to the other slot (the old firmware) and keeps it. Only an ESPHome OTA "
@@ -750,4 +833,4 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
             if ask("Type 'yes' to flash this device again: ").strip().lower() != "yes":
                 raise OtaError("Cancelled.") from e
             passes += 1
-            server = FileServer(zip_path, port)   # the old one is closed; a server cannot be reused
+            server = FileServer(serve_path, port)   # the old one is closed; a server cannot be reused

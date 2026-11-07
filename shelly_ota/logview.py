@@ -134,6 +134,8 @@ RULES = (
 )
 
 _EVENT = re.compile(r"Event from (\w+): (\{.*\})")
+_WILL_WRITE = re.compile(r"Will write to slot (\d)")
+_TABLE_MOVED = re.compile(r"Installing PT .*-> pt\(0x[0-9a-fA-F]+\)|PT is being moved")
 
 
 def _classify_event(m: re.Match, record: LogRecord) -> Entry:
@@ -225,6 +227,11 @@ class Session:
         # False: the package is Shelly's own (restore), "update? 0" is what is meant and says nothing. None: it is a warning,
         # because ESPHome takes no OTAs until its own bootloader has been written (also when unknown, as in a replay).
         self.expect_new_loader: bool | None = None
+        # --slot-swap (experimental): the slot the partition table was swapped for. If the installer then names another slot in
+        # "Will write to slot N", that is said at once: the swapped table would make the other slot the one that starts.
+        self.slot_swap_target: int | None = None
+        # --slot-swap: the installer's log line that says it writes the table to the new address (set by _check_slot_swap).
+        self.table_moved = False
         self._tail: collections.deque[tuple[LogRecord | str, Entry]] = collections.deque(maxlen=tail)
         self._hidden: collections.Counter[str] = collections.Counter()
         self._shown_keys: set[str] = set()
@@ -267,6 +274,21 @@ class Session:
                 self.finished.set()
             if self.level is not Level.raw:
                 self._show(item, entry)
+            self._check_slot_swap(item)
+
+    def _check_slot_swap(self, item: LogRecord | str) -> None:
+        if self.slot_swap_target is None:
+            return
+        text = item.message if isinstance(item, LogRecord) else item
+        if _TABLE_MOVED.search(text):
+            self.table_moved = True
+        m = _WILL_WRITE.search(text)
+        if m and int(m.group(1)) != self.slot_swap_target and "slot_swap" not in self._shown_keys:
+            self._shown_keys.add("slot_swap")
+            self.say(Level.quiet, f"WARNING: the installer writes to slot {m.group(1)}, but --slot-swap made the partition table "
+                                  f"for slot {self.slot_swap_target} (read before the update). With this table ESPHome's "
+                                  f"bootloader starts app_{self.slot_swap_target}, which is not the slot being written. "
+                                  "If the device does not start ESPHome, a serial connection and a flash dump are needed.")
 
     def _show(self, item: LogRecord | str, entry: Entry) -> None:
         if self.level >= Level.debug:

@@ -128,6 +128,9 @@ the device's `RX` and its `RX` to the device's `TX` (crossed, because a module n
 
 ## Not a way back: pushing the official app over ESPHome OTA
 
+> [!NOTE]
+> One exception was seen: on an ESP32-C6 dev board (`S1PMG4`) the pushed official app started, committed its boot state after 90 s and then accepted `restore`. See [the way back over the network](bootloader-and-slots.md#the-way-back-over-the-network-seen-once). The Plug M Gen3 case below did not.
+
 A device that runs ESPHome accepts the official *app image* through ESPHome's own OTA and boots it, but that is no way back.
 ESP-IDF's OTA writes `otadata` in its own format, and the Shelly app only reads its own (`SH0S`, the `boot_state.bin` of the
 package). On a Plug M Gen3 it stops with `no valid boot state!` and `ShOS init failed: -32` and restarts in a loop (with

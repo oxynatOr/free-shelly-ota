@@ -18,6 +18,7 @@ from . import __version__, buildinfo, secrets_check
 from .profile import Profile
 
 DROPPABLE_PARTS = ("boot", "pt", "otadata", "nvs", "fs")
+RELOCATED_PT_ADDR = 0x8000   # EXPERIMENTAL (build --pt-addr): ESP-IDF's default table address, free on every Gen3/Gen4 flash map
 CHIP_IDS = {"esp32": 0x0000, "esp32c3": 0x0005, "esp32c6": 0x000D}  # esp_chip_id_t in the ESP image header
 
 
@@ -108,15 +109,17 @@ def read_official_manifest(zf: zipfile.ZipFile, expected_name: str | None = None
     return manifest
 
 
-def package_layout_problems(profile: Profile, zf: zipfile.ZipFile, manifest: dict) -> list[str]:
-    """Where the package's partition table differs from what the profile says (empty = fits or no table in the package)."""
+def package_layout_problems(profile: Profile, zf: zipfile.ZipFile, manifest: dict, allow_relocated: bool = False) -> list[str]:
+    """Where the package's partition table differs from what the profile says (empty = fits or no table in the package).
+
+    allow_relocated: a package made with build --pt-addr keeps the table at RELOCATED_PT_ADDR; that is not a problem."""
     from .devicegen import parse_partitions  # imported here: devicegen itself needs OtaError from this module
     pt = manifest["parts"].get("pt")
     if not pt or "src" not in pt:
         return []
     problems = []
     addr = pt.get("addr", 0x10000)
-    if addr != profile.pt_offset:
+    if addr != profile.pt_offset and not (allow_relocated and addr == RELOCATED_PT_ADDR):
         problems.append(f"the partition table is at 0x{addr:x}, the profile says 0x{profile.pt_offset:x}")
     slot = next((e for e in parse_partitions(zf.read(pt["src"])) if e["name"] == profile.app_ptn), None)
     if slot is None:
@@ -153,8 +156,18 @@ def check_output_is_no_input(output: Path, *inputs: Path) -> None:
 def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
           drop: tuple[str, ...] = (), tag: str | None = None, factory: Path | None = None,
           boot_min_version: str | None = None, secrets: dict[str, list[bytes]] | None = None,
-          fail_on_secrets: bool = False) -> BuildResult:
+          fail_on_secrets: bool = False, pt_addr: int | None = None) -> BuildResult:
     tag = check_tag(tag)
+    if pt_addr is not None:   # EXPERIMENTAL, see docs/bootloader-and-slots.md
+        if not factory:
+            raise OtaError("--pt-addr only makes sense together with --esphome-factory (the bootloader has to read the table "
+                           "from the new address).")
+        if pt_addr != RELOCATED_PT_ADDR:
+            raise OtaError(f"--pt-addr: only 0x{RELOCATED_PT_ADDR:x} is supported.")
+        if "pt" in drop:
+            raise OtaError("Cannot drop 'pt' while moving it with --pt-addr.")
+        if pt_addr == profile.pt_offset:
+            raise OtaError(f"--pt-addr: the {profile.name} table is at 0x{pt_addr:x} already; nothing to move.")
     for part in drop:
         if part not in DROPPABLE_PARTS:
             raise OtaError(f"Cannot drop '{part}'. Droppable: {', '.join(DROPPABLE_PARTS)} ('app' is required).")
@@ -221,7 +234,7 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
         replaced: list[str] = []
         if factory:
             from . import bootswap  # imported here: bootswap itself needs OtaError from this module
-            replacements, boot_warnings = bootswap.prepare(factory.read_bytes(), original, manifest, app)
+            replacements, boot_warnings = bootswap.prepare(factory.read_bytes(), original, manifest, app, pt_addr=pt_addr)
             warnings += boot_warnings
             for key in ("boot", "otadata"):
                 data = replacements[parts[key]["src"]]
@@ -238,9 +251,17 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
                 parts["boot"]["min_version"] = target
                 warnings.append(f"boot min_version raised from {old} to {target}, so that the Shelly installer "
                                 f"writes the new bootloader (use --boot-min-version keep to leave it).")
+            if pt_addr is not None:
+                parts["pt"]["addr"] = pt_addr
+                warnings.append(f"EXPERIMENTAL: the partition table is moved to 0x{pt_addr:x} (Shelly's own table stays at "
+                                f"0x{profile.pt_offset:x}, untouched). Use it with send --slot-swap and an ESPHome build that "
+                                f"leaves CONFIG_PARTITION_TABLE_OFFSET unset. seen working on two dev boards only; going back to "
+                                f"Shelly's firmware afterwards worked once on a dev board (see the docs).")
             warnings.append("BOOTLOADER REPLACED: the package carries ESPHome's bootloader and a clean otadata. If the "
                             "bootloader does not suit the device, only UART can bring it back. The installer must also write the "
-                            "app to slot 0 (send checks that). Confirmed devices are marked in the README.")
+                            + ("app to slot 0 (send checks that). " if pt_addr is None else
+                               "app to slot 0, or send with --slot-swap for slot 1 (send checks that). ")
+                            + "Confirmed devices are marked in the README.")
 
         if "nvs" in parts:
             warnings.append("NVS part is included: applying this package wipes NVS (Wi-Fi credentials, settings).")
@@ -275,7 +296,7 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
         profile_name=profile.name, profile_revision=profile.revision,
         options={"esphome_factory": "boot" in replaced,
                  "boot_min_version": written["parts"]["boot"].get("min_version") if "boot" in replaced else None,
-                 "dropped": dropped, "tag": tag},
+                 "dropped": dropped, "tag": tag, **({"pt_addr": pt_addr} if pt_addr is not None else {})},
     )
 
 
@@ -336,7 +357,7 @@ def inspect_zip(path: Path, profile: Profile | None = None) -> str:
         if profile:
             lines.append(f"  slot fit: {len(app)} / {profile.app_slot_size} bytes "
                          f"({100 * len(app) / profile.app_slot_size:.0f}%)")
-            for problem in package_layout_problems(profile, zf, manifest):
+            for problem in package_layout_problems(profile, zf, manifest, allow_relocated=True):
                 lines.append(f"  WARNING: another layout than the {profile.name} profile: {problem}. `build` refuses this package.")
         lines.append("  all part hashes OK")
     return "\n".join(lines)
