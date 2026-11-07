@@ -87,6 +87,7 @@ def udp_log(addr: str, host: str, port: int, out: Callable[[str], None] = ui.say
             for line in text.splitlines():
                 out(f"  log| {line}")
 
+    thread = None
     previous = None
     read_previous = False   # only put the old setting back if it was read; otherwise we would write None over it
     try:
@@ -100,14 +101,21 @@ def udp_log(addr: str, host: str, port: int, out: Callable[[str], None] = ui.say
         yield stats
     finally:
         stop.set()
-        if read_previous:
-            try:
-                rpc.call(addr, "Sys.SetConfig", {"config": {"debug": {"udp": {"addr": previous}}}}, timeout=5, **auth)
-            except rpc.DeviceUnreachable:
-                pass   # expected after a successful update: the device is rebooting or already runs the new firmware
-            except OtaError as e:
-                out(f"NOTE: could not put the device's log setting back ({e}); it may keep sending its log to {host}:{port}.")
-        sock.close()
+        try:
+            if read_previous:
+                try:
+                    rpc.call(addr, "Sys.SetConfig", {"config": {"debug": {"udp": {"addr": previous}}}}, timeout=5, **auth)
+                except rpc.DeviceUnreachable:
+                    pass   # expected after a successful update: the device is rebooting or already runs the new firmware
+                except OtaError as e:
+                    out(f"NOTE: could not put the device's log setting back ({e}); it may keep sending its log to {host}:{port}.")
+        finally:
+            # The port must be free when this returns (send binds it again right after the slot probe). close() alone is not
+            # enough on Linux: while the reader is blocked in recvfrom() the socket stays open until that call returns, so wait
+            # for the reader first. Also runs if the restore call above fails in an unexpected way.
+            if thread is not None:
+                thread.join(2)
+            sock.close()
 
 
 def watch(addr: str, host: str, port: int, seconds: float | None, out: Callable[[str], None] = ui.say, *,
