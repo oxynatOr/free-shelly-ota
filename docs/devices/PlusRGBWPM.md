@@ -2,7 +2,7 @@
 
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
-![State: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
+![State: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
 ![Generation: 2](https://img.shields.io/badge/gen-2-lightgrey.svg?style=flat-square)
 ![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
 
@@ -101,7 +101,9 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## Notes for this device
 
-**Dev board only.** The OTA ran through on an ESP32 dev board with the DevKit image (2026-10-30, row in [Seen on a board](../devkit.md#seen-on-a-board)); no real device has been flashed. The board has no relay, meter or button, so nothing of the device's function is checked.
+- **Result:** first report ([#133](https://github.com/oxynatOr/free-shelly-ota/issues/133), thanks to [CzarofAK](https://github.com/CzarofAK)), from stock **2.0.3** with the package built from this profile (`--esphome-factory`). The device downloaded the ZIP and flashed it, ESPHome runs, and a later ESPHome OTA took effect, so ESPHome's bootloader is in place. Before that, the OTA had run through on a dev board with the DevKit image (2026-10-30, row in [Seen on a board](../devkit.md#seen-on-a-board)).
+- **No device log:** as on the dev board, the slot check got no UDP datagram from the device (`the update target slot could not be read`), so the package was sent with `--ignore-slot`. The second try to listen on port 9514 failed with `Address already in use`, so there is no `Boot: cur ... update?` line and no progress in this log. The result shows the app landed in slot 0 (ESPHome's bootloader started it), but the loader the device had is still unknown.
+- **Not reported:** the four LED outputs, the meter and the button under real use; the pins are not mapped here.
 
 **Pins.** Not mapped here. No stock dump of this device has been analysed here; pins read from firmware or templates are "not confirmed" until someone has measured them.
 

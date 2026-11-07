@@ -16,7 +16,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 ### Gen2 (ESP32)
 
-18 profiles: ✅ 2 · 🟡 2 · 🔬 5 · 🧪 9
+18 profiles: ✅ 3 · 🟡 2 · 🔬 4 · 🧪 9
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [Plus 1PM (Gen2)](Plus1PM.md) | `Plus1PM` | **`0x8000`** | `0x190000` | 🔬 |  |
 | [Plus Plug US (Gen2)](PlugUS.md) | `PlugUS` | **`0x8000`** | `0x190000` | 🔬 |  |
 | [Plus Plug UK (Gen2)](PlusPlugUK.md) | `PlusPlugUK` | **`0x8000`** | `0x190000` | 🔬 |  |
-| [Plus RGBW PM (Gen2)](PlusRGBWPM.md) | `PlusRGBWPM` | **`0x8000`** | `0x190000` | 🔬 |  |
+| [Plus RGBW PM (Gen2)](PlusRGBWPM.md) | `PlusRGBWPM` | **`0x8000`** | `0x190000` | ✅ | LED outputs and meter not reported |
 | [Pro 3EM (Gen2)](Pro3EM.md) | `Pro3EM` | **`0x8000`** | `0x200000` | 🧪 |  |
 | [Plus 2PM (Gen2)](Plus2PM.md) | `Plus2PM` | **`0x8000`** | `0x190000` | 🧪 | Not run on the dev board: the stock app restarts in a loop without factory data |
 | [Pro 1 (Gen2)](Pro1.md) | `Pro1` | **`0x8000`** | `0x200000` | 🧪 |  |
@@ -143,7 +143,6 @@ These profiles went through the whole update on a dev board with the [DevKit ima
 | [Plus 1PM (Gen2)](Plus1PM.md) | `Plus1PM` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
 | [Plus Plug US (Gen2)](PlugUS.md) | `PlugUS` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
 | [Plus Plug UK (Gen2)](PlusPlugUK.md) | `PlusPlugUK` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
-| [Plus RGBW PM (Gen2)](PlusRGBWPM.md) | `PlusRGBWPM` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
 
 ## Where devices differ
 
