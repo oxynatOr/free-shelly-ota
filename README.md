@@ -54,7 +54,7 @@ real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and th
 | --- | --- | --- | --- | --- |
 | Plus Plug S (V2 hardware, Gen2) | [`PlusPlugS`](docs/devices/PlusPlugS.md) | ESP32 | ✅ | Flashed without UART |
 | Plus Plug IT (Gen2) | [`PlusPlugIT`](docs/devices/PlusPlugIT.md) | ESP32 | ✅ | Flashed without UART |
-| Plus RGBW PM (Gen2) | [`PlusRGBWPM`](docs/devices/PlusRGBWPM.md) | ESP32 | ✅ | LED outputs and meter not reported |
+| Plus RGBW PM (Gen2) | [`PlusRGBWPM`](docs/devices/PlusRGBWPM.md) | ESP32 | ✅ | Three PWM outputs, voltage and NTC checked; inputs, button, LED not |
 | Plus i4 / i4 DC (Gen2) | [`PlusI4`](docs/devices/PlusI4.md) | ESP32 | 🟡 | Flashed over OTA; the inputs and the LED not checked |
 | Plus Uni (Gen2) | [`PlusUni`](docs/devices/PlusUni.md) | ESP32 | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
 | Plug M Gen3 | [`PlugMG3`](docs/devices/PlugMG3.md) | ESP32&#8209;C3 | ✅ | |

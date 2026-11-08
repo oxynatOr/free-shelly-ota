@@ -5,8 +5,9 @@
 ![State: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
 ![Generation: 2](https://img.shields.io/badge/gen-2-lightgrey.svg?style=flat-square)
 ![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
+![Pins: not confirmed](https://img.shields.io/badge/pins-not%20confirmed-yellow.svg?style=flat-square)
 
-[🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
+[🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [📍 Pins](#pins) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
 
 Gen2 / classic ESP32: lED controller with four PWM outputs and power metering. Partition table at the ESP-IDF default `0x8000`, bootloader at `0x1000`, 80 MHz flash frequency, like the [Plus Plug S](PlusPlugS.md).
 
@@ -52,6 +53,47 @@ esp32:
 ota:
   - platform: esphome
     allow_partition_access: true
+```
+
+The reporter's running config (ESPHome 2026.10.2) also has three things that are not needed to flash: `cpu_frequency: 160MHz` with `CONFIG_FREERTOS_UNICORE: "y"` (single core, chosen on purpose to stay safe on U4WDH units; their chip is a dual-core ESP32 rev3.1) and an `on_boot` block that releases the pad hold, copied from the Gen4 (see [Pins](#pins)). None of them is proven necessary on this device.
+
+## Pins
+
+| Function | Pin |
+| --- | --- |
+| PWM 1 to 4 (LEDC, 19531 Hz) | GPIO25, GPIO27, GPIO26, GPIO4 |
+| Inputs 1 to 4 (inverted) | GPIO36, GPIO37, GPIO38, GPIO39 |
+| Button | GPIO22 |
+| Status LED | GPIO14 |
+| NTC (10 k, B 3350) | GPIO33 |
+| Voltage (multiply 10.85) | GPIO34 |
+| Current (offset -0.794, multiply 16.13) | GPIO35 |
+
+Source: the [ESPHome device page](https://devices.esphome.io/), taken over by the reporter of [#133](https://github.com/oxynatOr/free-shelly-ota/issues/133), not measured by anyone here. What the reporter checked on a unit in a 12 V motorhome system:
+
+| Checked | Result |
+| --- | --- |
+| PWM 1 to 3 | switch and dim from Home Assistant (awning front, awning rear, kitchen); the 4th output is not connected |
+| Voltage | about 13.5 V on a 12 V system, plausible |
+| NTC | 27.8 °C, plausible |
+| Current | 0.35 to 0.40 A with all outputs off: the offset above does not fit this unit, it is not calibrated |
+| Inputs 1 to 4, button, status LED | not checked (the unit sits behind a panel) |
+
+Everything not in the "checked" table stays "not confirmed".
+
+**Pad hold.** The reporter's config releases the hold of the output pins at boot, as a precaution taken over from the Gen4, where Shelly OS leaves the pad hold enabled and the update only soft-resets the chip. It is not proven necessary on this device:
+
+```yaml
+esphome:
+  on_boot:
+    priority: 1000
+    then:
+      - lambda: |-
+          gpio_hold_dis(GPIO_NUM_25);
+          gpio_hold_dis(GPIO_NUM_26);
+          gpio_hold_dis(GPIO_NUM_27);
+          gpio_hold_dis(GPIO_NUM_4);
+          gpio_hold_dis(GPIO_NUM_14);
 ```
 
 ## Flash it
@@ -102,10 +144,8 @@ package, reads the update target slot. Command reference: [Commands](../commands
 ## Notes for this device
 
 - **Result:** first report ([#133](https://github.com/oxynatOr/free-shelly-ota/issues/133), thanks to [CzarofAK](https://github.com/CzarofAK)), from stock **2.0.3** with the package built from this profile (`--esphome-factory`). The device downloaded the ZIP and flashed it, ESPHome runs, and a later ESPHome OTA took effect, so ESPHome's bootloader is in place. Before that, the OTA had run through on a dev board with the DevKit image (2026-10-30, row in [Seen on a board](../devkit.md#seen-on-a-board)).
-- **No device log:** as on the dev board, the slot check got no UDP datagram from the device (`the update target slot could not be read`), so the package was sent with `--ignore-slot`. The second try to listen on port 9514 failed with `Address already in use`, so there is no `Boot: cur ... update?` line and no progress in this log. The result shows the app landed in slot 0 (ESPHome's bootloader started it), but the loader the device had is still unknown.
-- **Not reported:** the four LED outputs, the meter and the button under real use; the pins are not mapped here.
-
-**Pins.** Not mapped here. No stock dump of this device has been analysed here; pins read from firmware or templates are "not confirmed" until someone has measured them.
+- **No device log:** as on the dev board, the slot check got no UDP datagram from the device (`the update target slot could not be read`), so the package was sent with `--ignore-slot`. Right after the probe, `send` failed to listen on port 9514 (`Address already in use`), so there is no `Boot: cur ... update?` line and no progress in this log. Nothing else used the port: the probe's own socket was still bound while its reader thread waited in `recvfrom()`. The fix (wait for the reader, then close the socket) is in the next release; `--log-port 9515` avoids it. The result shows the app landed in slot 0 (ESPHome's bootloader started it), but the loader the device had is still unknown.
+- **Reported:** three PWM outputs work, voltage and NTC are plausible, the current offset does not fit ([Pins](#pins)). **Not reported:** the wall inputs, the button, the status LED.
 
 **Bootloader `min_version`.** The official package carries Shelly OS loader 1.0.2. The profile sets `boot_min_version: 1.0.9`, the
 default of the newer profiles, because a unit that Shelly has already updated can report 1.0.3 and would then skip a package with
