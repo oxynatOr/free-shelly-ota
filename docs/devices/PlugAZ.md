@@ -23,9 +23,10 @@ the native API: the same unit subsequently ran ESPHome 2026.10.2 with the
 full GPIO config and then its Bluetooth-proxy revision. Tilen confirmed
 on 2026-11-09 that the relay works after a complete power cycle. GPIO4 is
 active high. Voltage, frequency and internal temperature readings were
-received, but metering under a known load and NTC calibration are not
+received, and a toaster load worked after adjusting the ESPHome power
+limit. Metering accuracy against a reference and NTC calibration are not
 checked. The button and LED behavior are not individually confirmed.
-No UART was used for this installation.
+No UART was used for this installation. See [device report #141](https://github.com/oxynatOr/free-shelly-ota/issues/141).
 
 ## Before you start
 
@@ -126,7 +127,7 @@ The stock restoration log reported installed loader 1.0.2; its normal
 `min_version: 1.0.2` did not replace it (`update? 0`). The ESPHome package
 requested 1.0.9. A final loader-write log is not available, but subsequent
 ESPHome OTA updates and the resulting versions were confirmed. The state
-stays 🟡 because full load testing and calibration are still outstanding.
+stays 🟡 because calibration and individual button/LED checks are outstanding.
 
 **Relay does not click although the switch stays ON:** after the initial
 conversion Tilen saw exactly this behavior. Temperature was around
@@ -138,6 +139,14 @@ explanation, not a measured cause. Releasing only GPIO4's pad hold in an
 ESPHome boot hook has not been independently validated as a replacement
 for that power cycle. Do not change the relay GPIO or disable protections
 merely to work around this symptom.
+
+**Toaster switches off after a few seconds:** the reported ESPHome config
+initially limited power to 1500 W. Raising that configured limit to 2500 W
+allowed the toaster to operate normally. Shelly rates the AZ Plug for
+[2500 W with resistive loads, maximum 12 A](https://www.shelly.com/products/shelly-az-plug-white).
+The 1500 W limit belonged to this ESPHome config; it is not a claim about
+Shelly firmware defaults. This load test does not establish metering
+accuracy or protection calibration.
 
 ## Notes for this device
 
