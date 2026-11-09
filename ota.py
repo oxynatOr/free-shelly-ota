@@ -79,18 +79,18 @@ RESTORE_HELP = ("note: restore works only while Shelly firmware still runs; a de
                 "otadata: Wi-Fi and settings can be lost.")
 PC_GROUP = "this PC"
 CAFILE_HELP = "check TLS against the CA certificates in PEM only (e.g. Shelly's CA); TLS stays on, unlike --insecure"
-SLOT_SWAP_HELP = ("EXPERIMENTAL, seen working on two dev boards only: if the installer will write to slot 1, send the package with "
+SLOT_SWAP_HELP = ("EXPERIMENTAL, seen working on dev boards, reported once on a real device: if the installer will write to slot 1, send the package with "
                   "app_0/app_1 subtypes swapped in its partition table (labels and addresses stay Shelly's), so ESPHome's "
                   "bootloader starts slot 1; no restore first. Needs a package built with --esphome-factory and --pt-addr "
                   "0x8000 (the table has to be moved: at Shelly's address it would not work) and a readable target slot. The installer writes the table to flash: if it goes wrong, a serial connection and a flash "
-                  "dump are needed to bring the device back. Going back to Shelly's firmware afterwards worked once on a dev board (ESPHome OTA of Shelly's app image, then restore; see the docs)")
+                  "dump are needed to bring the device back. Going back to Shelly's firmware afterwards worked on two dev boards (ESPHome OTA of Shelly's app image, then restore; see the docs)")
 
 
-PT_ADDR_HELP = ("EXPERIMENTAL, seen working on two dev boards only: move the partition table to ADDR (only 0x8000) instead of "
+PT_ADDR_HELP = ("EXPERIMENTAL, seen working on dev boards, reported once on a real device: move the partition table to ADDR (only 0x8000) instead of "
                 "writing it where Shelly's is. Needs --esphome-factory from an ESPHome build that leaves "
                 "CONFIG_PARTITION_TABLE_OFFSET unset. Shelly's own table stays untouched. For send --slot-swap. The installer "
                 "writes the table to flash: if it goes wrong, a serial connection and a flash dump are needed. "
-                "Going back to Shelly's firmware afterwards worked once on a dev board (ESPHome OTA of Shelly's app image, then restore; see the docs)")
+                "Going back to Shelly's firmware afterwards worked on two dev boards (ESPHome OTA of Shelly's app image, then restore; see the docs)")
 
 
 def cmd_list(args) -> None:

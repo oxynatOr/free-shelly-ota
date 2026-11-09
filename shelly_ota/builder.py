@@ -255,8 +255,8 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
                 parts["pt"]["addr"] = pt_addr
                 warnings.append(f"EXPERIMENTAL: the partition table is moved to 0x{pt_addr:x} (Shelly's own table stays at "
                                 f"0x{profile.pt_offset:x}, untouched). Use it with send --slot-swap and an ESPHome build that "
-                                f"leaves CONFIG_PARTITION_TABLE_OFFSET unset. seen working on two dev boards only; going back to "
-                                f"Shelly's firmware afterwards worked once on a dev board (see the docs).")
+                                f"leaves CONFIG_PARTITION_TABLE_OFFSET unset. Seen working on dev boards, reported once on a real device; going back to "
+                                f"Shelly's firmware afterwards worked on two dev boards (see the docs).")
             warnings.append("BOOTLOADER REPLACED: the package carries ESPHome's bootloader and a clean otadata. If the "
                             "bootloader does not suit the device, only UART can bring it back. The installer must also write the "
                             + ("app to slot 0 (send checks that). " if pt_addr is None else

@@ -12,7 +12,7 @@ Gen3 2.0.1/2.1.0 and Gen4 2.1.1 dev boards). A package made with `build --pt-add
 the swapped slot. Shelly's own table stays at its address, untouched.
 
 The installer writes the `pt` part to flash, so a wrong table cannot be undone over the network: only a serial connection
-and a flash dump bring the device back. Going back to Shelly's firmware afterwards worked once on a dev board: ESPHome's OTA of Shelly's own app image, then
+and a flash dump bring the device back. Going back to Shelly's firmware afterwards worked on two dev boards: ESPHome's OTA of Shelly's own app image, then
 `restore` (docs/bootloader-and-slots.md).
 """
 

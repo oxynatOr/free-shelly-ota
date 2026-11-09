@@ -93,10 +93,10 @@ predictor, so the check uses the log line. (On the Mini 1PM Gen4 Zigbee firmware
 ## Experimental: slot swap in the package
 
 > [!WARNING]
-> **Experimental. Seen working on two dev boards (ESP32-C6 and ESP32-C3, 2026-11-05/06); not tried on a device.** The package moves the
+> **Experimental. Seen working on two dev boards (ESP32-C6 and ESP32-C3, 2026-11-05 to 2026-11-09), and reported once on a real device (a Shelly 2PM Gen3, from the reporter's notes, no raw log).** The package moves the
 > partition table and `send --slot-swap` changes it, and the installer writes it to flash. If that goes wrong, a serial
 > connection and a flash dump of the device are needed to bring it back ([Recovery over UART](recovery-uart.md)). Going back to
-> Shelly's firmware after such an install worked once on a dev board, over the network ([see below](#the-way-back-over-the-network-seen-once)).
+> Shelly's firmware after such an install worked on two dev boards, over the network ([see below](#the-way-back-over-the-network-seen-on-two-boards)).
 
 The installer and ESPHome's bootloader read different fields of the partition table. The installer finds the app slots by
 label and address (`app_0`, `app_1`). ESPHome's bootloader, with an `otadata` it cannot read, starts the app partition whose
@@ -139,17 +139,22 @@ What was seen (2026-11-05/06, dev boards with the DevKit images, `build --compil
 | ESP32-C6, 8 MB | `S1PMG4` (2.1.0) | Target slot 1. `PT is being moved from 0x10000 to 0x8000`, `Installing PT ... -> pt(0x8000)`. ESPHome's bootloader printed the swapped table, started `app_1`, the access point of the ESPHome config came up. A second ESPHome OTA (another build) took effect and the board then started from `app_0`. |
 | ESP32-C3, 8 MB | `S1PMG3` (2.1.0) | Target slot 1. `PT is being moved from 0xf000 to 0x8000`, `Installing PT 4096@fs_1(0x660000) -> pt(0x8000)`. Bootloader started `app_1`, the access point of the ESPHome config came up. |
 
+Repeat on 2026-11-09 (same two boards, stock 2.1.0 DevKit images, packages from `build --compile ... --pt-addr 0x8000`): swap send, way back, and a second send straight after the `restore` all worked on both. After the `restore` the installer's target was slot 0 on both boards (Shelly's app sits in slot 1 then), so the second send had nothing to swap and ESPHome started from `app_0`.
+
+Reported on a real device (WulffTech, a Shelly 2PM Gen3 that had run ESPHome for a while, from their notes, not a raw log): way back with the same steps, then `send --slot-swap` with `--pt-addr 0x8000`; ESPHome booted, Wi-Fi, mDNS, API and OTA came up, both relays and the power sensor were checked. Their first `--slot-swap` sends fell back to the old firmware, and a send after another `restore` worked. Why the first ones fell back is not known; the dev boards did not show it.
+
 Without the move (the table at Shelly's own address) the same boards, and a Gen3 board on stock 2.0.1, ended on the old app after
 a reported success.
 
 Not known yet:
 
-- whether the way back below works on other models (it was seen on one C6 board; a Plug M Gen3 once stopped with
+- whether the way back below works on other models (it was seen on a C6 and a C3 board and, per the reporter's notes, on a real 2PM Gen3; a Plug M Gen3 once stopped with
   `no valid boot state!` after the same first step, see [Recovery over UART](recovery-uart.md));
 - whether the installer chooses its target slot again after it has written the new table: in the runs above it did not;
-- devices: all of this was seen on dev boards only, not on a device in a wall or a socket.
+- why the first `--slot-swap` sends on the real 2PM Gen3 fell back to the old firmware (package without `--pt-addr`, or the unit's state after the way back); not reproduced on the dev boards;
+- devices: apart from the one report above, all of this was seen on dev boards only, not on a device in a wall or a socket.
 
-### The way back over the network (seen once)
+### The way back over the network (seen on two boards)
 
 Seen on the ESP32-C6 dev board (`S1PMG4`, stock 2.1.1, 2026-11-06), after a `--slot-swap` install, without UART:
 
@@ -165,7 +170,7 @@ Do **not** use `esphome upload --bootloader` for this: it stages the bootloader 
 there; with Shelly's loader in place the board then loops (`slot 0 is not bootable`) and only UART helps.
 After the way back, another `--slot-swap` install worked too (this time with target slot 0: the table moves, nothing to swap).
 
-Tested on one board and one firmware only; not on a device in a wall or a socket.
+Tested on two dev boards (C6 `S1PMG4`, C3 `S1PMG3`, stock 2.1.0 images, Shelly's app 2.1.1) and reported once on a real 2PM Gen3. If `restore` says "Not committed", wait a minute or two and run it again.
 
 ## Without ESPHome's bootloader (plain package)
 
