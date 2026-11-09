@@ -70,6 +70,8 @@ the installer wrote to slot 1, the old stock app in `app_0` started again althou
 bootloader was in place (UART log: `Loaded app from partition at offset 0x20000`, `PowerStrip 1.7.99`). After one official
 update to 2.0.1 and a new `send`, ESPHome started.
 
+If `restore` reboots before its log cleanup, the same UDP destination may still be active. The log reader temporarily disables and re-enables that destination so the startup target line is emitted again, then restores the previous setting. Checked on the AZ Plug.
+
 **How `send` helps:** right after the debug log is switched on, the device prints `Storing core dumps to app_N`, and N was the
 same as the later `Will write to slot N` in all runs so far. When the package replaces the bootloader, `send` reads that line
 first (briefly switching on the UDP log, so allow UDP port 9514) and **refuses to send if N is not 0**, telling you to run

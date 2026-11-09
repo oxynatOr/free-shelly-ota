@@ -47,6 +47,7 @@ The chip family must match and the flash must hold the whole partition table of 
 | `Pro4PM` | Pro 4PM | ESP32 | 8 MiB | classic ESP32 board with 8 MB |
 | `ProRGBWWPM` | Pro RGBWW PM | ESP32 | 8 MiB | classic ESP32 board with 8 MB |
 | `PlugMG3` | Plug M Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
+| `PlugAZ` | AZ Plug | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
 | `PlugSG3` | Plug S Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
 | `PlugPMG3` | Plug PM Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
 | `HTG3` | H&T Gen3 | ESP32-C3 | 8 MiB | ESP32-C3 board with 8 MB |
