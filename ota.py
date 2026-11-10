@@ -8,6 +8,7 @@ are replaced as well.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import shutil
@@ -78,6 +79,18 @@ RESTORE_HELP = ("note: restore works only while Shelly firmware still runs; a de
                 "otadata: Wi-Fi and settings can be lost.")
 PC_GROUP = "this PC"
 CAFILE_HELP = "check TLS against the CA certificates in PEM only (e.g. Shelly's CA); TLS stays on, unlike --insecure"
+SLOT_SWAP_HELP = ("EXPERIMENTAL, seen working on two dev boards only: if the installer will write to slot 1, send the package with "
+                  "app_0/app_1 subtypes swapped in its partition table (labels and addresses stay Shelly's), so ESPHome's "
+                  "bootloader starts slot 1; no restore first. Needs a package built with --esphome-factory and --pt-addr "
+                  "0x8000 (the table has to be moved: at Shelly's address it would not work) and a readable target slot. The installer writes the table to flash: if it goes wrong, a serial connection and a flash "
+                  "dump are needed to bring the device back. Going back to Shelly's firmware afterwards worked on two dev boards (ESPHome OTA of Shelly's app image, then restore; see the docs)")
+
+
+PT_ADDR_HELP = ("EXPERIMENTAL, seen working on dev boards, and on a real device with a plain send: move the partition table to ADDR (only 0x8000) instead of "
+                "writing it where Shelly's is. Needs --esphome-factory from an ESPHome build that leaves "
+                "CONFIG_PARTITION_TABLE_OFFSET unset. Shelly's own table stays untouched. For send --slot-swap. The installer "
+                "writes the table to flash: if it goes wrong, a serial connection and a flash dump are needed. "
+                "Going back to Shelly's firmware afterwards worked on two dev boards (ESPHome OTA of Shelly's app image, then restore; see the docs)")
 
 
 def cmd_list(args) -> None:
@@ -212,7 +225,7 @@ def _compile_for_build(args, p) -> None:
         # The esp32: block may come from packages or !include: let ESPHome put the config together (kept in memory only)
         ui.say("No esp32: block in the file: asking ESPHome for the full config (github:// packages need the network) ...")
         cfg = args.resolved_cfg = lint.load_config(compile_.resolve_config(args.compile, args.runner, image))
-    problems = lint.lint_esphome(args.compile, p, cfg=cfg)
+    problems = lint.lint_esphome(args.compile, p, cfg=cfg, relocated=args.pt_addr is not None)
     if problems:      # before the compile, which takes minutes
         raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
     ui.say(f"ESPHome config check OK ({args.compile.name})")
@@ -242,7 +255,7 @@ def cmd_build(args) -> None:
         _compile_for_build(args, p)
     resolved = getattr(args, "resolved_cfg", None) if args.esphome_yaml == args.compile else None
     if args.esphome_yaml:
-        problems = lint.lint_esphome(args.esphome_yaml, p, cfg=resolved)
+        problems = lint.lint_esphome(args.esphome_yaml, p, cfg=resolved, relocated=args.pt_addr is not None)
         if problems:
             raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
         if not args.compile:      # --compile has said it before the compile
@@ -269,7 +282,7 @@ def cmd_build(args) -> None:
     def run_build(target: Path) -> builder.BuildResult:
         return builder.build(p, args.app, official, target, drop=drop, tag=args.tag, factory=args.esphome_factory,
                              boot_min_version=args.boot_min_version, secrets=secrets,
-                             fail_on_secrets=args.fail_on_secrets)
+                             fail_on_secrets=args.fail_on_secrets, pt_addr=args.pt_addr)
 
     if args.dry_run:
         # Build in a scratch directory, so that an existing package (or its .sha256 and .report.json) stays untouched.
@@ -323,10 +336,16 @@ def _send(args, zip_path: Path, log_name: str | None = None, restoring: bool = F
     level = _level(args, Level.normal)
     logfile = _open_logfile(args, level, log_name or f"{zip_path.stem}.send.log")
     try:
-        sender.send(p, zip_path, args.ip, host=args.host, port=args.port, timeout=args.timeout, max_wait=getattr(args, "max_wait", sender.MAX_WAIT),
-                    assume_yes=args.yes, dry_run=args.dry_run, force=args.force, user=args.user,
-                    password=args.password, watch=args.watch, log_port=args.log_port, ignore_slot=args.ignore_slot,
-                    wait=getattr(args, "wait", sender.DEFAULT_WAIT), restoring=restoring, level=level, logfile=logfile)
+        with contextlib.ExitStack() as stack:
+            # --slot-swap (experimental): the copy with the swapped partition table lives only for this send
+            slot_swap = (Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="free-shelly-ota-slotswap-",
+                                                                              ignore_cleanup_errors=True)))
+                         if getattr(args, "slot_swap", False) else None)
+            sender.send(p, zip_path, args.ip, host=args.host, port=args.port, timeout=args.timeout, max_wait=getattr(args, "max_wait", sender.MAX_WAIT),
+                        assume_yes=args.yes, dry_run=args.dry_run, force=args.force, user=args.user,
+                        password=args.password, watch=args.watch, log_port=args.log_port, ignore_slot=args.ignore_slot,
+                        wait=getattr(args, "wait", sender.DEFAULT_WAIT), restoring=restoring, level=level, logfile=logfile,
+                        slot_swap=slot_swap)
     finally:
         if logfile:
             logfile.close()
@@ -625,6 +644,8 @@ def build_parser() -> argparse.ArgumentParser:
                         "else one patch above the official one). 'update? 0' in the log: use a higher value; "
                         "'keep' leaves it unchanged")
     g.add_argument("--esphome-yaml", type=Path, metavar="YAML", help="also check this ESPHome config")
+    g = b.add_argument_group("experimental")
+    g.add_argument("--pt-addr", type=lambda s: int(s, 0), metavar="ADDR", help=PT_ADDR_HELP)
     g = b.add_argument_group("secrets")
     g.add_argument("--secrets", type=Path, metavar="FILE",
                    help="secrets.yaml to compare the image with (default: next to --esphome-yaml)")
@@ -656,6 +677,8 @@ def build_parser() -> argparse.ArgumentParser:
                  epilog=_epilog("send DuoBulbG3 out/DuoBulbG3-app-<date>.zip --ip 192.168.1.50 --dry-run", "send"))
     t.add_argument("device", metavar="DEVICE", help=dev_help)
     t.add_argument("zip", type=Path, metavar="ZIP", help="the package made by build")
+    g = t.add_argument_group("experimental")
+    g.add_argument("--slot-swap", action="store_true", help=SLOT_SWAP_HELP)
     t.set_defaults(func=cmd_send)
 
     r = _command(sub, "restore", usage="ota.py restore DEVICE [options]", parents=[dev, snd, lvl],
