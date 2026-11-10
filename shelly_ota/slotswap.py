@@ -128,7 +128,7 @@ def check_package(zf: zipfile.ZipFile, manifest: dict) -> None:
                        "table is at, the installer only stores the table in a journal that ESPHome's bootloader does not read "
                        "(log: 'Installing new PT1'), and the old app would start. Build the package with "
                        f"--esphome-factory and --pt-addr 0x{RELOCATED_PT_ADDR:x}, from an ESPHome build that leaves "
-                       "CONFIG_PARTITION_TABLE_OFFSET unset (docs/bootloader-and-slots.md#experimental-slot-swap-in-the-package).")
+                       "CONFIG_PARTITION_TABLE_OFFSET unset (docs/slot-swap.md).")
     swap_table(zf.read(parts["pt"]["src"]), 1)   # the table must be one that can be swapped, before the device is asked
 
 

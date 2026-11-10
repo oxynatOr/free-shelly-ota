@@ -8,7 +8,7 @@ commands, the log lines to look for and the way back to Shelly OS. Pick your dev
 (✅ and 🟡); this page lists every profile.
 
 ✅ = the whole chain ran on a real device, 🟡 = flashed on a real device, but part of the chain or of the function is not
-checked yet, 🔬 = the OTA ran through on a dev board with the [DevKit image](../devkit.md), but not on the real device, 🧪 = the package builds and verifies, but nobody has flashed it yet.
+checked yet, 🔬 = the OTA ran through on a dev board with the [DevKit image](../devkit.md), but not on the real device (the runs: [Dev board runs](../devkit-runs.md)), 🧪 = the package builds and verifies, but nobody has flashed it yet.
 
 ## Devices
 
@@ -126,24 +126,6 @@ Gen1 has no profile and no device page yet, so `ota.py` cannot update these devi
 | Shelly 3EM | ESP8266 | 2 MB ![unconfirmed](https://img.shields.io/badge/-unconfirmed-yellow.svg?style=flat-square) | 🧪 | [#47](https://github.com/oxynatOr/free-shelly-ota/issues/47): as the 1L: the stock image does not boot on the bare dev board |
 | Shelly H&T | ESP8266 | 2 MB ![unconfirmed](https://img.shields.io/badge/-unconfirmed-yellow.svg?style=flat-square) | 🧪 | [#47](https://github.com/oxynatOr/free-shelly-ota/issues/47): the stock image stays silent on the bare dev board (probably it sleeps without its STM co-processor); pins read from the firmware, not confirmed |
 | Shelly Plug (SHPLG2-1) | ESP8266 | 4 MB ![unconfirmed](https://img.shields.io/badge/-unconfirmed-yellow.svg?style=flat-square) | 🧪 | [#47](https://github.com/oxynatOr/free-shelly-ota/issues/47): other layout (slot 0 at `0x100000`): ESPHome crashes right after rBoot starts it, the cache mapping of the second megabyte is not solved |
-
-## Tested on a dev board
-
-These profiles went through the whole update on a dev board with the [DevKit image](../devkit.md), but not on the real device yet. What the board showed is in [Seen on a board](../devkit.md#seen-on-a-board).
-
-| Device | Profile | Board | Date |
-| --- | --- | --- | --- |
-| [i4 Gen4](I4G4.md) | `I4G4` | ESP32-C6 dev board, 8 MB | 2026-10-21 |
-| [Dimmer Gen4](DimmerG4.md) | `DimmerG4` | ESP32-C6 dev board, 8 MB | 2026-10-21 |
-| [Dimmer 0/1-10V PM Gen4](Dimmer0110VPMG4.md) | `Dimmer0110VPMG4` | ESP32-C6 dev board, 8 MB | 2026-10-21 |
-| [1 Mini Gen4](Mini1G4.md) | `Mini1G4` | ESP32-C6 dev board, 8 MB | 2026-10-21 |
-| [EM Mini Gen4](MiniEMG4.md) | `MiniEMG4` | ESP32-C6 dev board, 8 MB | 2026-10-21 |
-| [Mini 1PM Gen4](Mini1PMG4.md) | `Mini1PMG4` | ESP32-C6 dev board, 8 MB | 2026-10-23 |
-| [Mini 1PM Gen4 (Zigbee)](Mini1PMG4.md#zigbee-variant) | `Mini1PMG4ZB` | ESP32-C6 dev board, 8 MB | 2026-10-23 |
-| [Plus 1 (Gen2)](Plus1.md) | `Plus1` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
-| [Plus 1PM (Gen2)](Plus1PM.md) | `Plus1PM` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
-| [Plus Plug US (Gen2)](PlugUS.md) | `PlugUS` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
-| [Plus Plug UK (Gen2)](PlusPlugUK.md) | `PlusPlugUK` | ESP32 dev board (ESP32-D0WD-V3), 4 MB, ESP-Prog | 2026-10-30 |
 
 ## Where devices differ
 

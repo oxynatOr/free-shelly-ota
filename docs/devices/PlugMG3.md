@@ -129,7 +129,7 @@ The reported run of the second plug, from stock 1.8.99 with the 2.1.0 package an
   log| W shelly_update.cpp:581   FW signatures: want 07 got 00
 ```
 
-No `EFUSE write error` line appeared, only the `FW signatures` one ([eFuse note](../troubleshooting.md#efuse)).
+No `EFUSE write error` line appeared, only the `FW signatures` one ([eFuse note](../background.md#efuse)).
 
 ## Notes for this device
 
@@ -165,7 +165,7 @@ Shelly's `2.2.0-beta2` for this plug (found by [onkelfarmor](https://github.com/
 >
 > Relay and meter were not reported.
 >
-> **The way for a plug on stock 1.8.99: run `restore PlugMG3-beta` twice (2026-10-31, DevKit board).** Shelly's installer of 1.8.99 needs two runs, as reported in the Shelly forum for 2.2.0-beta1 ([thread 15141](https://community.shelly.cloud/topic/15141-update-m-plug-to-v-200-fails/), found by [onkelfarmor](https://github.com/onkelfarmor), [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)). Run 1: `Will write to slot 0`, `Slot switch is required`, `Skipping app`, `Skipping fs`; the plug reports success and comes back on 1.8.99, now on slot 0 instead of 1. Run 2: `Will write to slot 1`, `Installing new PT1`; the plug reports 2.2.0-beta2 on slot 1. Wait until the plug has been running for more than about 130 s before each run, otherwise it answers `Not committed`. Then `send PlugMG3-beta` with the ESPHome package went through (`The installer writes to slot 0`, loader `010002ff` replaced), and ESPHome's access point appeared. This was played on a DevKit board (ESP32-C3, 8 MB) flashed with a dump of a stock 1.8.99 plug, see [DevKit](../devkit.md#seen-on-a-board), and then confirmed on a plug in the wall (below). The 2026-10-28 attempt on 1.8.99 was therefore only the first of the two runs.
+> **The way for a plug on stock 1.8.99: run `restore PlugMG3-beta` twice (2026-10-31, DevKit board).** Shelly's installer of 1.8.99 needs two runs, as reported in the Shelly forum for 2.2.0-beta1 ([thread 15141](https://community.shelly.cloud/topic/15141-update-m-plug-to-v-200-fails/), found by [onkelfarmor](https://github.com/onkelfarmor), [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)). Run 1: `Will write to slot 0`, `Slot switch is required`, `Skipping app`, `Skipping fs`; the plug reports success and comes back on 1.8.99, now on slot 0 instead of 1. Run 2: `Will write to slot 1`, `Installing new PT1`; the plug reports 2.2.0-beta2 on slot 1. Wait until the plug has been running for more than about 130 s before each run, otherwise it answers `Not committed`. Then `send PlugMG3-beta` with the ESPHome package went through (`The installer writes to slot 0`, loader `010002ff` replaced), and ESPHome's access point appeared. This was played on a DevKit board (ESP32-C3, 8 MB) flashed with a dump of a stock 1.8.99 plug, see [DevKit](../devkit-runs.md), and then confirmed on a plug in the wall (below). The 2026-10-28 attempt on 1.8.99 was therefore only the first of the two runs.
 >
 > ```
 > python ota.py restore PlugMG3-beta --watch 120     # run 1: stays on 1.8.99, slot 0
@@ -200,6 +200,7 @@ first, otherwise `send` refuses (the installer would write to slot 1).
 > [!WARNING]
 > - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
 > - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back ([Recovery over UART](../recovery-uart.md)). Take a flash backup first if you can.
+> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.
 > - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 [Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

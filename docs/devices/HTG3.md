@@ -130,7 +130,7 @@ In the `--watch` log look for these lines, in this order:
 - **`min_version`:** this device reports an installed loader 1.0.3, so the default (1.0.3) was skipped; with 1.0.9 the installer
   wrote ESPHome's bootloader ([why](../bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version)).
 - **eFuse:** the log shows `FW signatures: want 07 got 00` and refused eFuse writes ("Bits are not empty"). The update still
-  succeeded ([eFuse note](../troubleshooting.md#efuse)).
+  succeeded ([eFuse note](../background.md#efuse)).
 
 ## Way back
 
@@ -141,6 +141,7 @@ In the `--watch` log look for these lines, in this order:
 > [!WARNING]
 > - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
 > - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back ([Recovery over UART](../recovery-uart.md)). Take a flash backup first if you can.
+> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.
 > - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 [Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

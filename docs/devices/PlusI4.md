@@ -116,7 +116,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 **The slot.** The first dry run said the update would go to slot 1. The tester ran `python ota.py restore PlusI4` once; the second dry run then said slot 0, and the OTA went to slot 0. This is the same case as on the Plus Plug S: if `send` does not say `Update target slot: 0`, run `restore` first ([why](../bootloader-and-slots.md#the-app-must-land-in-slot-0)).
 
-**eFuse.** The log showed `FW signatures: want 07 got 00`, and the tester read it as refused eFuse writes. The update still completed ([eFuse note](../troubleshooting.md#efuse)).
+**eFuse.** The log showed `FW signatures: want 07 got 00`, and the tester read it as refused eFuse writes. The update still completed ([eFuse note](../background.md#efuse)).
 
 **ESPHome warnings.** As on other classic ESP32 devices, leave `minimum_chip_revision` and `sram1_as_iram` out of the config you build the package from: `build` refuses a bootloader whose header differs from Shelly's ([why](../troubleshooting.md#build-refuses-to-replace-the-bootloader)).
 
@@ -133,6 +133,7 @@ Still open: the pins of the four inputs and the LED, and a later ESPHome OTA. Pl
 > [!WARNING]
 > - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
 > - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back ([Recovery over UART](../recovery-uart.md)). Take a flash backup first if you can.
+> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.
 > - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 [Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

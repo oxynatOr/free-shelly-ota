@@ -143,7 +143,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## Notes for this device
 
-- **Result:** first report ([#133](https://github.com/oxynatOr/free-shelly-ota/issues/133), thanks to [CzarofAK](https://github.com/CzarofAK)), from stock **2.0.3** with the package built from this profile (`--esphome-factory`). The device downloaded the ZIP and flashed it, ESPHome runs, and a later ESPHome OTA took effect, so ESPHome's bootloader is in place. Before that, the OTA had run through on a dev board with the DevKit image (2026-10-30, row in [Seen on a board](../devkit.md#seen-on-a-board)).
+- **Result:** first report ([#133](https://github.com/oxynatOr/free-shelly-ota/issues/133), thanks to [CzarofAK](https://github.com/CzarofAK)), from stock **2.0.3** with the package built from this profile (`--esphome-factory`). The device downloaded the ZIP and flashed it, ESPHome runs, and a later ESPHome OTA took effect, so ESPHome's bootloader is in place. Before that, the OTA had run through on a dev board with the DevKit image (2026-10-30, row in [Dev board runs](../devkit-runs.md)).
 - **No device log:** as on the dev board, the slot check got no UDP datagram from the device (`the update target slot could not be read`), so the package was sent with `--ignore-slot`. Right after the probe, `send` failed to listen on port 9514 (`Address already in use`), so there is no `Boot: cur ... update?` line and no progress in this log. Nothing else used the port: the probe's own socket was still bound while its reader thread waited in `recvfrom()`. The fix (wait for the reader, then close the socket) is in the next release; `--log-port 9515` avoids it. The result shows the app landed in slot 0 (ESPHome's bootloader started it), but the loader the device had is still unknown.
 - **Reported:** three PWM outputs work, voltage and NTC are plausible, the current offset does not fit ([Pins](#pins)). **Not reported:** the wall inputs, the button, the status LED.
 
@@ -165,6 +165,7 @@ Please report the file written by `--log-file`, especially the lines `Update tar
 > [!WARNING]
 > - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
 > - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back ([Recovery over UART](../recovery-uart.md)). Take a flash backup first.
+> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.
 > - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 [Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

@@ -1,7 +1,7 @@
 <h1 align="left">
   <img src="docs/assets/logo.png" width="80" align="left" alt="Free-Shelly OTA logo">
   Free-Shelly OTA<br>
-  <sup><sup><sub>Pack your own ESPHome firmware into an official-style Shelly OTA package — and send it to the device.</sub></sup></sup>
+  <sup><sup><sub>Pack your own ESPHome firmware into an official-style Shelly OTA package and send it to the device.</sub></sup></sup>
 </h1>
 
 [![Status][status-shield]][status-url]
@@ -9,7 +9,7 @@
 [![Issues][issues-shield]][issues-url]
 [![License][license-shield]][license-url]
 
-[Supported devices](#supported-devices) · [Download](https://github.com/oxynatOr/free-shelly-ota/releases) · [Quick start](#quick-start) · [Step-by-step guide](docs/guide.md) · [Documentation](#documentation) · [Docs site](https://oxynator.github.io/free-shelly-ota/) · [Contributing](CONTRIBUTING.md) · [Request a device](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml)
+[Quick start](#quick-start) · [Supported devices](#supported-devices) · [Download](https://github.com/oxynatOr/free-shelly-ota/releases) · [Step-by-step guide](docs/guide.md) · [Documentation](#documentation) · [Docs site](https://oxynator.github.io/free-shelly-ota/) · [Contributing](CONTRIBUTING.md) · [Request a device](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml)
 
 `free-shelly-ota` is a command-line tool for **Shelly Gen2 (ESP32)**, **Gen3 (ESP32-C3)** and **Gen4 (ESP32-C6)** devices.
 It turns your ESPHome firmware into an update the Shelly accepts, and sends it over the network:
@@ -18,100 +18,24 @@ It turns your ESPHome firmware into an update the Shelly accepts, and sends it o
 2. **`build`** replaces its `app` part with your ESPHome image and fixes size and SHA-256 in the manifest.
 3. **`send`** checks the device, serves the ZIP from this PC and triggers the update over RPC.
 
-```mermaid
-flowchart LR
-    app["Your ESPHome image<br/>app.ota.bin"] --> build["build<br/>app part replaced,<br/>size + SHA-256 fixed"]
-    off["Official Shelly<br/>OTA package"] -->|fetch| build
-    build --> zip["Official-style<br/>OTA ZIP"] -->|send| dev["Your Shelly"]
-```
-
-**No UART needed to install.** Keep one ready as your way back, see the warning below.
+Installing runs over the network, no soldering. A UART adapter is only your safety net if a flash goes wrong.
 
 > [!WARNING]
 > **Experimental.** The whole chain is confirmed on real devices only where the table below shows ✅.
 >
-> - **Keep UART access ready.** A bootloader that does not suit a device can only be fixed over UART
->   ([Recovery over UART](docs/recovery-uart.md)).
+> - **Have a UART adapter ready.** If a flash goes wrong, UART is the only way back ([Recovery over UART](docs/recovery-uart.md)).
+> - **Your config is yours.** The ESPHome config (pins, relay, sensors, limits) is your responsibility. The tool checks the package (partition table, offset, size, bootloader), not whether the config works or is safe. The configs on the device pages are examples from reports, not tested for your unit.
+> - **A wrong `ota:`, `api:` or Wi-Fi setting can lock you out.** If the flashed config has no working network or OTA (missing `allow_partition_access`, wrong Wi-Fi, a key or encryption you cannot match later), the device is not reachable and only UART helps, as seen with the Power Strip. Test the config first, ideally on a dev board.
 > - **Warranty.** Installing third-party firmware voids your Shelly warranty.
 > - **Risk.** Incorrect flashing can brick your device. You assume all responsibility.
 
-> [!NOTE]
-> This project is **not** affiliated with Shelly, Allterco Robotics, Schneider Electric, ESPHome, CSA or Espressif Systems.
->
-> It contains **no ESPHome binaries and no Shelly firmware**: you compile your own ESPHome image, and `fetch` downloads the
-> official package from Shelly.
-
-
-## Supported devices
-
-**61 profiles:** ✅ 13 confirmed · 🟡 8 partly checked · 🔬 11 DevKit-tested · 🧪 29 untested
-
-Click the profile for the device page: ESPHome config, the exact commands and what to expect. This table shows the devices that ran on
-real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and the untested (🧪) ones, are on the
-[device pages](docs/devices/README.md#devices).
-
-| Device | Profile | Chip | State | Note |
-| --- | --- | --- | --- | --- |
-| Plus Plug S (V2 hardware, Gen2) | [`PlusPlugS`](docs/devices/PlusPlugS.md) | ESP32 | ✅ | Flashed without UART |
-| Plus Plug IT (Gen2) | [`PlusPlugIT`](docs/devices/PlusPlugIT.md) | ESP32 | ✅ | Flashed without UART |
-| Plus RGBW PM (Gen2) | [`PlusRGBWPM`](docs/devices/PlusRGBWPM.md) | ESP32 | ✅ | Three PWM outputs, voltage and NTC checked; inputs, button, LED not |
-| Plus i4 / i4 DC (Gen2) | [`PlusI4`](docs/devices/PlusI4.md) | ESP32 | 🟡 | Flashed over OTA; the inputs and the LED not checked |
-| Plus Uni (Gen2) | [`PlusUni`](docs/devices/PlusUni.md) | ESP32 | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
-| Plug M Gen3 | [`PlugMG3`](docs/devices/PlugMG3.md) | ESP32&#8209;C3 | ✅ | |
-| AZ Plug | [`PlugAZ`](docs/devices/PlugAZ.md) | ESP32&#8209;C3 | 🟡 | OTA and relay work; power cycle after conversion; calibration not checked |
-| Plug S Gen3 | [`PlugSG3`](docs/devices/PlugSG3.md) | ESP32&#8209;C3 | ✅ | |
-| H&T Gen3 | [`HTG3`](docs/devices/HTG3.md) | ESP32&#8209;C3 | ✅ | |
-| PM Mini Gen3 | [`MiniPMG3`](docs/devices/MiniPMG3.md) | ESP32&#8209;C3 | ✅ | Measures only, no relay |
-| Multicolor Bulb E27 Gen3 | [`RGBCCTBulbG3`](docs/devices/RGBCCTBulbG3.md) | ESP32&#8209;C3 | ✅ | |
-| Mini 1 Gen3 | [`Mini1G3`](docs/devices/Mini1G3.md) | ESP32&#8209;C3 | ✅ | |
-| 1 Gen3 | [`S1G3`](docs/devices/S1G3.md) | ESP32&#8209;C3 | ✅ | |
-| 2PM Gen3 | [`S2PMG3`](docs/devices/S2PMG3.md) | ESP32&#8209;C3 | ✅ | Relays and meter not reported |
-| Plug M Gen3, beta layout | [`PlugMG3-beta`](docs/devices/PlugMG3.md#beta-layout) | ESP32&#8209;C3 | ✅ | Shelly 2.2.0-beta2 only |
-| 1 Gen4 | [`S1G4`](docs/devices/S1G4.md) | ESP32&#8209;C6 | ✅ | |
-| Plug PM Gen3 | [`PlugPMG3`](docs/devices/PlugPMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
-| Duo Bulb Gen3 | [`DuoBulbG3`](docs/devices/DuoBulbG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
-| Mini 1PM Gen3 | [`Mini1PMG3`](docs/devices/Mini1PMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
-| 1PM Gen3 | [`S1PMG3`](docs/devices/S1PMG3.md) | ESP32&#8209;C3 | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
-| Power Strip 4 Gen4 | [`PowerStrip`](docs/devices/PowerStrip.md) | ESP32&#8209;C6 | 🟡 | Boots, outlets not checked |
-
-> - ✅ The whole chain ran on a real device.
-> - 🟡 Flashed on a real device, but part of the chain or of the function is not checked yet (see the Note column).
-> - 🔬 The OTA ran through on a dev board with the [DevKit image](docs/devkit.md), but not on the real device yet.
-> - 🧪 The package builds and verifies, but nobody has flashed it yet.
-
-
-## What you need
-
-- A Shelly of a supported model that still runs **Shelly's own firmware**, and its IP address (or this PC on its access point).
-- **Python 3.10 or newer** on a PC that the Shelly can reach on your network.
-- **ESPHome** (the `esphome` command) or **Docker** to compile your firmware.
-- **A way back:** a UART adapter ([build one from a dev board](docs/recovery-uart.md#build-your-own-uart-adapter)). A bad flash can only be fixed over UART.
-
-The rule that makes it work: the package ships **ESPHome's bootloader**, and the installer has to write the app to **slot 0** ([why](docs/bootloader-and-slots.md)). `send` checks both and tells you what to do.
-
-
 ## Quick start
 
-New to this? The [Step-by-step guide](docs/guide.md) covers everything from checking the device to the way back. The short version:
+You need a Shelly of a supported model on **Shelly's own firmware**, **Python 3.10+**, **ESPHome** or **Docker**, and a UART adapter as safety net. New to this? The [Step-by-step guide](docs/guide.md) covers everything from checking the device to the way back. The short version:
 
 **Download.** Get the [latest release](https://github.com/oxynatOr/free-shelly-ota/releases) (*Source code (zip)*) and unpack it, or run `git clone https://github.com/oxynatOr/free-shelly-ota`, then `pip install -r requirements.txt`.
 
-**1. Write your ESPHome config.** It must use Shelly's partition table and offset. Copy `partitions/<Profile>-stock.csv` from
-this repository next to your YAML (one per device; the device page lists the offset). Without it `build` refuses.
-
-```yaml
-esp32:
-  partitions: PlugMG3-stock.csv              # the copied file
-  framework:
-    type: esp-idf
-    sdkconfig_options:
-      CONFIG_PARTITION_TABLE_OFFSET: "0x10000"   # per device: see its page
-    advanced:
-      enable_ota_rollback: false
-ota:
-  - platform: esphome
-    allow_partition_access: true
-```
+**1. Write your ESPHome config.** It must use Shelly's partition table and offset: copy `partitions/<Profile>-stock.csv` next to your YAML and set `CONFIG_PARTITION_TABLE_OFFSET` to the value on the device page. Without it `build` refuses; it checks the partition table, not the rest of your config. The exact YAML is in the [guide, step 5](docs/guide.md#5-write-the-esphome-config).
 
 **2. Compile and pack.** `--compile` runs ESPHome for you (the `esphome` command, else Docker; the first Docker compile downloads the toolchain, see [Compile](docs/commands.md#compile)).
 
@@ -131,7 +55,7 @@ Compiled it yourself? Give `build` the two files ESPHome wrote: `python ota.py b
 python ota.py send PlugMG3 out/PlugMG3-app-<date>.zip --ip <device IP>
 ```
 
-- `PlugMG3` is the example; use your device's profile from the table above.
+- `PlugMG3` is the example; use your device's profile (the name is on its device page, see [Supported devices](#supported-devices)).
 - `--insecure` is needed because Shelly's servers use a private CA (unless you have that CA as a PEM file: `python ota.py ca` writes it from a package, and `--cafile PEM` keeps TLS on); the hash in the download URL still guards against transfer errors ([`fetch`](docs/commands.md#fetch)).
 - Add `--dry-run` first to check the device without sending anything ([`send`](docs/commands.md#send)).
 - A device without Wi-Fi (Zigbee firmware) needs [`ble wifi`](docs/commands.md#ble) first.
@@ -142,20 +66,78 @@ python ota.py send PlugMG3 out/PlugMG3-app-<date>.zip --ip <device IP>
 > hands the ZIP to anyone on your network who asks for its exact file name, so use a network you trust.
 
 
+## Supported devices
+
+**61 profiles:** ✅ 13 confirmed · 🟡 8 partly checked · 🔬 11 DevKit-tested · 🧪 29 untested
+
+Click a device for its page. Open a generation to see its devices: up to five that ran on real hardware, confirmed (✅) ones first, then partly checked (🟡). The counts cover every profile; the full list, with 🔬 and 🧪, is in the [device overview](docs/devices/README.md#devices).
+
+<details>
+<summary><b>Gen2 (ESP32)</b>: 18 profiles: ✅ 3 · 🟡 2 · 🔬 4 · 🧪 9</summary>
+
+![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
+
+| Device | State |
+| --- | --- |
+| [Plus Plug S (V2 hardware, Gen2)](docs/devices/PlusPlugS.md) | ✅ |
+| [Plus Plug IT (Gen2)](docs/devices/PlusPlugIT.md) | ✅ |
+| [Plus RGBW PM (Gen2)](docs/devices/PlusRGBWPM.md) | ✅ |
+| [Plus i4 / i4 DC (Gen2)](docs/devices/PlusI4.md) | 🟡 |
+| [Plus Uni (Gen2)](docs/devices/PlusUni.md) | 🟡 |
+
+All 18 Gen2 profiles: [device overview](docs/devices/README.md#gen2-esp32)
+
+</details>
+
+<details>
+<summary><b>Gen3 (ESP32-C3)</b>: 26 profiles: ✅ 9 · 🟡 5 · 🔬 0 · 🧪 12</summary>
+
+![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
+
+| Device | State |
+| --- | --- |
+| [Plug M Gen3](docs/devices/PlugMG3.md) | ✅ |
+| [Plug S Gen3](docs/devices/PlugSG3.md) | ✅ |
+| [H&T Gen3](docs/devices/HTG3.md) | ✅ |
+| [PM Mini Gen3 (no relay)](docs/devices/MiniPMG3.md) | ✅ |
+| [Multicolor Bulb E27 Gen3](docs/devices/RGBCCTBulbG3.md) | ✅ |
+
+All 26 Gen3 profiles: [device overview](docs/devices/README.md#gen3-esp32-c3)
+
+</details>
+
+<details>
+<summary><b>Gen4 (ESP32-C6)</b>: 17 profiles: ✅ 1 · 🟡 1 · 🔬 7 · 🧪 8</summary>
+
+![Chip: ESP32-C6](https://img.shields.io/badge/chip-ESP32--C6-blue.svg?style=flat-square)
+
+| Device | State |
+| --- | --- |
+| [1 Gen4](docs/devices/S1G4.md) | ✅ |
+| [Power Strip 4 Gen4](docs/devices/PowerStrip.md) | 🟡 |
+
+All 17 Gen4 profiles: [device overview](docs/devices/README.md#gen4-esp32-c6)
+
+</details>
+
+> - ✅ The whole chain ran on a real device.
+> - 🟡 Flashed on a real device, but part of the chain or of the function is not checked yet (see the device page).
+> - 🔬 The OTA ran through on a dev board with the [DevKit image](docs/devkit.md), but not on the real device yet.
+> - 🧪 The package builds and verifies, but nobody has flashed it yet.
+
+
 ## Documentation
 
 Start with the [Step-by-step guide](docs/guide.md). The same pages are on the [documentation site](https://oxynator.github.io/free-shelly-ota/), with search. The [documentation index](docs/README.md) lists everything; the pages you will need most:
 
 | Page | What is in it |
 | --- | --- |
-| [Step-by-step guide](docs/guide.md) | The whole way: check, prepare, config, build, send, afterwards, failure, way back |
-| [Device pages](docs/devices) | One page per device: config, pins, commands, log lines, pitfalls |
-| [Commands](docs/commands.md) | `fetch`, `build`, `send`, `restore`, `ble`, `log` and the rest, with all options |
-| [Troubleshooting](docs/troubleshooting.md) | Header errors, empty log, battery devices, eFuse, power cycle |
-| [Recovery over UART](docs/recovery-uart.md) | Back to Shelly OS with `esptool` |
-| [Bootloader and slots](docs/bootloader-and-slots.md) | Why ESPHome's bootloader is shipped, `min_version`, why the app must land in slot 0 |
-| [Developer guide](docs/guide-developers.md) | Adding devices, testing, reports, release |
-| [CHANGELOG](CHANGELOG.md) · [Roadmap](ROADMAP.md) | What changed, what is planned and where testers can help |
+| [Step-by-step guide](docs/guide.md) | The whole way, from check to way back |
+| [Device pages](docs/devices) | Config, pins, commands and pitfalls per device |
+| [Commands](docs/commands.md) | All commands and options |
+| [Troubleshooting](docs/troubleshooting.md) · [Recovery over UART](docs/recovery-uart.md) | When something goes wrong |
+| [Bootloader and slots](docs/bootloader-and-slots.md) | Why ESPHome's bootloader is shipped and the app must land in slot 0 |
+| [Developer guide](docs/guide-developers.md) · [CHANGELOG](CHANGELOG.md) · [Roadmap](ROADMAP.md) | Adding devices, what changed, what is planned |
 
 
 ## Contributing and reports
@@ -178,6 +160,15 @@ This project builds on the research of others: [tasmota/mgos32-to-tasmota32](htt
 [automatous-io/shelly-gen4-esphome](https://github.com/automatous-io/shelly-gen4-esphome) (Apache-2.0). Please visit and support them.
 The tool's own findings (the loader's boot state, the slot rule, `min_version`, the pin tables, the DevKit) were worked out here and on real
 devices, with the help of the people who tested and reported. [CREDITS.md](CREDITS.md) names them all and says what each contributed.
+
+
+## Disclaimer
+
+> [!NOTE]
+> This project is **not** affiliated with Shelly, Allterco Robotics, Schneider Electric, ESPHome, CSA or Espressif Systems.
+>
+> It contains **no ESPHome binaries and no Shelly firmware**: you compile your own ESPHome image, and `fetch` downloads the
+> official package from Shelly.
 
 
 ## License

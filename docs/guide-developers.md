@@ -84,7 +84,7 @@ The rules are in [CONTRIBUTING.md](../CONTRIBUTING.md): evidence for every hardw
 
 - **States.** ✅ means the whole chain ran on real hardware, 🟡 flashed but part unchecked, 🔬 ran on a dev board, 🧪 builds only. Do not raise a state without a report or log that shows it. The README and the device overview must agree (`test_readme.py`).
 - **Observed or assumed.** Separate what was seen ("seen on one unit") from what was read from firmware or assumed. Name the number of units.
-- **Results go in their tables:** dev-board runs in `docs/devkit.md#seen-on-a-board`, field results on the device page, each with date, device or board, and what the log showed.
+- **Results go in their tables:** dev-board runs in `docs/devkit-runs.md`, field results on the device page, each with date, device or board, and what the log showed.
 - **Other people's devices.** Before you build or recommend a package, compare the installed loader with the package's `boot_min_version` ([Bootloader and slots](bootloader-and-slots.md)). A package that skips the bootloader looks fine and fails later. Be stricter for devices you cannot reach.
 - **Never make a refusal pass silently.** A refusal that was too strict or too loose is a bug: write a test, then fix it.
 
@@ -168,7 +168,7 @@ DevKit rules:
 - Use a spare board that matches the chip and flash size (see the table in [devkit.md](devkit.md#which-board)). Never a device.
 - `python -m esptool --port COMx flash-id` first; `espefuse summary` before and after the first update (the updater may burn BLOCK3).
 - Take the log from `send --log-file`; the first run needs `restore` if the target slot is 1.
-- Add a row to [Seen on a board](devkit.md#seen-on-a-board) with date, board, profile and what the serial monitor and `send --watch` showed. Then set the profile to 🔬.
+- Add a row to [Dev board runs](devkit-runs.md) with date, board, profile and what the serial monitor and `send --watch` showed. Then set the profile to 🔬.
 - The board has no relay, meter or button; do not report those as checked.
 
 ## 9. Handle a device report

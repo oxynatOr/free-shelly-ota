@@ -54,15 +54,66 @@ class ReadmeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.text = README.read_text(encoding="utf-8")
-        cls.states = _table_states(README, state_cell=3)  # Device | Profile | Chip | State | Note: the confirmed devices
+        cls.states = _table_states(README, state_cell=2)  # Device | Profile | State | Note: up to five devices per generation
         cls.overview = _table_states(DEVICE_OVERVIEW, state_cell=4)  # Device | Profile | Table | Slot | State: all of them, one table per generation
 
     def test_the_overview_has_every_profile_and_nothing_else(self):
         self.assertEqual(sorted(self.overview), profile.list_devices())
 
-    def test_the_readme_table_has_exactly_the_confirmed_devices(self):
-        confirmed = {name: symbol for name, symbol in self.overview.items() if symbol in ("✅", "🟡")}
-        self.assertEqual(self.states, confirmed)
+    @staticmethod
+    def _generations(path: Path) -> dict:
+        """{'Gen2': {'chip': ..., 'line': the counts line, 'rows': [(profile, symbol), ...]}} in file order, for the '### GenN (chip)' sections."""
+        gens, cur = {}, None
+        for line in path.read_text(encoding="utf-8").splitlines():
+            m = re.match(r"### (Gen\d) \((.*)\)\s*$", line)
+            if m:
+                cur = gens.setdefault(m.group(1), {"chip": m.group(2), "rows": [], "line": ""}) if m.group(1) != "Gen1" else None
+                continue
+            if line.startswith("#"):
+                cur = None
+            if cur is None:
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            name = re.search(r"`([\w-]+)`", cells[1]) if line.startswith("|") and len(cells) >= 4 else None
+            if name:
+                cur["rows"].append((name.group(1), cells[4 if path == DEVICE_OVERVIEW else 2].split(" ")[0]))
+            elif " profiles: ✅" in line:
+                cur["line"] = line
+        return gens
+
+    def test_each_generation_lists_the_best_five_real_hardware_devices(self):
+        """README rule: per generation (a <details> block) up to five devices, confirmed first, then partly checked, in overview order;
+        the counts in the summary cover all profiles of that generation."""
+        overview, readme = {}, {}
+        for path, target in ((DEVICE_OVERVIEW, overview), (README, readme)):
+            cur = None
+            for line in path.read_text(encoding="utf-8").splitlines():
+                m = re.match(r"### (Gen\d) \((.*)\)\s*$", line) if path == DEVICE_OVERVIEW else re.search(r"<summary><b>(Gen\d) \((.*?)\)</b>", line)
+                if m:
+                    cur = target.setdefault(m.group(1), {"chip": m.group(2), "rows": [], "counts": None}) if m.group(1) != "Gen1" else None
+                    if path == README and cur is not None:
+                        counts = re.search(r"(\d+) profiles: ✅ (\d+) · 🟡 (\d+) · 🔬 (\d+) · 🧪 (\d+)", line)
+                        cur["counts"] = [int(g) for g in counts.groups()]
+                    continue
+                if path == DEVICE_OVERVIEW and line.startswith("#"):
+                    cur = None
+                if cur is None:
+                    continue
+                if path == DEVICE_OVERVIEW and line.startswith("| ["):
+                    cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                    name, link = re.match(r"\[(.*)\]\((.*)\)$", cells[0]).groups()
+                    cur["rows"].append((name, link, cells[4].split(" ")[0]))
+                elif path == README:
+                    m = re.match(r"\| \[(.*)\]\(docs/devices/(.*)\) \| (\S+) \|$", line)
+                    if m:
+                        cur["rows"].append(m.groups())
+        self.assertEqual(list(readme), list(overview))
+        for gen, data in overview.items():
+            rows = data["rows"]
+            best = ([r for r in rows if r[2] == "✅"] + [r for r in rows if r[2] == "🟡"])[:5]
+            self.assertEqual(readme[gen]["rows"], best, gen)
+            self.assertEqual(readme[gen]["chip"], data["chip"], gen)
+            self.assertEqual(readme[gen]["counts"], [len(rows)] + [sum(1 for r in rows if r[2] == sym) for sym in STATES], gen)
 
     def test_states_are_known_symbols(self):
         for name, symbol in self.overview.items():
@@ -74,12 +125,6 @@ class ReadmeTests(unittest.TestCase):
         symbols = list(self.overview.values())
         expected = (len(symbols), symbols.count("✅"), symbols.count("🟡"), symbols.count("🔬"), symbols.count("🧪"))
         self.assertEqual(tuple(int(g) for g in m.groups()), expected)
-
-    def test_the_dev_board_section_lists_exactly_the_devkit_tested_devices(self):
-        text = DEVICE_OVERVIEW.read_text(encoding="utf-8")
-        section = text.split("## Tested on a dev board", 1)[1].split("\n## ", 1)[0]
-        listed = set(re.findall(r"(?m)^\| \[[^\]]+\]\([^)]*\) \| `(\w+)` \|", section))
-        self.assertEqual(listed, {name for name, symbol in self.overview.items() if symbol == "🔬"})
 
     def test_relative_links_and_images_exist(self):
         for m in re.finditer(r"\]\(([^)\s]+)\)", self.text):
@@ -131,6 +176,7 @@ class DevicePageTests(unittest.TestCase):
                     "power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).")
     SAFETY_BACK = ("> - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back "
                    "([Recovery over UART](../recovery-uart.md)). Take a flash backup first")
+    SAFETY_CONFIG = ("> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.")
     SAFETY_REPORT = ("> - **Flashed it? Tell us,** also when it worked: "
                      "[open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).")
     FLASHED_WITHOUT_UART = {"Pill.md", "PlusPlugIT.md", "PlusPlugS.md"}      # no bootloader swap needed there, their Way back says what applies
@@ -141,6 +187,7 @@ class DevicePageTests(unittest.TestCase):
             box = text[text.rindex("---"):]
             self.assertIn("> [!WARNING]\n", box, page.name)
             self.assertIn(self.SAFETY_WIPES, box, page.name)
+            self.assertIn(self.SAFETY_CONFIG, box, page.name)
             self.assertIn(self.SAFETY_REPORT, box, page.name)
             if page.name in self.FLASHED_WITHOUT_UART:
                 self.assertNotIn("No way back over the network", box, page.name)
@@ -225,7 +272,7 @@ class TopicPageTests(unittest.TestCase):
 
     PAGES = (
         "docs/README.md", "docs/commands.md", "docs/bootloader-and-slots.md", "docs/troubleshooting.md", "docs/recovery-uart.md",
-        "docs/credential-check.md", "docs/versions.md", "docs/devkit.md", "docs/guide.md", "docs/guide-developers.md", "CONTRIBUTING.md", "docs/devices/README.md", "devices/README.md", "ROADMAP.md", "CREDITS.md",
+        "docs/credential-check.md", "docs/versions.md", "docs/devkit.md", "docs/guide.md", "docs/guide-developers.md", "docs/slot-swap.md", "docs/devkit-runs.md", "docs/guide-special-cases.md", "docs/background.md", "CONTRIBUTING.md", "docs/devices/README.md", "devices/README.md", "ROADMAP.md", "CREDITS.md",
     )
     CALLOUTS = {"NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"}
 

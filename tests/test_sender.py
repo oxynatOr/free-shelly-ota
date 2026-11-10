@@ -376,6 +376,7 @@ class SlowDownloadTests(unittest.TestCase):
 
     @needs_fw
     def test_the_cap_is_kept(self):
-        ok, log = self._send(30, timeout=3, max_wait=5)
+        # the estimate needs about 2 s of download, so the first deadline (timeout) must be well past that: 6 s, not 3 s
+        ok, log = self._send(40, timeout=6, max_wait=9)
         self.assertIsInstance(ok, sender.OtaError)
         self.assertTrue(any("--max-wait" in l for l in log), log)

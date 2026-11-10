@@ -101,7 +101,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## Notes for this device
 
-**Dev board only.** The OTA ran through on an ESP32 dev board with the DevKit image (2026-10-30, row in [Seen on a board](../devkit.md#seen-on-a-board)); no real device has been flashed. The board has no relay, meter or button, so nothing of the device's function is checked.
+**Dev board only.** The OTA ran through on an ESP32 dev board with the DevKit image (2026-10-30, row in [Dev board runs](../devkit-runs.md)); no real device has been flashed. The board has no relay, meter or button, so nothing of the device's function is checked.
 
 **Pins.** Not mapped here. No stock dump of this device has been analysed here; pins read from firmware or templates are "not confirmed" until someone has measured them.
 
@@ -123,6 +123,7 @@ Please report the file written by `--log-file`, especially the lines `Update tar
 > [!WARNING]
 > - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
 > - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back ([Recovery over UART](../recovery-uart.md)). Take a flash backup first.
+> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.
 > - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 [Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

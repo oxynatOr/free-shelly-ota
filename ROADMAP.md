@@ -8,19 +8,20 @@ Where the project stands and where it goes next.
 
 > [!NOTE]
 > This is a plan, not a promise: the order changes when a test report or a new device shows up.
-> State: 2026-10-29, at release 0.7.0 (see the [CHANGELOG](CHANGELOG.md)).
+> State: 2026-11-10, at release 0.8.0 (see the [CHANGELOG](CHANGELOG.md)).
 
 ## Now
 
 - **Dev board test bench.** `ota.py devkit` writes a flash image of a package, so the whole update (`send`, the installer, the bootloader swap, the slot logic) can be played
   through on a dev board instead of a device, for any profile. Seven Gen4 profiles have been through the whole update on an ESP32-C6 board with 8 MB. The Shelly app does start on a board
   that is not a Shelly, but it checks the flash size and stops on a board with less than the device has (8 MB), so a 4 MB ESP32-C3 board is too small.
-  What the boards showed goes into [Test on a dev board](docs/devkit.md#seen-on-a-board).
+  What the boards showed goes into [Test on a dev board](docs/devkit-runs.md).
 - **Zigbee units without Wi-Fi.** The Zigbee firmware has no network and no access point; `ota.py ble wifi` (Bluetooth RPC) gave a Mini 1PM Gen4 on a dev board its Wi-Fi, and the update ran after that.
   Still open: a real Zigbee unit (Mini 1PM Gen4, Power Strip) over Bluetooth and the whole update.
 
 ## Next
 
+- **Slot swap on a real device.** `send --slot-swap` is seen on dev boards, but not on a unit in a wall: the one report so far could not read the target slot (the device's UDP log did not arrive). Needs a Gen3 or Gen4 unit with a readable slot and a UART adapter at hand; a small follow-up for `ota.py inspect` (a note instead of no warning for a table at 0x8000) is also open.
 - **Hardware checks** (these turn 🟡 into ✅): the Plug PM Gen3 readings (and the BL0942 RX pull-up found on the PM Mini),
   the Power Strip outlets and metering, the Duo Bulb's GPIOs (it runs over OTA, the pins are from the stock dump), the Plus Uni with this profile's `boot_min_version` 1.0.9
   (the first report ran with 1.0.3 and kept Shelly's loader) and its pins, the Mini 1PM Gen4 pins (read from the stock firmware, not measured).
@@ -91,3 +92,5 @@ Items that stood under "Now" in an earlier version of this page.
 | Release 0.6.0 (pre-release) | [CHANGELOG](CHANGELOG.md#060---2026-10-24) |
 | `build --compile` (ESPHome command or Docker with a cache volume, also for `packages:` and `!include`), `pyproject.toml` for development, `PlugMG3-beta` and the layout check, `BluGwG3` removed | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |
 | Release 0.7.0 | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |
+| `send --slot-swap` and `build --pt-addr` (experimental), `ota.py ca` for `--cafile`, 16 Plus and Pro profiles, `PlusI4` and the AZ Plug (61 in total), documentation site and guides | [CHANGELOG](CHANGELOG.md#080---2026-11-10) |
+| Release 0.8.0 | [CHANGELOG](CHANGELOG.md#080---2026-11-10) |

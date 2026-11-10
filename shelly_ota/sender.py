@@ -470,7 +470,7 @@ SLOT_SWAP_WARNING = (
     "stay Shelly's. The installer writes that table to the new address in the package (Shelly's own table stays where it is). "
     "If it goes wrong, a serial connection and a flash dump are needed to bring the device back. "
     "Going back to Shelly's firmware afterwards worked on two dev boards (ESPHome OTA of Shelly's app image, then restore; see the docs).")
-SLOT_SWAP_DOC = "docs/bootloader-and-slots.md#experimental-slot-swap-in-the-package"
+SLOT_SWAP_DOC = "docs/slot-swap.md"
 
 
 def slot_swap_after_text(target: int, swapped: bool = True) -> str:

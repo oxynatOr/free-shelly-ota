@@ -128,11 +128,11 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## Notes for this device
 
-Played through on a dev board with the DevKit image on 2026-10-23 (see [Seen on a board](../devkit.md#seen-on-a-board)); not on the real device yet. Please report the `--watch` log of a real device, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
+Played through on a dev board with the DevKit image on 2026-10-23 (see [Dev board runs](../devkit-runs.md)); not on the real device yet. Please report the `--watch` log of a real device, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
 
 ## Zigbee variant
 
-`Mini1PMG4ZB` is the Zigbee firmware variant of the same hardware (listed under `alt` in the update reply of `Mini1PMG4`; its profile has `parent: Mini1PMG4`). Use the same config and flash it with `python ota.py send Mini1PMG4ZB ...` after building with `build Mini1PMG4ZB`. Played through on a dev board as well (2026-10-23, see [Seen on a board](../devkit.md#seen-on-a-board)); not on the real device. On the dev board the Zigbee firmware had no Wi-Fi and opened no access point: `python ota.py ble wifi SSID -` ([ble](../commands.md#ble)) gave it one before `send`.
+`Mini1PMG4ZB` is the Zigbee firmware variant of the same hardware (listed under `alt` in the update reply of `Mini1PMG4`; its profile has `parent: Mini1PMG4`). Use the same config and flash it with `python ota.py send Mini1PMG4ZB ...` after building with `build Mini1PMG4ZB`. Played through on a dev board as well (2026-10-23, see [Dev board runs](../devkit-runs.md)); not on the real device. On the dev board the Zigbee firmware had no Wi-Fi and opened no access point: `python ota.py ble wifi SSID -` ([ble](../commands.md#ble)) gave it one before `send`.
 
 ## Way back
 
@@ -143,6 +143,7 @@ Played through on a dev board with the DevKit image on 2026-10-23 (see [Seen on 
 > [!WARNING]
 > - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
 > - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back ([Recovery over UART](../recovery-uart.md)). Take a flash backup first if you can.
+> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.
 > - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 [Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

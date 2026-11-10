@@ -38,9 +38,12 @@ class BuilderTests(unittest.TestCase):
 
     @needs_fw
     def test_golden_official_app_reproduces_manifest(self):
+        checked = 0
         for device in profile.list_devices():
             p = profile.load_profile(device)
             official = firmware.cached_zip(p.package_name, prerelease=p.channel == "beta")
+            if official is None:  # not in the local firmware cache: nothing to compare with
+                continue
             with zipfile.ZipFile(official) as z:
                 manifest = json.loads(z.read("manifest.json"))
                 app = z.read(manifest["parts"]["app"]["src"])
@@ -48,6 +51,9 @@ class BuilderTests(unittest.TestCase):
             with zipfile.ZipFile(res.output) as z:
                 self.assertEqual(json.loads(z.read("manifest.json")), manifest)
             res.output.unlink()
+            checked += 1
+        if not checked:
+            self.skipTest("no official package in the firmware cache")
 
     @needs_fw
     def test_drop_fs_removes_part_and_file(self):

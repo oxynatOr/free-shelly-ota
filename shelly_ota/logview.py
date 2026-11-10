@@ -99,7 +99,7 @@ class Rule:
         return Entry(self.kind, self.level, self.text.format(*m.groups()), key=self.key) if m else None
 
 
-_EFUSE_NOTE = "The update still succeeded where this was seen; see docs/troubleshooting.md#efuse"
+_EFUSE_NOTE = "The update still succeeded where this was seen; see docs/background.md#efuse"
 
 # The first rule that matches wins. The device pages tell users to look for: the target slot, "Boot: cur ... update?",
 # "Will write to slot", the progress, and the success.
