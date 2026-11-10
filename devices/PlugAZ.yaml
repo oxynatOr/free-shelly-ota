@@ -1,0 +1,9 @@
+# OTA profile for PlugAZ, generated from the official 2.0.3 package.
+display_name: "Shelly AZ Plug"
+platform: esp32c3
+update_id: PlugAZ
+app_ptn: app_0
+app_slot_size: 0x280000   # app_0 @0x20000
+pt_offset: 0xf000
+boot_min_version: "1.0.9"   # request ESPHome's bootloader instead of keeping Shelly's loader
+revision: 1

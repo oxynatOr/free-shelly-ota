@@ -75,6 +75,10 @@
     "revision": 2,
     "hash": "1cde80306026"
   },
+  "PlugAZ": {
+    "revision": 1,
+    "hash": "66f10528d161"
+  },
   "PlugMG3": {
     "revision": 2,
     "hash": "3d2ebea809d3"

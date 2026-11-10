@@ -24,6 +24,7 @@ TOP_PAGES = [
     ("Versions", "versions.md"),
     ("Developer guide", "guide-developers.md"),
     ("Gen1 research", "research/gen1.md"),
+    ("AZ Plug research", "research/plugaz.md"),
 ]
 
 _LINK = re.compile(r"(\]\()([^)\s#]+)((?:#[^)\s]*)?\))")

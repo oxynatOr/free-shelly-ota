@@ -44,7 +44,7 @@ flowchart LR
 
 ## Supported devices
 
-**60 profiles:** ✅ 13 confirmed · 🟡 7 partly checked · 🔬 11 DevKit-tested · 🧪 29 untested
+**61 profiles:** ✅ 13 confirmed · 🟡 8 partly checked · 🔬 11 DevKit-tested · 🧪 29 untested
 
 Click the profile for the device page: ESPHome config, the exact commands and what to expect. This table shows the devices that ran on
 real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and the untested (🧪) ones, are on the
@@ -58,6 +58,7 @@ real hardware (✅ and 🟡). All profiles, also the DevKit-tested (🔬) and th
 | Plus i4 / i4 DC (Gen2) | [`PlusI4`](docs/devices/PlusI4.md) | ESP32 | 🟡 | Flashed over OTA; the inputs and the LED not checked |
 | Plus Uni (Gen2) | [`PlusUni`](docs/devices/PlusUni.md) | ESP32 | 🟡 | Flashed over OTA, ESPHome's bootloader step not checked |
 | Plug M Gen3 | [`PlugMG3`](docs/devices/PlugMG3.md) | ESP32&#8209;C3 | ✅ | |
+| AZ Plug | [`PlugAZ`](docs/devices/PlugAZ.md) | ESP32&#8209;C3 | 🟡 | OTA and relay work; power cycle after conversion; calibration not checked |
 | Plug S Gen3 | [`PlugSG3`](docs/devices/PlugSG3.md) | ESP32&#8209;C3 | ✅ | |
 | H&T Gen3 | [`HTG3`](docs/devices/HTG3.md) | ESP32&#8209;C3 | ✅ | |
 | PM Mini Gen3 | [`MiniPMG3`](docs/devices/MiniPMG3.md) | ESP32&#8209;C3 | ✅ | Measures only, no relay |

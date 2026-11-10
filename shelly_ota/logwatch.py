@@ -93,6 +93,12 @@ def udp_log(addr: str, host: str, port: int, out: Callable[[str], None] = ui.say
     try:
         previous = (rpc.call(addr, "Sys.GetConfig", **auth).get("debug", {}).get("udp") or {}).get("addr")
         read_previous = True
+        # A restore may reboot before cleanup and leave this destination active.
+        # Setting the same value again does not reinitialize the log sink, so the
+        # one-time core-dump target line used by probe_slot is never emitted.
+        # Toggle only that already-active destination; finally restores it.
+        if previous == f"{host}:{port}":
+            rpc.call(addr, "Sys.SetConfig", {"config": {"debug": {"udp": {"addr": None}}}}, **auth)
         result = rpc.call(addr, "Sys.SetConfig", {"config": {"debug": {"udp": {"addr": f"{host}:{port}"}}}}, **auth)
         if result.get("restart_required"):
             out("NOTE: the device wants a restart for the log setting to apply.")
