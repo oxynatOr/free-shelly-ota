@@ -132,7 +132,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 **A bricked unit.** One unit that ran ESPHome and no longer started was brought back to Shelly OS over UART from the official
 package ([Recovery over UART](../recovery-uart.md) uses this device as its example). `espefuse summary` showed `BLOCK3` with a
 byte `0x07` set; the installer logs `FW signatures: want 07 got 00` and failed eFuse writes ("Bits are not empty"). Nothing was
-burned; the meaning of the bits is unknown ([eFuse note](../troubleshooting.md#efuse)).
+burned; the meaning of the bits is unknown ([eFuse note](../background.md#efuse)).
 
 ## Way back
 
@@ -142,6 +142,7 @@ While Shelly firmware runs: `python ota.py restore PlusPlugS`. Otherwise [Recove
 
 > [!WARNING]
 > - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
+> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.
 > - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 [Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

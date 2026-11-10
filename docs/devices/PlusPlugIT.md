@@ -124,7 +124,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 | 2 | `Device: The bootloader will be replaced ...` (raw log: `Boot: cur ... min ... update? 1`) | The installer will write ESPHome's bootloader. `WARNING: ESPHome's bootloader was NOT written` (`update? 0`) means it will not: build again with a higher `--boot-min-version` ([why](../bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version)) |
 | 3 | The progress (`Update: ... %`, one line that updates in place) up to 100 %, then `Done: update installed, the device confirmed it` | The device restarts into ESPHome |
 
-On the reporter's unit the raw log also showed `FW signatures: want 07 got 00` and `BURN BLOCK3 - OK` twice, with no write error ([eFuse note](../troubleshooting.md#efuse)).
+On the reporter's unit the raw log also showed `FW signatures: want 07 got 00` and `BURN BLOCK3 - OK` twice, with no write error ([eFuse note](../background.md#efuse)).
 
 ## Notes for this device
 
@@ -141,6 +141,7 @@ While Shelly firmware runs: `python ota.py restore PlusPlugIT`. Otherwise [Recov
 
 > [!WARNING]
 > - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
+> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.
 > - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 [Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

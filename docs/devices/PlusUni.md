@@ -178,7 +178,7 @@ loader works: it switches slots once, during its countdown, and then stays on th
 **Fixing it over UART, and the bootloader over OTA.** The tester wired a Raspberry Pi to the UART header, flashed ESPHome's factory image once, and the unit then took OTAs normally. He also ran ESPHome Builder's **Update bootloader** over OTA afterwards, which worked. That needs `allow_partition_access: true` in the config that is running, so keep it in the first config you send: then a bootloader problem can be fixed over OTA, without UART ([steps](../bootloader-and-slots.md)). The tester did not report whether the header order of the table under Pins matched his board.
 
 **eFuse.** After `FW signatures: want 07 got 00` the log shows `BURN BLOCK3 - OK` twice, not the `EFUSE write error` of the H&T and PM Mini.
-Whether the eFuse changed on this unit was not checked ([eFuse note](../troubleshooting.md#efuse)).
+Whether the eFuse changed on this unit was not checked ([eFuse note](../background.md#efuse)).
 
 **The slot.** The Plus Plug S, the other Gen2 device, first received the app in slot 1 and needed `restore` once; `send` checks
 the target slot for you ([why](../bootloader-and-slots.md#the-app-must-land-in-slot-0)). Here the target was slot 0 from the start.
@@ -200,6 +200,7 @@ Still open: a check of the two ⚠️ pins (1-Wire `DATA`, reset button) on a bo
 > [!WARNING]
 > - **Wipes Wi-Fi and settings.** ESPHome opens its own access point or joins the Wi-Fi from your config; if nothing comes up, power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).
 > - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back ([Recovery over UART](../recovery-uart.md)). Take a flash backup first if you can.
+> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.
 > - **Flashed it? Tell us,** also when it worked: [open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).
 
 [Bootloader and slots](../bootloader-and-slots.md) · [Troubleshooting](../troubleshooting.md) · [Recovery over UART](../recovery-uart.md)

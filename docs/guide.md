@@ -24,10 +24,10 @@ Read this, then decide:
 - **A bad flash can brick the device.** The fix is UART (a serial connection to the board inside), which means opening the device.
   Keep that in mind before you start, not after.
 - **The installer burns an eFuse bit on some devices** (`FW signatures: want 07 got 00`, then `EFUSE write error` or `BURN BLOCK3`).
-  What the bits mean is not known, and the change may be permanent ([eFuse](troubleshooting.md#efuse)).
+  What the bits mean is not known, and the change may be permanent ([eFuse](background.md#efuse)).
 - **Settings are wiped.** Wi-Fi, schedules, scenes, cloud link: all gone. ESPHome starts from your config.
 - **Mains voltage.** Never open a device that is connected to mains. Never connect UART to one that is.
-- **Battery devices (H&T)** need a charged battery and must be awake ([Special cases](#battery-device-ht-gen3)).
+- **Battery devices (H&T)** need a charged battery and must be awake ([Special cases](guide-special-cases.md#battery-device-ht-gen3)).
 
 If you accept that, go on. If you are unsure, test the whole update on a spare dev board first ([Test on a dev board](devkit.md)).
 
@@ -42,7 +42,7 @@ If you accept that, go on. If you are unsure, test the whole update on a spare d
 
    Look at `app` and `ver`. Add `--ip <device IP>` to later commands; `send` compares the model and refuses a mismatch.
 2. **Find the profile.** Open the [device pages](devices/README.md#devices). The profile name (for example `PlugMG3`) is what you give to every command.
-   `python ota.py list` (after step 2) shows all profiles. No profile for your model? See [Another device](#a-device-without-a-profile).
+   `python ota.py list` (after step 2) shows all profiles. No profile for your model? See [Another device](guide-special-cases.md#a-device-without-a-profile).
 3. **Read the device page completely.** It has the exact ESPHome config for that model, the pins, the log lines to expect and the pitfalls seen so far.
 4. **Check what the device runs now.**
    - It must run **Shelly firmware**, not ESPHome. (Already ESPHome? Then use ESPHome's own OTA and skip this guide.)
@@ -296,55 +296,17 @@ Also when it worked. This is how 🧪 devices turn into ✅.
 
 ## Special cases
 
-### A device without a profile
+Off the main path, on [their own page](guide-special-cases.md):
 
-A profile is made from the official package and takes minutes. [Request it](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=new-device.yml) (offer to test it),
-or make it yourself with `python ota.py add-device <official.zip>` and follow [Device profiles](../devices/README.md#adding-a-profile) and the [Developer guide](guide-developers.md#6-add-a-new-device).
-Nobody can say it works until someone flashed one; treat it as 🧪.
-
-### A device with no Wi-Fi (Zigbee firmware)
-
-Some Zigbee firmware has no network and opens no access point. Give it a Wi-Fi over Bluetooth, then use the printed address:
-
-```
-pip install bleak
-python ota.py ble scan
-python ota.py ble wifi MyNetwork -
-python ota.py send <Profile> out/<file>.zip --ip <printed address> --dry-run
-```
-
-`-` asks for the password without echoing. Seen on a dev board only, not yet on a real device ([`ble`](commands.md#ble)).
-
-### Battery device (H&T Gen3)
-
-Charge or replace the battery (30 % or more) and keep the device awake. The stock updater answers `Battery below 30 percent` otherwise, and `send` does not retry.
-The official H&T package may not be listed for current firmware; use `fetch HTG3 --from-version 1.4.4` ([`fetch`](commands.md#fetch)). Its page: [HTG3](devices/HTG3.md).
-
-### Classic ESP32 (Gen2) and ESP32-C6 (Gen4)
-
-The steps are the same; the differences are in the profile: partition table at `0x8000` for Gen2, an 8 MB layout on Gen4. The bootloader header must match Shelly's
-(flash frequency 80 MHz on classic ESP32 and C6, see the [fix table](troubleshooting.md#build-refuses-to-replace-the-bootloader)). Gen4 packages may be verified with a signature on some firmware; if the
-device rejects the package, check the log and use UART ([disputed](troubleshooting.md#gen4-signature-check-disputed)).
-
-### Beta firmware
-
-Do not send a package of the wrong layout. Check [Beta firmware with another flash layout](bootloader-and-slots.md#beta-firmware-with-another-flash-layout). Shelly can pull a beta, so cache the package with `fetch` before you need it.
-
-### Devices that measure only
-
-The Plug PM Gen3 and PM Mini Gen3 have no relay. A config for them must not have one.
-
-### Settings you want to keep
-
-The package wipes NVS. `--drop nvs` leaves it out of the package, but it is **untested on devices**; only use it if you know why.
-
-### Password on the Shelly
-
-`--user admin --password '<pw>'` for `send`, `restore` and `log`. A password on the command line stays in the shell history.
-
-### Several devices
-
-Repeat steps 5 to 9 per device, with its own profile, its own CSV and its own YAML. A package built for one model is refused by another.
+- [A device without a profile](guide-special-cases.md#a-device-without-a-profile)
+- [A device with no Wi-Fi (Zigbee firmware)](guide-special-cases.md#a-device-with-no-wi-fi-zigbee-firmware)
+- [Battery device (H&T Gen3)](guide-special-cases.md#battery-device-ht-gen3)
+- [Classic ESP32 (Gen2) and ESP32-C6 (Gen4)](guide-special-cases.md#classic-esp32-gen2-and-esp32-c6-gen4)
+- [Beta firmware](guide-special-cases.md#beta-firmware)
+- [Devices that measure only](guide-special-cases.md#devices-that-measure-only)
+- [Settings you want to keep](guide-special-cases.md#settings-you-want-to-keep)
+- [Password on the Shelly](guide-special-cases.md#password-on-the-shelly)
+- [Several devices](guide-special-cases.md#several-devices)
 
 ## Cheat sheet
 

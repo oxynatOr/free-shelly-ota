@@ -21,13 +21,17 @@ not work. The README has the short version; these pages have the details.
 | Page | What is in it |
 | --- | --- |
 | [Step-by-step guide](guide.md) | The whole way for a user: check, prepare, config, build, send, afterwards, way back |
+| [Special cases](guide-special-cases.md) | No profile, no Wi-Fi, battery devices, beta firmware, several devices |
 | [Developer guide](guide-developers.md) | Adding devices, testing, reports, profiles, tool changes, release |
 | [Device pages](devices/README.md) | One page per device: config, pins, commands, log lines, pitfalls |
 | [Commands](commands.md) | `fetch`, `build`, `send`, `restore`, `ble`, `log` and the rest, with all options |
 | [Bootloader and slots](bootloader-and-slots.md) | Why ESPHome's bootloader is shipped, `min_version`, why the app must land in slot 0 |
-| [Troubleshooting](troubleshooting.md) | Header errors, empty log, battery devices, eFuse, power cycle |
+| [Slot swap](slot-swap.md) | Experimental: install without a `restore` first, and the way back over the network |
+| [Troubleshooting](troubleshooting.md) | Header errors, empty log, battery devices, power cycle |
+| [Background](background.md) | Why `send` uses a URL update, the Gen4 signature check, eFuse |
 | [Recovery over UART](recovery-uart.md) | Back to Shelly OS with `esptool` |
 | [Test on a dev board](devkit.md) | A flash image of a package for a board: play the whole update through, for any device |
+| [Dev board runs](devkit-runs.md) | What the boards showed, per date and profile |
 | [Credential check](credential-check.md) | Secrets inside images and packages |
 | [Versions](versions.md) | Tool version, build report, profile revisions |
 

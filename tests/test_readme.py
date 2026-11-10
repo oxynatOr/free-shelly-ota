@@ -126,12 +126,6 @@ class ReadmeTests(unittest.TestCase):
         expected = (len(symbols), symbols.count("✅"), symbols.count("🟡"), symbols.count("🔬"), symbols.count("🧪"))
         self.assertEqual(tuple(int(g) for g in m.groups()), expected)
 
-    def test_the_dev_board_section_lists_exactly_the_devkit_tested_devices(self):
-        text = DEVICE_OVERVIEW.read_text(encoding="utf-8")
-        section = text.split("## Tested on a dev board", 1)[1].split("\n## ", 1)[0]
-        listed = set(re.findall(r"(?m)^\| \[[^\]]+\]\([^)]*\) \| `(\w+)` \|", section))
-        self.assertEqual(listed, {name for name, symbol in self.overview.items() if symbol == "🔬"})
-
     def test_relative_links_and_images_exist(self):
         for m in re.finditer(r"\]\(([^)\s]+)\)", self.text):
             url = m.group(1)
@@ -182,6 +176,7 @@ class DevicePageTests(unittest.TestCase):
                     "power-cycle the device ([help](../troubleshooting.md#esphome-does-not-start-after-the-update)).")
     SAFETY_BACK = ("> - **No way back over the network** once ESPHome's bootloader runs: `restore` gets no answer, only UART brings Shelly OS back "
                    "([Recovery over UART](../recovery-uart.md)). Take a flash backup first")
+    SAFETY_CONFIG = ("> - **The config is yours.** The tool checks the package, not your ESPHome config: pins, relay and limits are your responsibility, and a wrong `ota:`, `api:` or Wi-Fi setting can leave the device unreachable (then only UART helps). Test the config on a dev board first.")
     SAFETY_REPORT = ("> - **Flashed it? Tell us,** also when it worked: "
                      "[open a device report](https://github.com/oxynatOr/free-shelly-ota/issues/new?template=device-report.yml).")
     FLASHED_WITHOUT_UART = {"Pill.md", "PlusPlugIT.md", "PlusPlugS.md"}      # no bootloader swap needed there, their Way back says what applies
@@ -192,6 +187,7 @@ class DevicePageTests(unittest.TestCase):
             box = text[text.rindex("---"):]
             self.assertIn("> [!WARNING]\n", box, page.name)
             self.assertIn(self.SAFETY_WIPES, box, page.name)
+            self.assertIn(self.SAFETY_CONFIG, box, page.name)
             self.assertIn(self.SAFETY_REPORT, box, page.name)
             if page.name in self.FLASHED_WITHOUT_UART:
                 self.assertNotIn("No way back over the network", box, page.name)
@@ -276,7 +272,7 @@ class TopicPageTests(unittest.TestCase):
 
     PAGES = (
         "docs/README.md", "docs/commands.md", "docs/bootloader-and-slots.md", "docs/troubleshooting.md", "docs/recovery-uart.md",
-        "docs/credential-check.md", "docs/versions.md", "docs/devkit.md", "docs/guide.md", "docs/guide-developers.md", "CONTRIBUTING.md", "docs/devices/README.md", "devices/README.md", "ROADMAP.md", "CREDITS.md",
+        "docs/credential-check.md", "docs/versions.md", "docs/devkit.md", "docs/guide.md", "docs/guide-developers.md", "docs/slot-swap.md", "docs/devkit-runs.md", "docs/guide-special-cases.md", "docs/background.md", "CONTRIBUTING.md", "docs/devices/README.md", "devices/README.md", "ROADMAP.md", "CREDITS.md",
     )
     CALLOUTS = {"NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"}
 

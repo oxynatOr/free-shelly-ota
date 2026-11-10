@@ -15,7 +15,7 @@ Where the project stands and where it goes next.
 - **Dev board test bench.** `ota.py devkit` writes a flash image of a package, so the whole update (`send`, the installer, the bootloader swap, the slot logic) can be played
   through on a dev board instead of a device, for any profile. Seven Gen4 profiles have been through the whole update on an ESP32-C6 board with 8 MB. The Shelly app does start on a board
   that is not a Shelly, but it checks the flash size and stops on a board with less than the device has (8 MB), so a 4 MB ESP32-C3 board is too small.
-  What the boards showed goes into [Test on a dev board](docs/devkit.md#seen-on-a-board).
+  What the boards showed goes into [Test on a dev board](docs/devkit-runs.md).
 - **Zigbee units without Wi-Fi.** The Zigbee firmware has no network and no access point; `ota.py ble wifi` (Bluetooth RPC) gave a Mini 1PM Gen4 on a dev board its Wi-Fi, and the update ran after that.
   Still open: a real Zigbee unit (Mini 1PM Gen4, Power Strip) over Bluetooth and the whole update.
 
