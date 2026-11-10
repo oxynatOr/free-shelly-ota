@@ -1,0 +1,11 @@
+# Gen1 stock partition layout of Shelly Plug US, read from the manifest.json of the official package.
+# Only used so the gen1_ota component knows where the slots are; the flash itself keeps Shelly's layout.
+# Name,        Type, SubType, Offset,    Size,     Flags
+rboot, boot, rboot, 0x0, 0x1000,
+rboot_cfg, data, rboot, 0x7000, 0x1000,
+app_0, app, ota_0, 0x8000, 0xB3000,
+fs_0, data, spiffs, 0xBB000, 0x40000,
+app_1, app, ota_1, 0x108000, 0xB3000,
+fs_1, data, spiffs, 0x1BB000, 0x40000,
+rf_cal, data, phy, 0x1FB000, 0x1000,
+sys_params, data, nvs, 0x1FC000, 0x1000,

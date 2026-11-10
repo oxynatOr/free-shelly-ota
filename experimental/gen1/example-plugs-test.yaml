@@ -1,0 +1,44 @@
+# First test image for the Shelly Plug S (Gen1, SHPLG-S): WiFi AP only, gen1_ota receiver, relay + button.
+# Relay GPIO15 is read from the stock firmware v1.14.0 (hard-coded, output).
+# Button GPIO13 is NOT confirmed (community value, not read from the firmware).
+# LEDs (GPIO0/GPIO2) and the HLW8012-type meter (GPIO12/5/14) are left out on purpose.
+esphome:
+  name: plugs-test
+
+esp8266:
+  board: esp_wroom_02
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+logger:
+  baud_rate: 115200
+
+wifi:
+  ap:
+    ssid: "plugs-test"
+    password: "change-me-please"
+
+# No `ota:` block: ESPHome's own OTA needs eboot, which a Shelly Gen1 does not have.
+gen1_ota:
+  password: !secret gen1_ota_password
+  partitions: SHPLG-S-stock.csv
+
+switch:
+  - platform: gpio
+    id: relay
+    name: "Relay"
+    pin: GPIO15
+    restore_mode: ALWAYS_OFF
+
+binary_sensor:
+  - platform: gpio
+    name: "Button"
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - switch.toggle: relay

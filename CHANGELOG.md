@@ -5,6 +5,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- **`experimental/gen1/`: an ESPHome component and tools for Shelly Gen1 (ESP8266, rBoot), experimental** ([#47](https://github.com/oxynatOr/free-shelly-ota/issues/47); the request came from [ceburos](https://github.com/ceburos); [sipe](https://github.com/sipe), a Plug S owner, added flash readouts). `experimental/gen1/components/gen1_ota` is an ESPHome external component that receives a later image over TCP and installs it into the rBoot slot (ESPHome's own OTA needs eboot, which Gen1 does not have); `experimental/gen1/tools/gen1_ota.py` converts, checks and sends images, and `experimental/gen1/tools/make_stock_pkg.py` builds the packages for the first install through Shelly's own updater (`/ota?url=`, the sequence ESPHome ZIP, stock ZIP, ESPHome ZIP). The layout comes from a partition CSV per model (19 files from the official manifests). It ran on an ESP8266 dev board with the stock images of 13 models and the first self-update there; **nothing has run on a real Shelly Gen1**, and there is no Gen1 profile, device page or `ota.py` command. The Plug S has a first test image (`experimental/gen1/example-plugs-test.yaml`, for testers only): it went through the whole sequence on the dev board with the Plug S stock image and the rBoot config read back as confirmed. The relay pin of the Plug S (`GPIO15`) is read from the stock firmware, not confirmed; button, LED and meter pins are not confirmed. Apache 2.0 like the rest; no Shelly file is in the folder. **Not breaking:** a new folder, no profile, package or command changed; `ota.py` and the existing tests do not use it.
+
+### Changed
+- Documentation: [Research: Shelly Gen1](docs/research/gen1.md) (the prototype now lives in `experimental/gen1/`, Plug S results, pins read from firmware, a Plug S owner's flash readout), the Gen1 table of the [device overview](docs/devices/README.md#gen1-esp8266-in-testing) and the Gen1 item of the [Roadmap](ROADMAP.md). **Not breaking:** documentation only; no anchor was removed.
+- [CREDITS.md](CREDITS.md): [ceburos](https://github.com/ceburos) and [sipe](https://github.com/sipe) are added as reporters for the Gen1 request ([#47](https://github.com/oxynatOr/free-shelly-ota/issues/47)).
+
 ## [0.8.0] - 2026-11-10
 
 Still 0.x, so still experimental: nobody has flashed 29 of the 61 profiles, and 11 more went through the update on a dev board only.

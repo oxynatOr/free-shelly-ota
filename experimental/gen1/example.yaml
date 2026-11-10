@@ -1,0 +1,27 @@
+esphome:
+  name: gen1-ota-example
+
+esp8266:
+  board: esp_wroom_02
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+logger:
+  baud_rate: 115200
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "gen1-ota-example"
+    password: "change-me-please"
+
+# No `ota:` block: ESPHome's own OTA needs eboot, which a Shelly Gen1 does not have.
+gen1_ota:
+  password: !secret gen1_ota_password   # at least 8 characters
+  partitions: SHSW-1-stock.csv   # partition CSV: one of components/gen1_ota/partitions or your own
+  # port: 8267
+  # confirm_after: 10s                    # when the running app confirms the boot to rBoot
