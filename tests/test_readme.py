@@ -54,15 +54,66 @@ class ReadmeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.text = README.read_text(encoding="utf-8")
-        cls.states = _table_states(README, state_cell=3)  # Device | Profile | Chip | State | Note: the confirmed devices
+        cls.states = _table_states(README, state_cell=2)  # Device | Profile | State | Note: up to five devices per generation
         cls.overview = _table_states(DEVICE_OVERVIEW, state_cell=4)  # Device | Profile | Table | Slot | State: all of them, one table per generation
 
     def test_the_overview_has_every_profile_and_nothing_else(self):
         self.assertEqual(sorted(self.overview), profile.list_devices())
 
-    def test_the_readme_table_has_exactly_the_confirmed_devices(self):
-        confirmed = {name: symbol for name, symbol in self.overview.items() if symbol in ("✅", "🟡")}
-        self.assertEqual(self.states, confirmed)
+    @staticmethod
+    def _generations(path: Path) -> dict:
+        """{'Gen2': {'chip': ..., 'line': the counts line, 'rows': [(profile, symbol), ...]}} in file order, for the '### GenN (chip)' sections."""
+        gens, cur = {}, None
+        for line in path.read_text(encoding="utf-8").splitlines():
+            m = re.match(r"### (Gen\d) \((.*)\)\s*$", line)
+            if m:
+                cur = gens.setdefault(m.group(1), {"chip": m.group(2), "rows": [], "line": ""}) if m.group(1) != "Gen1" else None
+                continue
+            if line.startswith("#"):
+                cur = None
+            if cur is None:
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            name = re.search(r"`([\w-]+)`", cells[1]) if line.startswith("|") and len(cells) >= 4 else None
+            if name:
+                cur["rows"].append((name.group(1), cells[4 if path == DEVICE_OVERVIEW else 2].split(" ")[0]))
+            elif " profiles: ✅" in line:
+                cur["line"] = line
+        return gens
+
+    def test_each_generation_lists_the_best_five_real_hardware_devices(self):
+        """README rule: per generation (a <details> block) up to five devices, confirmed first, then partly checked, in overview order;
+        the counts in the summary cover all profiles of that generation."""
+        overview, readme = {}, {}
+        for path, target in ((DEVICE_OVERVIEW, overview), (README, readme)):
+            cur = None
+            for line in path.read_text(encoding="utf-8").splitlines():
+                m = re.match(r"### (Gen\d) \((.*)\)\s*$", line) if path == DEVICE_OVERVIEW else re.search(r"<summary><b>(Gen\d) \((.*?)\)</b>", line)
+                if m:
+                    cur = target.setdefault(m.group(1), {"chip": m.group(2), "rows": [], "counts": None}) if m.group(1) != "Gen1" else None
+                    if path == README and cur is not None:
+                        counts = re.search(r"(\d+) profiles: ✅ (\d+) · 🟡 (\d+) · 🔬 (\d+) · 🧪 (\d+)", line)
+                        cur["counts"] = [int(g) for g in counts.groups()]
+                    continue
+                if path == DEVICE_OVERVIEW and line.startswith("#"):
+                    cur = None
+                if cur is None:
+                    continue
+                if path == DEVICE_OVERVIEW and line.startswith("| ["):
+                    cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                    name, link = re.match(r"\[(.*)\]\((.*)\)$", cells[0]).groups()
+                    cur["rows"].append((name, link, cells[4].split(" ")[0]))
+                elif path == README:
+                    m = re.match(r"\| \[(.*)\]\(docs/devices/(.*)\) \| (\S+) \|$", line)
+                    if m:
+                        cur["rows"].append(m.groups())
+        self.assertEqual(list(readme), list(overview))
+        for gen, data in overview.items():
+            rows = data["rows"]
+            best = ([r for r in rows if r[2] == "✅"] + [r for r in rows if r[2] == "🟡"])[:5]
+            self.assertEqual(readme[gen]["rows"], best, gen)
+            self.assertEqual(readme[gen]["chip"], data["chip"], gen)
+            self.assertEqual(readme[gen]["counts"], [len(rows)] + [sum(1 for r in rows if r[2] == sym) for sym in STATES], gen)
 
     def test_states_are_known_symbols(self):
         for name, symbol in self.overview.items():

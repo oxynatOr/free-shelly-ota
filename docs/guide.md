@@ -19,6 +19,8 @@ Read this, then decide:
 - **It is experimental.** Only the devices marked ✅ in the [device table](devices/README.md#devices) ran the whole chain on real hardware. 🟡 means part of it is
   unchecked, 🔬 means it ran on a dev board only, 🧪 means nobody has flashed it.
 - **Warranty.** Third-party firmware voids it.
+- **The ESPHome config is yours.** This tool checks the package (partition table, offset, size, bootloader), not whether your config works or is safe. A wrong
+  `ota:`, `api:` or Wi-Fi setting can leave the device unreachable, and then only UART helps. Test the config first, ideally on a dev board.
 - **A bad flash can brick the device.** The fix is UART (a serial connection to the board inside), which means opening the device.
   Keep that in mind before you start, not after.
 - **The installer burns an eFuse bit on some devices** (`FW signatures: want 07 got 00`, then `EFUSE write error` or `BURN BLOCK3`).
