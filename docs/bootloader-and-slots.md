@@ -93,7 +93,7 @@ predictor, so the check uses the log line. (On the Mini 1PM Gen4 Zigbee firmware
 ## Experimental: slot swap in the package
 
 > [!WARNING]
-> **Experimental. Seen working on two dev boards (ESP32-C6 and ESP32-C3, 2026-11-05 to 2026-11-09), and reported once on a real device (a Shelly 2PM Gen3, from the reporter's notes, no raw log).** The package moves the
+> **Experimental. Seen working on two dev boards (ESP32-C6 and ESP32-C3, 2026-11-05 to 2026-11-09). On a real device (a Shelly 2PM Gen3) only a plain `send` of a `--pt-addr` package was tried, `--slot-swap` itself was not run there (from the reporter's notes, no raw log).** The package moves the
 > partition table and `send --slot-swap` changes it, and the installer writes it to flash. If that goes wrong, a serial
 > connection and a flash dump of the device are needed to bring it back ([Recovery over UART](recovery-uart.md)). Going back to
 > Shelly's firmware after such an install worked on two dev boards, over the network ([see below](#the-way-back-over-the-network-seen-on-two-boards)).
@@ -141,7 +141,7 @@ What was seen (2026-11-05/06, dev boards with the DevKit images, `build --compil
 
 Repeat on 2026-11-09 (same two boards, stock 2.1.0 DevKit images, packages from `build --compile ... --pt-addr 0x8000`): swap send, way back, and a second send straight after the `restore` all worked on both. After the `restore` the installer's target was slot 0 on both boards (Shelly's app sits in slot 1 then), so the second send had nothing to swap and ESPHome started from `app_0`.
 
-Reported on a real device (WulffTech, a Shelly 2PM Gen3 that had run ESPHome for a while, from their notes, not a raw log): way back with the same steps, then `send --slot-swap` with `--pt-addr 0x8000`; ESPHome booted, Wi-Fi, mDNS, API and OTA came up, both relays and the power sensor were checked. Their first `--slot-swap` sends fell back to the old firmware, and a send after another `restore` worked. Why the first ones fell back is not known; the dev boards did not show it.
+Reported on a real device (WulffTech, a Shelly 2PM Gen3 that had run ESPHome for a while, from their notes, not a raw log): the way back with the same steps, then a plain `send` (no `--slot-swap`) of a package built with `--pt-addr 0x8000`. ESPHome booted, Wi-Fi, mDNS, API and OTA came up, both relays and the power sensor were checked. Three earlier plain sends fell back to the old firmware: each time `send` could not read the target slot (the device's UDP log never arrived) and went ahead blind, and the unit reported slot 0, then 1, then 1 before them (the second try after only 96 s of uptime). After a `restore` and a proper wait the same plain send worked. `--slot-swap` itself was not run on the real device: seven dry runs all stopped with the slot "could not be read". Why no UDP log arrived on that unit is not known (a stale log destination after a restore is one candidate, see the open pull request #140).
 
 Without the move (the table at Shelly's own address) the same boards, and a Gen3 board on stock 2.0.1, ended on the old app after
 a reported success.
@@ -151,8 +151,8 @@ Not known yet:
 - whether the way back below works on other models (it was seen on a C6 and a C3 board and, per the reporter's notes, on a real 2PM Gen3; a Plug M Gen3 once stopped with
   `no valid boot state!` after the same first step, see [Recovery over UART](recovery-uart.md));
 - whether the installer chooses its target slot again after it has written the new table: in the runs above it did not;
-- why the first `--slot-swap` sends on the real 2PM Gen3 fell back to the old firmware (package without `--pt-addr`, or the unit's state after the way back); not reproduced on the dev boards;
-- devices: apart from the one report above, all of this was seen on dev boards only, not on a device in a wall or a socket.
+- `--slot-swap` on a real device: it was never run there, because the slot could not be read (no UDP log from the unit);
+- devices: apart from the one report above (a plain send, not `--slot-swap`), all of this was seen on dev boards only, not on a device in a wall or a socket.
 
 ### The way back over the network (seen on two boards)
 
@@ -170,7 +170,7 @@ Do **not** use `esphome upload --bootloader` for this: it stages the bootloader 
 there; with Shelly's loader in place the board then loops (`slot 0 is not bootable`) and only UART helps.
 After the way back, another `--slot-swap` install worked too (this time with target slot 0: the table moves, nothing to swap).
 
-Tested on two dev boards (C6 `S1PMG4`, C3 `S1PMG3`, stock 2.1.0 images, Shelly's app 2.1.1) and reported once on a real 2PM Gen3. If `restore` says "Not committed", wait a minute or two and run it again.
+Tested on two dev boards (C6 `S1PMG4`, C3 `S1PMG3`, stock 2.1.0 images, Shelly's app 2.1.1) and, for the way back and a plain send of a `--pt-addr` package, once on a real 2PM Gen3. If `restore` says "Not committed", wait a minute or two and run it again.
 
 ## Without ESPHome's bootloader (plain package)
 
