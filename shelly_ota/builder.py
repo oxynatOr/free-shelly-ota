@@ -359,5 +359,9 @@ def inspect_zip(path: Path, profile: Profile | None = None) -> str:
                          f"({100 * len(app) / profile.app_slot_size:.0f}%)")
             for problem in package_layout_problems(profile, zf, manifest, allow_relocated=True):
                 lines.append(f"  WARNING: another layout than the {profile.name} profile: {problem}. `build` refuses this package.")
+            pt = manifest["parts"].get("pt")
+            if pt and pt.get("addr") == RELOCATED_PT_ADDR != profile.pt_offset:
+                lines.append(f"  NOTE: the partition table is at 0x{RELOCATED_PT_ADDR:x}, as in a package made with `build --pt-addr` (for `send --slot-swap`); "
+                             f"the {profile.name} profile says 0x{profile.pt_offset:x}. Another package with this table address has another layout.")
         lines.append("  all part hashes OK")
     return "\n".join(lines)

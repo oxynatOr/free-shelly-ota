@@ -85,6 +85,16 @@ class LayoutCheckTests(unittest.TestCase):
         self.assertIn("WARNING: another layout", builder.inspect_zip(other, self.profile))
         self.assertNotIn("WARNING", builder.inspect_zip(self.official, self.profile))
 
+    @needs_fw
+    def test_inspect_notes_a_table_at_the_pt_addr_address(self):
+        """A table at 0x8000 on a profile that expects another address: a NOTE says how such a package is made, not nothing."""
+        other = self.tmp / "moved.zip"
+        zip_with_app_slot(self.official, other, "app_0", self.profile.app_slot_size, pt_addr=0x8000)
+        text = builder.inspect_zip(other, self.profile)
+        self.assertIn("NOTE: the partition table is at 0x8000", text)
+        self.assertIn("build --pt-addr", text)
+        self.assertNotIn("NOTE", builder.inspect_zip(self.official, self.profile))
+
 
 class CachedPackagesMatchStockCsvTests(unittest.TestCase):
     """A new official package with another table shows up here, before it reaches anyone."""
