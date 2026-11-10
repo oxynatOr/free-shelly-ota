@@ -395,6 +395,15 @@ class BootWatch:
             self.out(logwatch.boot_skipped_warning(boot))
 
 
+def official_zip_for(profile, version, fw_dir=firmware.FW_DIR):
+    """The cached official ZIP a package is compared with (its bootloader, its app).
+
+    The ZIP of the package's own base version when it is cached, so a package on a beta base is compared with the beta
+    ZIP, whose bootloader differs from the stable one; otherwise the newest of the profile's channel."""
+    own = firmware.cached_zip(profile.package_name, str(version), fw_dir=fw_dir) if version else None
+    return own or firmware.cached_zip(profile.package_name, fw_dir=fw_dir, prerelease=profile.channel == "beta")
+
+
 def quiet_about_kept_loader(boot_replaced: bool | None, keeps_loader: bool, restoring: bool) -> bool | None:
     """What logview.Session.expect_new_loader gets. ESPHome only takes OTAs after its own bootloader was written, so
     'update? 0' is a warning for every ESPHome package, also one that is unclear or was forced without the bootloader.
@@ -550,7 +559,7 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     say(Level.verbose, f"Download URL for the device: {url}")
     if slot_swap is not None:
         say(Level.quiet, f"WARNING: {SLOT_SWAP_WARNING}")
-    official_zip = firmware.cached_zip(profile.package_name, prerelease=profile.channel == "beta")
+    official_zip = official_zip_for(profile, manifest.get("version"))
     if slot_swap is not None and not official_zip:
         server.httpd.server_close()
         raise OtaError(f"--slot-swap needs the official {profile.name} ZIP in the cache, to tell that this package carries "
