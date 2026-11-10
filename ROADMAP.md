@@ -8,7 +8,7 @@ Where the project stands and where it goes next.
 
 > [!NOTE]
 > This is a plan, not a promise: the order changes when a test report or a new device shows up.
-> State: 2026-10-29, at release 0.7.0 (see the [CHANGELOG](CHANGELOG.md)).
+> State: 2026-11-10, at release 0.8.0 (see the [CHANGELOG](CHANGELOG.md)).
 
 ## Now
 
@@ -21,6 +21,7 @@ Where the project stands and where it goes next.
 
 ## Next
 
+- **Slot swap on a real device.** `send --slot-swap` is seen on dev boards, but not on a unit in a wall: the one report so far could not read the target slot (the device's UDP log did not arrive). Needs a Gen3 or Gen4 unit with a readable slot and a UART adapter at hand; a small follow-up for `ota.py inspect` (a note instead of no warning for a table at 0x8000) is also open.
 - **Hardware checks** (these turn 🟡 into ✅): the Plug PM Gen3 readings (and the BL0942 RX pull-up found on the PM Mini),
   the Power Strip outlets and metering, the Duo Bulb's GPIOs (it runs over OTA, the pins are from the stock dump), the Plus Uni with this profile's `boot_min_version` 1.0.9
   (the first report ran with 1.0.3 and kept Shelly's loader) and its pins, the Mini 1PM Gen4 pins (read from the stock firmware, not measured).
@@ -91,3 +92,5 @@ Items that stood under "Now" in an earlier version of this page.
 | Release 0.6.0 (pre-release) | [CHANGELOG](CHANGELOG.md#060---2026-10-24) |
 | `build --compile` (ESPHome command or Docker with a cache volume, also for `packages:` and `!include`), `pyproject.toml` for development, `PlugMG3-beta` and the layout check, `BluGwG3` removed | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |
 | Release 0.7.0 | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |
+| `send --slot-swap` and `build --pt-addr` (experimental), `ota.py ca` for `--cafile`, 16 Plus and Pro profiles and `PlusI4` (60 in total), documentation site and guides | [CHANGELOG](CHANGELOG.md#080---2026-11-10) |
+| Release 0.8.0 | [CHANGELOG](CHANGELOG.md#080---2026-11-10) |

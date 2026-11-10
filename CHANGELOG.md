@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-10
+
+Still 0.x, so still experimental: nobody has flashed 29 of the 60 profiles, and 11 more went through the update on a dev board only.
+
+### Summary
+- **`send --slot-swap` and `build --pt-addr 0x8000`** (experimental, [#111](https://github.com/oxynatOr/free-shelly-ota/issues/111)): the package ships Shelly's partition table at 0x8000, and when the installer will write to slot 1, `send` swaps the app subtypes so that ESPHome's bootloader starts that slot, without a `restore` first. Seen working on dev boards (ESP32-C6 and ESP32-C3, Gen3 and Gen4 layouts), including the way back over the network; on a real device only a plain `send` of a `--pt-addr` package and the way back were reported, `--slot-swap` itself has not run on one yet. Idea, code and first log by [WulffTech](https://github.com/WulffTech).
+- **`ota.py ca`** takes Shelly's root CA out of a package and writes it as a PEM file for `fetch --cafile`, so TLS can stay on ([#128](https://github.com/oxynatOr/free-shelly-ota/issues/128)).
+- **43 to 60 profiles:** 16 Shelly Plus and Pro devices and `PlusI4` (all 🧪 except the Gen2 profiles that went through the update on an ESP32 dev board, 🔬); `PlugMG3-beta` is confirmed on a real plug, `PlusI4` is partly checked.
+- **Fixes:** `send` no longer fails with `Address already in use` on Linux right after the slot check ([#133](https://github.com/oxynatOr/free-shelly-ota/issues/133)); `send` and `restore` compare a package with the official ZIP of its own base version, so `restore --version 2.2.0-beta2` is no longer refused ([#142](https://github.com/oxynatOr/free-shelly-ota/issues/142)).
+- **Documentation:** a documentation site, a step-by-step guide and a developer guide, `CONTRIBUTING.md` with a rule for AI-assisted contributions, a restructured README and device overview, and new credits groups.
+
+One visible change, possibly breaking for few: `MiniPMG3` refuses a package on Shelly firmware older than 1.3.3 (see Changed). Otherwise nothing breaks for existing setups.
+
 ### Changed
 - [CREDITS.md](CREDITS.md) has a new layout: every table has the same columns and widths, the device and issue are small badges, and each person has one line of short keywords instead of a paragraph (the details are on the device pages). bobkersten is no longer listed: the Plus Plug S page names the ESPHome device page and its author where it uses them, as the other device pages do with their ESPHome pages, so the credits list people of this project and not the authors of every source. The groups are unchanged. Documentation only, nothing breaks.
 - [CREDITS.md](CREDITS.md) lists people in four groups (contributors, testers, reporters, confirmations), once each in the highest group they reached, and moves bobkersten and the outside sources to a new section *Third parties*; [jumoog](https://github.com/jumoog) is added as a confirmation for the Plug M Gen3 beta layout ([#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)). The `CONTRIBUTING.md` rule on credits names the groups. Documentation only: the anchor `#shelly-and-the-tools-underneath` is gone (nothing in the repo links to it), everything else keeps working, so nothing breaks.
