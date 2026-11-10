@@ -92,5 +92,5 @@ Items that stood under "Now" in an earlier version of this page.
 | Release 0.6.0 (pre-release) | [CHANGELOG](CHANGELOG.md#060---2026-10-24) |
 | `build --compile` (ESPHome command or Docker with a cache volume, also for `packages:` and `!include`), `pyproject.toml` for development, `PlugMG3-beta` and the layout check, `BluGwG3` removed | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |
 | Release 0.7.0 | [CHANGELOG](CHANGELOG.md#070---2026-10-29) |
-| `send --slot-swap` and `build --pt-addr` (experimental), `ota.py ca` for `--cafile`, 16 Plus and Pro profiles and `PlusI4` (60 in total), documentation site and guides | [CHANGELOG](CHANGELOG.md#080---2026-11-10) |
+| `send --slot-swap` and `build --pt-addr` (experimental), `ota.py ca` for `--cafile`, 16 Plus and Pro profiles, `PlusI4` and the AZ Plug (61 in total), documentation site and guides | [CHANGELOG](CHANGELOG.md#080---2026-11-10) |
 | Release 0.8.0 | [CHANGELOG](CHANGELOG.md#080---2026-11-10) |

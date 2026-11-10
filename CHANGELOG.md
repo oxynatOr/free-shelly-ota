@@ -7,13 +7,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [0.8.0] - 2026-11-10
 
-Still 0.x, so still experimental: nobody has flashed 29 of the 60 profiles, and 11 more went through the update on a dev board only.
+Still 0.x, so still experimental: nobody has flashed 29 of the 61 profiles, and 11 more went through the update on a dev board only.
 
 ### Summary
 - **`send --slot-swap` and `build --pt-addr 0x8000`** (experimental, [#111](https://github.com/oxynatOr/free-shelly-ota/issues/111)): the package ships Shelly's partition table at 0x8000, and when the installer will write to slot 1, `send` swaps the app subtypes so that ESPHome's bootloader starts that slot, without a `restore` first. Seen working on dev boards (ESP32-C6 and ESP32-C3, Gen3 and Gen4 layouts), including the way back over the network; on a real device only a plain `send` of a `--pt-addr` package and the way back were reported, `--slot-swap` itself has not run on one yet. Idea, code and first log by [WulffTech](https://github.com/WulffTech).
 - **`ota.py ca`** takes Shelly's root CA out of a package and writes it as a PEM file for `fetch --cafile`, so TLS can stay on ([#128](https://github.com/oxynatOr/free-shelly-ota/issues/128)).
-- **43 to 60 profiles:** 16 Shelly Plus and Pro devices and `PlusI4` (all 🧪 except the Gen2 profiles that went through the update on an ESP32 dev board, 🔬); `PlugMG3-beta` is confirmed on a real plug, `PlusI4` is partly checked.
-- **Fixes:** `send` no longer fails with `Address already in use` on Linux right after the slot check ([#133](https://github.com/oxynatOr/free-shelly-ota/issues/133)); `send` and `restore` compare a package with the official ZIP of its own base version, so `restore --version 2.2.0-beta2` is no longer refused ([#142](https://github.com/oxynatOr/free-shelly-ota/issues/142)).
+- **43 to 61 profiles:** 16 Shelly Plus and Pro devices, `PlusI4` and the Shelly AZ Plug (`PlugAZ`, partly checked on a real plug, thanks to [tilenkranjc](https://github.com/tilenkranjc)). The Plus and Pro profiles are 🧪, except five Gen2 profiles that went through the update on an ESP32 dev board (🔬); `PlugMG3-beta` is confirmed on a real plug, `PlusI4` is partly checked.
+- **Fixes:** `send` no longer fails with `Address already in use` on Linux right after the slot check ([#133](https://github.com/oxynatOr/free-shelly-ota/issues/133)); the slot check works again after a `restore` reboot left UDP logging on; `send` and `restore` compare a package with the official ZIP of its own base version, so `restore --version 2.2.0-beta2` is no longer refused ([#142](https://github.com/oxynatOr/free-shelly-ota/issues/142)).
 - **Documentation:** a documentation site, a step-by-step guide and a developer guide, `CONTRIBUTING.md` with a rule for AI-assisted contributions, a restructured README and device overview, and new credits groups.
 
 One visible change, possibly breaking for few: `MiniPMG3` refuses a package on Shelly firmware older than 1.3.3 (see Changed). Otherwise nothing breaks for existing setups.
