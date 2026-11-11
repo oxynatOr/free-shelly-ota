@@ -1,0 +1,93 @@
+# Second test image for the Shelly Plug S (Gen1, SHPLG-S): the first one (example-plugs-test.yaml) plus both LEDs and the power meter.
+# Relay GPIO15 is read from the stock firmware v1.14.0 and worked on a real plug. Everything else here is NOT confirmed on a real plug:
+# button GPIO13 worked on one plug, but the LED pins (GPIO0 red, GPIO2 blue) and the meter pins (GPIO12 select, GPIO5 CF, GPIO14 CF1)
+# and the values of the meter (current resistor, voltage divider) come from the ESPHome device page for the Plug S, not from the firmware.
+# There is no calibration: the readings only say whether the meter is wired the way the device page says, not how accurate it is.
+#
+# How to see it: the values appear in the serial log (115200 baud) every 10 seconds, the AP has no web page and no API.
+#   - press the button: the relay toggles, the red LED follows the relay, the blue LED is lit while the button is held
+#   - put a known load on the relay (a lamp, a kettle) and look at "Power", "Voltage" and "Current" in the log
+esphome:
+  name: plugs-meter
+
+esp8266:
+  board: esp_wroom_02
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+logger:
+  baud_rate: 115200
+
+wifi:
+  ap:
+    ssid: "plugs-meter"
+    password: "change-me-please"
+
+# No `ota:` block: ESPHome's own OTA needs eboot, which a Shelly Gen1 does not have.
+gen1_ota:
+  password: !secret gen1_ota_password
+  partitions: SHPLG-S-stock.csv
+
+output:
+  - platform: gpio
+    id: red_led
+    pin:
+      number: GPIO0
+      inverted: true
+  - platform: gpio
+    id: blue_led
+    pin:
+      number: GPIO2
+      inverted: true
+
+switch:
+  - platform: gpio
+    id: relay
+    name: "Relay"
+    pin: GPIO15
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - output.turn_on: red_led
+    on_turn_off:
+      - output.turn_off: red_led
+
+binary_sensor:
+  - platform: gpio
+    name: "Button"
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - output.turn_on: blue_led
+      - switch.toggle: relay
+    on_release:
+      - output.turn_off: blue_led
+
+sensor:
+  - platform: hlw8012
+    model: BL0937
+    sel_pin:
+      number: GPIO12
+      inverted: true
+    cf_pin: GPIO5
+    cf1_pin: GPIO14
+    current_resistor: 0.000943
+    voltage_divider: 2066
+    update_interval: 10s
+    current:
+      name: "Current"
+    voltage:
+      name: "Voltage"
+    power:
+      name: "Power"
+      # a cut-off for the test, not a safety device: the readings are not calibrated
+      on_value_range:
+        - above: 2400
+          then:
+            - switch.turn_off: relay
+    energy:
+      name: "Energy"

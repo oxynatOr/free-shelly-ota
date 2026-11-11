@@ -126,6 +126,23 @@ Good to know: `revert` refuses (`ERR stock`) if the other slot holds no valid im
 After a `revert` there is no automatic fallback to ESPHome (the stock treats a set flag as a fresh update and drops it, see the README), so
 if the stock does not come up, the way back is UART and your backup.
 
+## LEDs and power meter (optional third test, needs a load)
+
+`example-plugs-meter.yaml` is the first test image plus both LEDs and the power meter. Only the relay is read from the firmware; the LED pins
+(GPIO0 red, GPIO2 blue), the meter pins (GPIO12 select, GPIO5 CF, GPIO14 CF1) and the meter values (current resistor, voltage divider) come
+from the ESPHome device page for the Plug S and are **not confirmed**. The readings are not calibrated, they only show whether the meter is
+wired the way the device page says. The image ran on the dev board (it starts and configures all of it); no signal was on the pins there.
+
+- Build it like the first image, with `example-plugs-meter.yaml` instead (the Docker command compiles `/config/example-plugs-meter.yaml`, the
+  firmware is in `/cache/data/build/plugs-meter/.pioenvs/plugs-meter/firmware.bin`), same password, and `send` it as a second update. Its own
+  network is called `plugs-meter` (same password `change-me-please`), join that one afterwards.
+- Look at the serial log (115200 baud). Press the button: the relay toggles, the **red LED follows the relay**, the **blue LED is lit while the
+  button is held**. Every 10 seconds the log shows `Voltage`, `Current`, `Power` and `Energy`.
+- Put a known load on the relay (a lamp or a kettle, well below the plug's 10 A / 2300 W) and report the log values next to the real value of
+  the load (a plug-in power meter, or the rated watts). A cut-off at 2400 W turns the relay off in this image; it is a test cut-off, not a
+  protection, because the values are not calibrated.
+- Report: which LED lights when, whether red and blue are the right way round, and the readings with and without load.
+
 ## Open points
 
 - One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay. The three-update case, a second update and `revert` are untested there.
