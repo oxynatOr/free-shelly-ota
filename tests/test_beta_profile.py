@@ -29,6 +29,29 @@ class BetaProfileTests(unittest.TestCase):
         shutil.rmtree(tmp / "Dev" / "2.2.0-beta1"), shutil.rmtree(tmp / "Dev" / "2.2.0-beta2")
         self.assertIsNone(firmware.cached_zip("Dev", fw_dir=tmp, prerelease=True))
 
+    def test_versions_sort_by_release_then_prerelease_number(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        for version in ("2.2.0-beta10", "2.2.0", "2.2.0-beta2", "2.1.0", "2.2.0-beta1"):
+            (tmp / "Dev" / version).mkdir(parents=True)
+            (tmp / "Dev" / version / "Dev.zip").write_bytes(b"PK")
+        self.assertEqual(
+            firmware.list_versions("Dev", fw_dir=tmp),
+            ["2.1.0", "2.2.0-beta1", "2.2.0-beta2", "2.2.0-beta10", "2.2.0"],
+        )
+        self.assertEqual(firmware.cached_zip("Dev", fw_dir=tmp, prerelease=True).parent.name, "2.2.0-beta10")
+
+    def test_only_alpha_beta_rc_count_as_prerelease(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        for version in ("2.1.0", "2.2.0-beta2", "2.2.0-prod1", "2.3.0-RC1"):
+            (tmp / "Dev" / version).mkdir(parents=True)
+            (tmp / "Dev" / version / "Dev.zip").write_bytes(b"PK")
+        self.assertEqual([firmware.is_prerelease(v) for v in ("2.2.0-beta2", "2.3.0-RC1", "2.2.0-prod1", "2.1.0")],
+                         [True, True, False, False])
+        self.assertEqual(firmware.cached_zip("Dev", fw_dir=tmp).parent.name, "2.2.0-prod1")
+        self.assertEqual(firmware.cached_zip("Dev", fw_dir=tmp, prerelease=True).parent.name, "2.3.0-RC1")
+
 
 if __name__ == "__main__":
     unittest.main()
