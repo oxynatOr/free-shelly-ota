@@ -1,0 +1,11 @@
+# OTA profile: Shelly 2PM Gen3 with the flash layout of Shelly's stable 2.2.0 (app slots of 0x300000). OTA-relevant data only.
+# Not for 1.4.99, 2.0.x or 2.1.x: those have the layout of the S2PMG3 profile and `build` refuses the mix.
+display_name: "Shelly 2PM Gen3 (2.2.0 layout)"
+platform: esp32c3
+update_id: S2PMG3        # name used by https://updates.shelly.cloud/update/<update_id>
+package: S2PMG3          # the official package and its folder in fw/ are called S2PMG3
+layout_since: "2.2.0"    # firmware older than this (1.4.99, 2.0.x, 2.1.x) has the old layout: `send` refuses the package there
+app_ptn: app_0           # partition the manifest "app" part targets
+app_slot_size: 0x300000  # app_0 @0x20000, app_1 @0x400000
+boot_min_version: "1.0.9"   # same as the S2PMG3 profile; a unit on 2.2.0 still ran Shelly OS loader 1.0.3
+revision: 1   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)
