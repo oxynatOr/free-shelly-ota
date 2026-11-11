@@ -4,7 +4,7 @@ An ESPHome external component for **Shelly Gen1 devices (ESP8266, rBoot layout)*
 because the ESP8266 OTA relies on the `eboot` bootloader and a Shelly Gen1 has rBoot instead. This component receives a new
 firmware over the network, installs it into the app slot and arms rBoot's fallback to the stock firmware.
 
-Status: **tested on a Wemos D1 mini that carries the Shelly 1 or Plug S flash layout, not on a real Shelly.** See "What is tested".
+Status: **tested on a Wemos D1 mini that carries the Shelly 1 or Plug S flash layout; on a real device only the first start of the Plug S test image was seen** (2026-11-11: access point up, button switched the relay). See "What is tested".
 A first test route for the Gen1 Plug S is in [PLUGS-TEST.md](PLUGS-TEST.md) (draft).
 
 ## What it does
@@ -161,7 +161,7 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
 
 ## What is not tested
 
-- A real Shelly 1 or any other Gen1 device (flash size assumed 2 MB, GPIO pins of the relay and input not set up in the example:
+- A real Shelly 1 or any Gen1 device other than the Plug S (on the Plug S only the first start was seen: no report yet of the config afterwards, a restart after a power cut or a second update). Flash size assumed 2 MB, GPIO pins of the relay and input not set up in the example:
   the stock app uses GPIO4 for the relay and GPIO5 for the switch input, read from the firmware).
 - The `boot` part (rBoot itself), which the stock updater marks as not updatable.
 - Power loss at other moments of the copy, and several updates in a row on the same device.
