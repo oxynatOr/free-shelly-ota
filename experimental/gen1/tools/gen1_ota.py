@@ -6,6 +6,7 @@
   gen1_ota.py check <image.bin>                                     structure check of an rBoot image
   gen1_ota.py send <image.bin> --host H [--port 8267] [--password-file F]   push an image (password: G1OT_PASSWORD or file)
   gen1_ota.py push <firmware.bin> --host H ...                      convert + send
+  gen1_ota.py revert --host H [--port 8267] [--password-file F]    way back: boot the stock firmware from the other slot
 
 Exit status is 0 only if the device answered OK.
 """
@@ -164,6 +165,24 @@ def send(img: bytes, host: str, port: int, password: bytes, timeout: float = 30.
         s.close()
 
 
+def revert(host: str, port: int, password: bytes, timeout: float = 30.0) -> str:
+    """Ask the device to boot the stock firmware from the other slot (same handshake as send, header G1RV, no image)."""
+    s = socket.create_connection((host, port), timeout=10)
+    try:
+        nonce = b""
+        while len(nonce) < 16:
+            chunk = s.recv(16 - len(nonce))
+            if not chunk:
+                raise ConnectionError("connection closed: " + nonce.decode(errors="replace").strip())
+            nonce += chunk
+        hdr = b"G1RV" + struct.pack("<II", 0, 0)
+        s.sendall(hdr + hmac.new(password, nonce + hdr, hashlib.sha256).digest())
+        s.settimeout(timeout)
+        return _line(s)
+    finally:
+        s.close()
+
+
 def _password(args) -> bytes:
     if args.password_file:
         return open(args.password_file, "rb").read().strip()
@@ -194,6 +213,10 @@ def main(argv=None) -> int:
         p.add_argument("--port", type=int, default=8267)
         p.add_argument("--password-file")
         p.add_argument("--partitions", help="partition CSV (path or a shipped file; default: the Shelly 1 layout)")
+    r = sub.add_parser("revert")
+    r.add_argument("--host", required=True)
+    r.add_argument("--port", type=int, default=8267)
+    r.add_argument("--password-file")
     args = ap.parse_args(argv)
     if args.cmd == "partitions":
         text = layout_from_package(args.package, args.name)
@@ -203,6 +226,14 @@ def main(argv=None) -> int:
         else:
             sys.stdout.write(text)
         return 0
+    if args.cmd == "revert":
+        try:
+            reply = revert(args.host, args.port, _password(args))
+        except OSError as err:
+            print("no answer from %s:%d (%s). Is the device up and on this network?" % (args.host, args.port, err))
+            return 2
+        print("reply: %s" % reply)
+        return 0 if reply == "OK" else 1
     lay = load_layout(args.partitions) if getattr(args, "partitions", None) else None
     max_image = lay.max_image if lay else MAX_IMAGE
     if args.cmd == "convert":

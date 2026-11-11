@@ -54,6 +54,10 @@ def device(password: bytes, result: dict):
         if not hmac.compare_digest(mac, hmac.new(password, nonce + hdr, hashlib.sha256).digest()):
             c.sendall(b"ERR auth\n")
             return
+        if hdr[:4] == b"G1RV":
+            result["revert"] = True
+            c.sendall(b"OK\n")
+            return
         size, crc = struct.unpack("<II", hdr[4:])
         c.sendall(b"READY\n")
         data = b""
@@ -76,3 +80,16 @@ def test_send_right_and_wrong_password():
     assert res["ok"]
     port, t = device(b"correct horse", {})
     assert gen1_ota.send(img, "127.0.0.1", port, b"wrong") == "ERR auth"
+
+
+def test_revert_right_and_wrong_password():
+    res = {}
+    port, t = device(b"correct horse", res)
+    assert gen1_ota.revert("127.0.0.1", port, b"correct horse") == "OK"
+    t.join(2)
+    assert res.get("revert") is True
+    res = {}
+    port, t = device(b"correct horse", res)
+    assert gen1_ota.revert("127.0.0.1", port, b"wrong") == "ERR auth"
+    t.join(2)
+    assert "revert" not in res

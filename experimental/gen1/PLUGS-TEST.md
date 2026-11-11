@@ -92,7 +92,10 @@ post the serial log (115200 baud).
 ## If something goes wrong
 
 - The stock firmware stays in the other slot; a failed ESPHome boot falls back to it by itself.
-- If the plug does not come back at all: UART, write `backup.bin` back (`esptool write-flash 0 backup.bin`). There is no way back without UART.
+- If the plug does not come back at all: UART, write `backup.bin` back (`esptool write-flash 0 backup.bin`).
+- If ESPHome runs and you want the stock firmware back without UART: `python tools/gen1_ota.py revert --host <plug-ip>` (join the `plugs-test`
+  network first, the plug is at `192.168.4.1`; password in `G1OT_PASSWORD`). This needs an image built after 2026-11-11; the first test image
+  has no `revert`, so it needs one `send` of a newer image first. `revert` ran on the dev board only.
 
 ## Open points
 

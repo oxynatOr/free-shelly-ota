@@ -106,6 +106,22 @@ python tools/gen1_ota.py push .esphome/build/<name>/.pioenvs/<name>/firmware.bin
 `push` = `convert` (ESPHome binary to rBoot image) + `check` + `send`. Exit status 0 only if the device answered `OK`. The device
 resets itself a few seconds later; the AP/IP comes back when the new app is up.
 
+### Way back to the stock firmware, without UART
+
+```
+export G1OT_PASSWORD=...
+python tools/gen1_ota.py revert --host <ip>
+```
+
+`revert` asks the running ESPHome to boot the stock firmware from the other slot. The receiver first walks the image in slot 1
+(structure and checksum, so an empty or damaged slot is never booted), then points the rBoot config at slot 1 and restarts. The
+stock firmware starts from its own file system (the one it kept when ESPHome was installed) and answers with its access point and
+`/shelly` again. ESPHome stays in slot 0: a package for Shelly's updater (`make_stock_pkg.py ... --image`) installs it there again.
+
+The unconfirmed flag is left at 0 on purpose: the stock reads a set flag as "I was just updated" and reverts to ESPHome. So there
+is no automatic fallback after a `revert`; the slot check is the protection. A device whose ESPHome image was built before
+this command existed has no `revert`; it needs one update (`push`) first.
+
 ### First installation
 
 The device has to end up with the **stock firmware in slot 1** (the fallback) and ESPHome in slot 0. Two ways:
@@ -130,6 +146,9 @@ The device has to end up with the **stock firmware in slot 1** (the fallback) an
 3. Device answers `READY\n`, or `ERR auth`, `ERR size`, `ERR layout` and closes (a wrong password also costs one second).
 4. Client sends the image. The device stages it, verifies CRC and image structure, answers `OK\n` (or `ERR crc`, `ERR verify`,
    `ERR flash`, `ERR image`, `ERR receive`) and installs.
+
+Way back: the same handshake with `"G1RV"` and size and crc 0. The device answers `OK\n` and restarts into the stock firmware, or
+`ERR stock` (no valid image in the other slot), `ERR layout`, `ERR state` (not running from slot 0) or `ERR flash`. No image follows.
 
 A password protects against strangers on the network. It does not prove who built the image (there is no signature), and the
 traffic is not encrypted.
@@ -156,6 +175,8 @@ On the D1 mini with the Shelly 1 layout (2 MB header, 4 MB chip), ESPHome 2026.1
 | Update A to B over WiFi with the tool | `OK`, B boots and confirms |
 | New app that crashes right after boot | rBoot falls back to the stock after one failed boot |
 | Reset 2.5 s after the `OK` (during the copy) | stock boots, no boot loop |
+| `revert` (Plug S layout, 2026-11-11) | `OK`, the stock boots from slot 1 with its own file system and answers `/shelly`; a package for the stock updater then puts ESPHome back into slot 0 |
+| `revert` with the unconfirmed flag set | the stock tries to take over the old file system and reverts to ESPHome (`Update failed, reverting to ROM 0`): this is why the flag stays 0 |
 
 Host side: `python -m pytest tests` (conversion, image check, protocol against a simulated device).
 
@@ -164,6 +185,8 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
 - A real Shelly 1 or any Gen1 device other than the Plug S (on the Plug S only the first start was seen: no report yet of the config afterwards, a restart after a power cut or a second update). Flash size assumed 2 MB, GPIO pins of the relay and input not set up in the example:
   the stock app uses GPIO4 for the relay and GPIO5 for the switch input, read from the firmware).
 - The `boot` part (rBoot itself), which the stock updater marks as not updatable.
+- `revert` on a real device, a power cut during the one-sector config write of `revert`, and the stock settings after a long ESPHome
+  time (the stock file system was not touched on the dev board, but nobody changed settings in between).
 - Power loss at other moments of the copy, and several updates in a row on the same device.
 - Images close to the 425,984 byte limit; a running image larger than the limit would overlap the staging area (the check only
   looks at incoming images).
