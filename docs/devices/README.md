@@ -41,7 +41,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 ### Gen3 (ESP32-C3)
 
-26 profiles: ✅ 9 · 🟡 5 · 🔬 0 · 🧪 12
+27 profiles: ✅ 9 · 🟡 6 · 🔬 0 · 🧪 12
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
@@ -59,6 +59,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [Duo Bulb Gen3](DuoBulbG3.md) | `DuoBulbG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
 | [Mini 1PM Gen3](Mini1PMG3.md) | `Mini1PMG3` | **`0xf000`** | `0x2a0000` | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
 | [1PM Gen3](S1PMG3.md) | `S1PMG3` | **`0xf000`** | `0x2c0000` | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
+| [2PM Gen3, 2.2.0 layout](S2PMG3.md#220-layout) | `S2PMG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0 and later; installer took a plain package with a non-ESPHome app, ESPHome not tested |
 | [The Pill](Pill.md) | `Pill` | `0x10000` | `0x280000` | 🧪 |  |
 | [1L Gen3](S1LG3.md) | `S1LG3` | `0x10000` | `0x2b0000` | 🧪 |  |
 | [2L Gen3](S2LG3.md) | `S2LG3` | `0x10000` | `0x2b0000` | 🧪 |  |

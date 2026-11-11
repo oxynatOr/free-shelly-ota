@@ -235,6 +235,10 @@
     "revision": 2,
     "hash": "5c9b46b851a0"
   },
+  "S2PMG3-v2": {
+    "revision": 1,
+    "hash": "62f75144f990"
+  },
   "S2PMG4": {
     "revision": 2,
     "hash": "25d945ec43ab"

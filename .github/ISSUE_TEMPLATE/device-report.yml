@@ -74,6 +74,7 @@ body:
         - S2LG3 (2L Gen3)
         - S2LG4 (2L Gen4)
         - S2PMG3 (2PM Gen3)
+        - S2PMG3-v2 (2PM Gen3, 2.2.0 layout)
         - S2PMG4 (2PM Gen4)
         - S3EMG3 (3EM-63 Gen3)
         - Other (a profile made with add-device)

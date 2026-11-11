@@ -5,6 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Profile `S2PMG3-v2` (2PM Gen3 with the flash layout of Shelly's stable 2.2.0: app slots of `0x300000`, `app_1` at `0x400000`, the table of the 2.2.0 betas of the other Gen3 devices), with `layout_since: 2.2.0` and its stock CSV. The `S2PMG3` profile does not fit 2.2.0 and `build` refuses the mix. Partly checked on one unit (thanks to [andrewagner86](https://github.com/andrewagner86)): Shelly's own update from 1.4.99 over 2.1.1 to 2.2.0 without UART, the table of a flash dump equals the package's, and the installer took a plain package (no `--esphome-factory`) built with this profile, with a non-ESPHome app, into slot 0. ESPHome with this profile is not tested (🟡). Not breaking: a new profile, `S2PMG3` is unchanged.
+
 ## [0.8.0] - 2026-11-10
 
 Still 0.x, so still experimental: nobody has flashed 29 of the 61 profiles, and 11 more went through the update on a dev board only.
