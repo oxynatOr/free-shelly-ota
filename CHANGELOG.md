@@ -5,6 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- Cached firmware versions are sorted correctly when several pre-releases are cached: `2.2.0-beta1` and `2.2.0-beta2` had the same sort key, so `cached_zip(prerelease=True)` (the `-beta` profiles) could pick the older beta, depending on the order the file system listed them. Now `2.1.0 < 2.2.0-beta1 < 2.2.0-beta2 < 2.2.0`. Only alpha, beta and rc tags count as pre-releases (before, anything after a "-" did, e.g. `x.y.z-prod1`). Visible effect: the version lists of `fetch`/`inspect` show a release after its own pre-releases (before, `2.2.0` came first). Not breaking: nothing is written or removed, and `cached_zip` still separates stable from pre-release versions as before.
+
 ## [0.8.0] - 2026-11-10
 
 Still 0.x, so still experimental: nobody has flashed 29 of the 61 profiles, and 11 more went through the update on a dev board only.
