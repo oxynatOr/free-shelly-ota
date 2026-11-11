@@ -41,7 +41,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 ### Gen3 (ESP32-C3)
 
-26 profiles: ✅ 8 · 🟡 6 · 🔬 0 · 🧪 12
+26 profiles: ✅ 9 · 🟡 5 · 🔬 0 · 🧪 12
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
