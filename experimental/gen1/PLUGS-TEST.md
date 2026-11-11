@@ -4,7 +4,7 @@
 > `ota.py` command. A mistake can leave the plug without working firmware; the way back needs a UART connection and a flash backup.
 > It switches mains power: open the case only with the plug unplugged. Do not try it on a device you cannot recover over UART.
 
-Status: **draft.** On one real Plug S (2026-11-11, short case, stock already in slot 1) the test image started: the access point `plugs-test` came up and the button switched the relay. Not reported yet: the rBoot config afterwards, a restart after a power cut, the relay level. Before that the sequence ran on a Wemos D1 mini with the Plug S flash layout and the
+Status: **draft.** On one real Plug S (2026-11-11, short case, stock already in slot 1) the test image started: the access point `plugs-test` came up and the button switched the relay. Reported in follow-ups: the rBoot config reads as confirmed (current slot 0, previous slot 1, flag 0, attempts 0), the plug comes back reliably after being unplugged several times, and the relay is off after plugging in and switched on by the button. Before that the sequence ran on a Wemos D1 mini with the Plug S flash layout and the
 Plug S stock v1.14.0. The test image `example-plugs-test.yaml` (2026-11-10, D1 mini with the Plug S stock image) went through
 ESPHome zip -> flip zip -> ESPHome zip: the stock moved to slot 1 (`Booting rom 1`), ESPHome landed in slot 0 and booted (AP `plugs-test`,
 GPIO15 relay and GPIO13 button configured, `gen1_ota` listening on 8267). The rBoot config sector (0x7000) afterwards reads current rom 0,
@@ -99,7 +99,7 @@ post the serial log (115200 baud).
 
 ## Open points
 
-- Only the first start was seen on a real Plug S (one unit, short case). The three-update case, the config afterwards and a second update are untested there.
+- One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay. The three-update case, a second update and `revert` are untested there.
 - The `boot` part is never replaced (the stock updater marks it `update: false`).
 - Power loss at other moments of the copy, repeated updates.
 - Relay level and the pins of button, LEDs and meter are not confirmed.

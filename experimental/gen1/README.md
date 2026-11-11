@@ -182,7 +182,7 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
 
 ## What is not tested
 
-- A real Shelly 1 or any Gen1 device other than the Plug S (on the Plug S only the first start was seen: no report yet of the config afterwards, a restart after a power cut or a second update). Flash size assumed 2 MB, GPIO pins of the relay and input not set up in the example:
+- A real Shelly 1 or any Gen1 device other than the Plug S (on the Plug S the first start, the config afterwards, restarts after power cuts and the relay were reported; a second update and `revert` were not tried). Flash size assumed 2 MB, GPIO pins of the relay and input not set up in the example:
   the stock app uses GPIO4 for the relay and GPIO5 for the switch input, read from the firmware).
 - The `boot` part (rBoot itself), which the stock updater marks as not updatable.
 - `revert` on a real device, a power cut during the one-sector config write of `revert`, and the stock settings after a long ESPHome
