@@ -23,8 +23,25 @@ FW_DIR = MODULE_DIR / "fw" / "shelly"
 UPDATE_API = "https://updates.shelly.cloud/update/{update_id}"
 
 
+_PRERELEASE_RE = re.compile(r"-(alpha|beta|rc)", re.IGNORECASE)
+
+
+def is_prerelease(version: str) -> bool:
+    """True for 2.2.0-beta2, alpha and rc builds. Other tags (1.8.99-plugmg3prod0) are not pre-releases."""
+    return bool(_PRERELEASE_RE.search(version))
+
+
 def _version_key(version: str) -> tuple:
-    return tuple(int(p) if p.isdigit() else 0 for p in re.split(r"[.\-]", version))
+    """Sort key: 2.1.0 < 2.2.0-beta1 < 2.2.0-beta2 < 2.2.0 < 2.2.0-prod1.
+
+    A pre-release (alpha, beta, rc) sorts before the release it belongs to; its words and numbers are compared one
+    by one (beta2 < beta10). Any other tag after the "-" sorts after the plain release (assumption: no real package
+    with such a tag has been seen).
+    """
+    release, _, tag = version.partition("-")
+    numbers = tuple(int(p) if p.isdigit() else 0 for p in release.split("."))
+    words = tuple((0, int(t)) if t.isdigit() else (1, t.lower()) for t in re.findall(r"\d+|[A-Za-z]+", tag))
+    return numbers, not is_prerelease(version), words
 
 
 def list_versions(device: str, fw_dir: Path = FW_DIR) -> list[str]:
@@ -39,15 +56,15 @@ def list_versions(device: str, fw_dir: Path = FW_DIR) -> list[str]:
 def cached_zip(device: str, version: str | None = None, fw_dir: Path = FW_DIR, prerelease: bool = False) -> Path | None:
     """Path of the cached official ZIP, or None.
 
-    Without a version it is the newest stable one (a pre-release such as 2.2.0-beta1 has to be asked for with
-    its version); only if nothing but pre-releases is cached, the newest of those. prerelease=True (a -beta profile)
+    Without a version it is the newest stable one (a pre-release such as 2.2.0-beta1, see is_prerelease, has to be
+    asked for with its version); only if nothing but pre-releases is cached, the newest of those. prerelease=True (a -beta profile)
     takes the newest pre-release instead, and None if there is none.
     """
     versions = list_versions(device, fw_dir)
     if version is None and prerelease:
-        version = ([v for v in versions if "-" in v] or [None])[-1]
+        version = ([v for v in versions if is_prerelease(v)] or [None])[-1]
     elif version is None:
-        stable = [v for v in versions if "-" not in v]
+        stable = [v for v in versions if not is_prerelease(v)]
         version = (stable or versions or [None])[-1]
     if version is None or version not in versions:
         return None
