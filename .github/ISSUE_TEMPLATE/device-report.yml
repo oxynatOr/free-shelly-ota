@@ -19,6 +19,7 @@ body:
         - PlugMG3-beta (Plug M Gen3, beta layout)
         - PlugAZ (AZ Plug)
         - PlugSG3 (Plug S Gen3)
+        - PlugSG3-v2 (Plug S Gen3, 2.2.0 layout)
         - HTG3 (H&T Gen3)
         - RGBCCTBulbG3 (Multicolor Bulb Gen3)
         - DuoBulbG3 (Duo Bulb Gen3)

@@ -95,6 +95,10 @@
     "revision": 2,
     "hash": "7d2bdda62aa5"
   },
+  "PlugSG3-v2": {
+    "revision": 1,
+    "hash": "51a74db7d636"
+  },
   "PlugUS": {
     "revision": 1,
     "hash": "679171db42dd"
