@@ -93,9 +93,38 @@ post the serial log (115200 baud).
 
 - The stock firmware stays in the other slot; a failed ESPHome boot falls back to it by itself.
 - If the plug does not come back at all: UART, write `backup.bin` back (`esptool write-flash 0 backup.bin`).
-- If ESPHome runs and you want the stock firmware back without UART: `python tools/gen1_ota.py revert --host <plug-ip>` (join the `plugs-test`
-  network first, the plug is at `192.168.4.1`; password in `G1OT_PASSWORD`). This needs an image built after 2026-11-11; the first test image
-  has no `revert`, so it needs one `send` of a newer image first. `revert` ran on the dev board only.
+- If ESPHome runs and you want the stock firmware back without UART: see "Second update and the way back" below.
+
+## Second update and the way back (optional, after the first test worked)
+
+Only with the UART adapter ready and your backup safe. Both steps ran on the dev board only, not on a real plug yet.
+
+What you need:
+
+- **Your PC in the plug's own network.** The test image does not know your WiFi. It runs its own network `plugs-test` (WPA2, password
+  `change-me-please` from the example config), and the plug is at `192.168.4.1`. The tools talk to port 8267 there. While your PC is in
+  that network, a PC with one WiFi adapter has no internet and no other WiFi: build the image first, then join `plugs-test`. A second
+  adapter or a cable for the other network avoids this.
+- **The same password as in the running image.** The plug accepts a command only with the `gen1_ota_password` that was in `secrets.yaml`
+  when the running image was built. Give it to the tool through the environment (PowerShell: `$env:G1OT_PASSWORD = "..."`; Linux and macOS:
+  `export G1OT_PASSWORD=...`) or with `--password-file`. A wrong password gives `ERR auth` after one second, the plug keeps running.
+- **An image that knows `revert`.** The first test image has none. Build a new one from the current branch (same commands as in "Build the
+  image and the packages", same password) and `send` it first.
+
+Steps:
+
+1. Send the newer image (this is the first update from ESPHome to ESPHome on a real plug):
+   `python tools/gen1_ota.py send --partitions SHPLG-S-stock.csv out/plugs-test-slot.bin --host 192.168.4.1`. The answer has to be `OK`. The
+   plug restarts and is gone for about 40 seconds; your PC may drop the network, join `plugs-test` again.
+2. Way back to the stock firmware: `python tools/gen1_ota.py revert --host 192.168.4.1`. The answer has to be `OK`. The plug restarts as a
+   Shelly again, with the settings it had before ESPHome, in your normal WiFi (if it was not set up, in its own network `shellyplug-s-...`).
+   Check `http://<plug-ip>/shelly`.
+3. Put ESPHome back (optional): the update URL of "Update through the stock updater" with `esphome.zip`; the stock runs from slot 1 now, so
+   one update is enough.
+
+Good to know: `revert` refuses (`ERR stock`) if the other slot holds no valid image, and `ERR state` if the plug does not run from slot 0.
+After a `revert` there is no automatic fallback to ESPHome (the stock treats a set flag as a fresh update and drops it, see the README), so
+if the stock does not come up, the way back is UART and your backup.
 
 ## Open points
 
