@@ -185,8 +185,8 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
 - A real Shelly 1 or any Gen1 device other than the Plug S (on the Plug S the first start, the config afterwards, restarts after power cuts and the relay were reported; a second update and `revert` were not tried). Flash size assumed 2 MB, GPIO pins of the relay and input not set up in the example:
   the stock app uses GPIO4 for the relay and GPIO5 for the switch input, read from the firmware).
 - The `boot` part (rBoot itself), which the stock updater marks as not updatable.
-- `revert` on a real device, a power cut during the one-sector config write of `revert`, and the stock settings after a long ESPHome
-  time (the stock file system was not touched on the dev board, but nobody changed settings in between).
+- A power cut during the one-sector config write of `revert`. On one real Plug S `send` and `revert` worked (the stock came back with its settings and WiFi), but installing
+  ESPHome again through Shelly's updater after the `revert` did not work there once; the cause is open (it worked on the dev board).
 - Power loss at other moments of the copy, and several updates in a row on the same device.
 - Images close to the 425,984 byte limit; a running image larger than the limit would overlap the staging area (the check only
   looks at incoming images).

@@ -4,9 +4,16 @@
 # and the values of the meter (current resistor, voltage divider) come from the ESPHome device page for the Plug S, not from the firmware.
 # There is no calibration: the readings only say whether the meter is wired the way the device page says, not how accurate it is.
 #
-# How to see it: the values appear in the serial log (115200 baud) every 10 seconds, the AP has no web page and no API.
+# How to see it, WITHOUT a UART adapter (never connect a UART adapter to a plug that is on mains): join the network "plugs-meter" and use
+# the JSON interface at 192.168.4.1 (user admin, password = your gen1_ota_password). The addresses use the NAME of the entity with its
+# capital letter, not a lower-case id:
+#   curl -u admin:PASSWORD http://192.168.4.1/sensor/Power        (also /sensor/Voltage, /sensor/Current, /sensor/Energy)
+#   curl -u admin:PASSWORD http://192.168.4.1/switch/Relay        and  /binary_sensor/Button
+#   curl -u admin:PASSWORD -X POST http://192.168.4.1/switch/Relay/toggle      (switches the relay without the button)
+# The start page http://192.168.4.1/ lists the entities, but its values are filled by a script from the internet, so offline the table
+# stays empty: use the addresses above.
 #   - press the button: the relay toggles, the red LED follows the relay, the blue LED is lit while the button is held
-#   - put a known load on the relay (a lamp, a kettle) and look at "Power", "Voltage" and "Current" in the log
+#   - put a known load on the relay (a lamp, a kettle) and look at "Power", "Voltage" and "Current"
 esphome:
   name: plugs-meter
 
@@ -30,6 +37,16 @@ wifi:
 gen1_ota:
   password: !secret gen1_ota_password
   partitions: SHPLG-S-stock.csv
+
+# A JSON interface (and a start page) in the plug's own network, so the values can be read with the plug on mains (no UART). Version 1 is
+# the smallest one and fits next to the rest, but it is deprecated in ESPHome (removal planned for 2027.1.0); its page needs the internet.
+web_server:
+  port: 80
+  version: 1
+  auth:
+    type: basic
+    username: admin
+    password: !secret gen1_ota_password
 
 output:
   - platform: gpio

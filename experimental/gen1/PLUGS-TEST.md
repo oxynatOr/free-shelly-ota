@@ -3,6 +3,11 @@
 > **For testers only. This is not a supported way to flash a Plug S.** It has run on one real Plug S so far (first start only), and there is no Gen1 profile or
 > `ota.py` command. A mistake can leave the plug without working firmware; the way back needs a UART connection and a flash backup.
 > It switches mains power: open the case only with the plug unplugged. Do not try it on a device you cannot recover over UART.
+>
+> **Never connect a UART adapter to a plug that is connected to mains.** The ground of the plug's electronics can be at mains potential, and
+> the adapter would carry it to your PC. UART is only for a plug that is unplugged with the case open. A plug powered by the UART adapter
+> (3.3 V) runs the chip, but not the relay, and a flash write or WiFi on that supply can brown out. Everything that needs mains (relay, load,
+> meter) is done with the case closed and without UART, over the plug's WiFi network.
 
 Status: **draft.** On one real Plug S (2026-11-11, short case, stock already in slot 1) the test image started: the access point `plugs-test` came up and the button switched the relay. Reported in follow-ups: the rBoot config reads as confirmed (current slot 0, previous slot 1, flag 0, attempts 0), the plug comes back reliably after being unplugged several times, and the relay is off after plugging in and switched on by the button. Before that the sequence ran on a Wemos D1 mini with the Plug S flash layout and the
 Plug S stock v1.14.0. The test image `example-plugs-test.yaml` (2026-11-10, D1 mini with the Plug S stock image) went through
@@ -97,7 +102,7 @@ post the serial log (115200 baud).
 
 ## Second update and the way back (optional, after the first test worked)
 
-Only with the UART adapter ready and your backup safe. Both steps ran on the dev board only, not on a real plug yet.
+Only with the UART adapter ready and your backup safe. `send` and `revert` worked on one real plug (2026-11-11); putting ESPHome back through the stock updater afterwards did not work there yet (cause open, it worked on the dev board).
 
 What you need:
 
@@ -136,16 +141,21 @@ wired the way the device page says. The image ran on the dev board (it starts an
 - Build it like the first image, with `example-plugs-meter.yaml` instead (the Docker command compiles `/config/example-plugs-meter.yaml`, the
   firmware is in `/cache/data/build/plugs-meter/.pioenvs/plugs-meter/firmware.bin`), same password, and `send` it as a second update. Its own
   network is called `plugs-meter` (same password `change-me-please`), join that one afterwards.
-- Look at the serial log (115200 baud). Press the button: the relay toggles, the **red LED follows the relay**, the **blue LED is lit while the
-  button is held**. Every 10 seconds the log shows `Voltage`, `Current`, `Power` and `Energy`.
-- Put a known load on the relay (a lamp or a kettle, well below the plug's 10 A / 2300 W) and report the log values next to the real value of
+- **Case closed, plug in the wall, no UART.** Join the network `plugs-meter` and read the values as JSON from `192.168.4.1` (user `admin`,
+  password = your `gen1_ota_password`): `curl -u admin:PASSWORD http://192.168.4.1/sensor/Power`, also `/sensor/Voltage`, `/sensor/Current`,
+  `/sensor/Energy`, `/switch/Relay` and `/binary_sensor/Button`. The names are case sensitive (capital first letter). The values update every
+  10 seconds. The start page `http://192.168.4.1/` lists the entities, but it needs the internet to show values, so it stays empty in the
+  plug's network. To switch the relay without the button: `curl -u admin:PASSWORD -X POST http://192.168.4.1/switch/Relay/toggle`.
+- Press the button: the relay toggles, the **red LED follows the relay**, the **blue LED is lit while the button is held**.
+- Put a known load on the relay (a lamp or a kettle, well below the plug's 10 A / 2300 W) and report the page values next to the real value of
   the load (a plug-in power meter, or the rated watts). A cut-off at 2400 W turns the relay off in this image; it is a test cut-off, not a
-  protection, because the values are not calibrated.
-- Report: which LED lights when, whether red and blue are the right way round, and the readings with and without load.
+  protection, because the values are not calibrated. Anyone who knows the network password can switch the relay while this image runs.
+- Report: which LED lights when, whether red and blue are the right way round, whether the load is really switched on when the page says
+  `ON`, and the readings with and without load.
 
 ## Open points
 
-- One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay. The three-update case, a second update and `revert` are untested there.
+- One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there, and putting ESPHome back through the stock updater after `revert` failed there once (cause open).
 - The `boot` part is never replaced (the stock updater marks it `update: false`).
 - Power loss at other moments of the copy, repeated updates.
 - Relay level and the pins of button, LEDs and meter are not confirmed.
