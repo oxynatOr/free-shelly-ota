@@ -122,6 +122,11 @@ The unconfirmed flag is left at 0 on purpose: the stock reads a set flag as "I w
 is no automatic fallback after a `revert`; the slot check is the protection. A device whose ESPHome image was built before
 this command existed has no `revert`; it needs one update (`push`) first.
 
+`revert` also clears byte 9 of the rBoot config sector. The stock sets that byte when it installs a package (it reads `01` after the first install),
+and while it is `01` the stock downloads a new package after a `revert` but does not write it, so ESPHome cannot be installed again (found on a real
+Plug S, reproduced on the dev board: with byte 9 set to 0 the stock wrote the package). A plug reverted by an image built before 2026-11-12 needs byte 9
+set to 0 once over UART, see PLUGS-TEST.md.
+
 ### First installation
 
 The device has to end up with the **stock firmware in slot 1** (the fallback) and ESPHome in slot 0. Two ways:
@@ -176,6 +181,8 @@ On the D1 mini with the Shelly 1 layout (2 MB header, 4 MB chip), ESPHome 2026.1
 | New app that crashes right after boot | rBoot falls back to the stock after one failed boot |
 | Reset 2.5 s after the `OK` (during the copy) | stock boots, no boot loop |
 | `revert` (Plug S layout, 2026-11-11) | `OK`, the stock boots from slot 1 with its own file system and answers `/shelly`; a package for the stock updater then puts ESPHome back into slot 0 |
+| `revert` leaving byte 9 of the rBoot config at 1 (Plug S layout, 2026-11-12) | the stock downloads a new package (`GET` seen) and restarts, but slot 0 stays unchanged: the stock did not write it |
+| `revert` clearing byte 9, then a package through the stock updater | slot 0 holds the new image, ESPHome runs and confirms (config afterwards: current 0, previous 1, flag 0) |
 | `revert` with the unconfirmed flag set | the stock tries to take over the old file system and reverts to ESPHome (`Update failed, reverting to ROM 0`): this is why the flag stays 0 |
 
 Host side: `python -m pytest tests` (conversion, image check, protocol against a simulated device).
@@ -185,8 +192,8 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
 - A real Shelly 1 or any Gen1 device other than the Plug S (on the Plug S the first start, the config afterwards, restarts after power cuts and the relay were reported; a second update and `revert` were not tried). Flash size assumed 2 MB, GPIO pins of the relay and input not set up in the example:
   the stock app uses GPIO4 for the relay and GPIO5 for the switch input, read from the firmware).
 - The `boot` part (rBoot itself), which the stock updater marks as not updatable.
-- A power cut during the one-sector config write of `revert`. On one real Plug S `send` and `revert` worked (the stock came back with its settings and WiFi), but installing
-  ESPHome again through Shelly's updater after the `revert` did not work there once; the cause is open (it worked on the dev board).
+- A power cut during the one-sector config write of `revert`. On one real Plug S `send` and `revert` worked (the stock came back with its settings and WiFi); installing
+  ESPHome again afterwards failed because of byte 9 (see above), and the fix is tested on the dev board only.
 - Power loss at other moments of the copy, and several updates in a row on the same device.
 - Images close to the 425,984 byte limit; a running image larger than the limit would overlap the staging area (the check only
   looks at incoming images).
