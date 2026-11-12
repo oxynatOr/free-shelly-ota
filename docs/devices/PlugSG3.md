@@ -15,7 +15,7 @@
 | --- | --- |
 | Profile | `PlugSG3`, `PlugSG3-v2` (for Shelly's 2.2.0 layout, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
-| Official package | 2.1.0 (stable since 2026-10-14; Bootloader, partition table and filesystem are the same as in 2.0.1; the hardware runs were made with 2.0.1) |
+| Official package | 2.2.0 (stable, seen 2026-11-11), with the layout of `PlugSG3-v2`. The `PlugSG3` profile needs a package before 2.2.0: 2.1.1 is the step the update API offered from 1.7.3 on 2026-11-11 (`fetch PlugSG3 --from-version 1.7.3`); 2.1.0 (stable from 2026-10-14) has the same bootloader, partition table and filesystem as 2.0.1, and the hardware runs were made with 2.0.1 |
 | Partition table | `0x10000` |
 | App slot size | `0x2a0000` |
 | ESPHome device page | [Shelly Plug S Gen3](https://devices.esphome.io/devices/shelly-plug-s-gen3/) |
@@ -146,8 +146,8 @@ Shelly's stable `2.2.0` for this plug has a **different flash layout**, the same
 > [!NOTE]
 > **Partly checked (2026-11-11, one plug, `S3PL-00112EU` with the Matter firmware, no UART, thanks to [andrewagner86](https://github.com/andrewagner86)):**
 >
-> - The plug came with Shelly 1.7.3. Shelly's own update (`Shelly.Update`, stable channel) took it to 2.1.1 (table of the `PlugSG3` profile) in one run. After that the update API offered 2.2.0 as the next step.
-> - The plug did not offer that update again after a later return to 2.1.1 (`Shelly.CheckForUpdate` answered `{}`), so 2.2.0 went on with `python ota.py restore PlugSG3-v2` from 2.1.1: one run, the installer wrote to slot 1 (`Installing new PT1 (a00c9381)`, `Boot: cur 010003ff, new 010003ff, ... update? 0`), and the plug reported 2.2.0 with Matter still on.
+> - The plug came with Shelly 1.7.3. Shelly's own update (`Shelly.Update`, stable channel) took it to 2.1.1 (table of the `PlugSG3` profile) in one run. Right after that update, the plug listed 2.2.0 as the next stable step.
+> - Later the same day the plug ran 2.1.1 again, this time restored from the official 2.1.1 ZIP after a test of the same custom app with the `PlugSG3` profile. On that run it listed no update at all (`Shelly.CheckForUpdate` answered `{}`, twice). So 2.2.0 went on with `python ota.py restore PlugSG3-v2` from 2.1.1: one run, the installer wrote to slot 1 (`Installing new PT1 (a00c9381)`, `Boot: cur 010003ff, new 010003ff, ... update? 0`), and the plug reported 2.2.0 with Matter still on.
 > - `send PlugSG3-v2` with a plain package (no `--esphome-factory`, so `--force`), whose app was a custom ESP-IDF app and not ESPHome: the installer wrote to slot 0 and the device confirmed the update. That app then took the plug back to Shelly 2.2.0 from the official ZIP, which ran again from slot 0.
 >
 > **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `inspect --device`, a later ESPHome OTA, and the table in flash (no dump).
