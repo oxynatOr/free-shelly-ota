@@ -68,7 +68,7 @@ python ota.py send PlugMG3 out/PlugMG3-app-<date>.zip --ip <device IP>
 
 ## Supported devices
 
-**61 profiles:** ✅ 13 confirmed · 🟡 8 partly checked · 🔬 11 DevKit-tested · 🧪 29 untested
+**63 profiles:** ✅ 13 confirmed · 🟡 10 partly checked · 🔬 11 DevKit-tested · 🧪 29 untested
 
 Click a device for its page. Open a generation to see its devices: up to five that ran on real hardware, confirmed (✅) ones first, then partly checked (🟡). The counts cover every profile; the full list, with 🔬 and 🧪, is in the [device overview](docs/devices/README.md#devices).
 
@@ -90,7 +90,7 @@ All 18 Gen2 profiles: [device overview](docs/devices/README.md#gen2-esp32)
 </details>
 
 <details>
-<summary><b>Gen3 (ESP32-C3)</b>: 26 profiles: ✅ 9 · 🟡 5 · 🔬 0 · 🧪 12</summary>
+<summary><b>Gen3 (ESP32-C3)</b>: 28 profiles: ✅ 9 · 🟡 7 · 🔬 0 · 🧪 12</summary>
 
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
@@ -102,7 +102,7 @@ All 18 Gen2 profiles: [device overview](docs/devices/README.md#gen2-esp32)
 | [PM Mini Gen3 (no relay)](docs/devices/MiniPMG3.md) | ✅ |
 | [Multicolor Bulb E27 Gen3](docs/devices/RGBCCTBulbG3.md) | ✅ |
 
-All 26 Gen3 profiles: [device overview](docs/devices/README.md#gen3-esp32-c3)
+All 28 Gen3 profiles: [device overview](docs/devices/README.md#gen3-esp32-c3)
 
 </details>
 

@@ -209,7 +209,8 @@ class BuildOutputTests(unittest.TestCase):
 
     def test_config_problem_stops_before_the_compile(self):
         (self.tmp / "x.yaml").write_text("esp32: {}\n")
-        with mock.patch.object(ota.lint, "lint_esphome", return_value=["bad partition"]), \
+        with mock.patch.object(ota.compile_, "pick_runner", return_value="esphome"), \
+                mock.patch.object(ota.lint, "lint_esphome", return_value=["bad partition"]), \
                 mock.patch.object(ota.compile_, "compile_yaml") as comp:
             code, text = self.run_ota("build", "PlugMG3", "--compile", str(self.tmp / "x.yaml"))
         self.assertNotEqual(code, 0)

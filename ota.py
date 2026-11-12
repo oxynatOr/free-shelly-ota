@@ -16,7 +16,6 @@ import sys
 import tempfile
 import zipfile
 import textwrap
-import zipfile
 from pathlib import Path
 
 from shelly_ota import (MODULE_DIR, ble, buildinfo, builder, cacert, compile as compile_, devicegen, devkit, firmware, lint, logview, logwatch,
