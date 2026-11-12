@@ -1,6 +1,6 @@
 # First test image for the Shelly Plug S (Gen1, SHPLG-S): WiFi AP only, gen1_ota receiver, relay + button.
 # Relay GPIO15 is read from the stock firmware v1.14.0 (hard-coded, output).
-# Button GPIO13 is NOT confirmed (community value, not read from the firmware).
+# Button GPIO13 comes from the ESPHome device page for the Plug S (named tester) and worked on a real Plug S.
 # LEDs (GPIO0/GPIO2) and the HLW8012-type meter (GPIO12/5/14) are left out on purpose.
 esphome:
   name: plugs-test

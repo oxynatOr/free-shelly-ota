@@ -26,8 +26,8 @@ current rom 0, previous rom 1, unconfirmed flag 0, attempts 0 (boot confirmed), 
 - Starts its own WiFi access point `plugs-test` (no WiFi credentials of yours are needed or stored).
 - Runs the `gen1_ota` receiver on port 8267 (password from your `secrets.yaml`) and confirms the boot to rBoot after 10 s.
 - Relay on GPIO15 (read from the stock firmware v1.14.0: hard-coded output). Starts OFF.
-- Button on GPIO13 toggles the relay. **GPIO13 is not confirmed**, it is a community value, not read from the firmware.
-- Left out on purpose: LEDs (GPIO0/GPIO2), power meter (GPIO12/5/14), all unconfirmed.
+- Button on GPIO13 toggles the relay. GPIO13 comes from the ESPHome device page for the Plug S (its configuration is credited to a named tester) and worked on a real Plug S.
+- Left out on purpose: LEDs (GPIO0/GPIO2) and power meter (GPIO12/5/14). They are documented on the same device page, but nobody has tried them on a plug in this project yet.
 
 ## What you need
 
@@ -135,7 +135,7 @@ if the stock does not come up, the way back is UART and your backup.
 
 `example-plugs-meter.yaml` is the first test image plus both LEDs and the power meter. Only the relay is read from the firmware; the LED pins
 (GPIO0 red, GPIO2 blue), the meter pins (GPIO12 select, GPIO5 CF, GPIO14 CF1) and the meter values (current resistor, voltage divider) come
-from the ESPHome device page for the Plug S and are **not confirmed**. The readings are not calibrated, they only show whether the meter is
+from the ESPHome device page for the Plug S, which credits a named tester for the configuration. Nobody has tried them on a plug in this project yet. The readings are not calibrated, they only show whether the meter is
 wired the way the device page says. The image ran on the dev board (it starts and configures all of it); no signal was on the pins there.
 
 - Build it like the first image, with `example-plugs-meter.yaml` instead (the Docker command compiles `/config/example-plugs-meter.yaml`, the
@@ -158,4 +158,4 @@ wired the way the device page says. The image ran on the dev board (it starts an
 - One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there, and putting ESPHome back through the stock updater after `revert` failed there once (cause open).
 - The `boot` part is never replaced (the stock updater marks it `update: false`).
 - Power loss at other moments of the copy, repeated updates.
-- Relay level and the pins of button, LEDs and meter are not confirmed.
+- Relay (`GPIO15`, read from the firmware) and button (`GPIO13`, device page) are confirmed on one real plug, including the relay level. The LED and meter pins and the meter values are documented on the device page, but not yet tried on a plug in this project.

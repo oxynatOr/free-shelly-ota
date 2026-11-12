@@ -1,7 +1,8 @@
 # Second test image for the Shelly Plug S (Gen1, SHPLG-S): the first one (example-plugs-test.yaml) plus both LEDs and the power meter.
-# Relay GPIO15 is read from the stock firmware v1.14.0 and worked on a real plug. Everything else here is NOT confirmed on a real plug:
-# button GPIO13 worked on one plug, but the LED pins (GPIO0 red, GPIO2 blue) and the meter pins (GPIO12 select, GPIO5 CF, GPIO14 CF1)
-# and the values of the meter (current resistor, voltage divider) come from the ESPHome device page for the Plug S, not from the firmware.
+# Relay GPIO15 is read from the stock firmware v1.14.0, button GPIO13 comes from the ESPHome device page; both worked on a real plug.
+# The LED pins (GPIO0 red, GPIO2 blue), the meter pins (GPIO12 select, GPIO5 CF, GPIO14 CF1) and the meter values (current resistor,
+# voltage divider) come from the same ESPHome device page for the Plug S, which credits a named tester for the configuration. They
+# have not been tried on a plug in this project yet.
 # There is no calibration: the readings only say whether the meter is wired the way the device page says, not how accurate it is.
 #
 # How to see it, WITHOUT a UART adapter (never connect a UART adapter to a plug that is on mains): join the network "plugs-meter" and use
