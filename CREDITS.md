@@ -110,6 +110,7 @@ Sources and tools from outside this project. Their work is not redistributed her
 </tr></thead>
 <tbody>
 <tr><td valign="top">Shelly / Allterco Robotics</td><td valign="top">The official OTA packages and the update API (not redistributed here)</td></tr>
+<tr><td valign="top"><a href="https://devices.esphome.io/devices/shelly-plug-s/">ESPHome device page for the Shelly Plug S</a>: <a href="https://github.com/gieljnssns">gieljnssns</a> (tested the configuration), Tasmota (blakadder's template for the BlitzWolf SHP6) and <a href="https://community.home-assistant.io/u/tijmen/summary">Tijmen</a></td><td valign="top">The pins and the first meter values of the Plug S Gen1 in <code>experimental/gen1</code> (facts only; the page is GPL-3.0, its configuration text is not copied)</td></tr>
 <tr><td valign="top"><a href="https://esphome.io">ESPHome</a>, Espressif (esptool, ESP-IDF)</td><td valign="top">The firmware framework and tooling everything builds on</td></tr>
 </tbody></table>
 

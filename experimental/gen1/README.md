@@ -194,6 +194,11 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
 
 ## Files
 
+`plugs.yaml` is a complete ESPHome configuration for the Plug S Gen1 (WiFi with the plug's own network as fallback, API, relay, button, both LEDs,
+meter with limits, energy, temperature, `gen1_ota` instead of `ota:`), written from the ESPHome documentation with the pins and values of the ESPHome
+device page. It built, started and kept its fallback network on the dev board; the LED, meter and temperature parts have not been tried on a plug.
+`example-plugs-test.yaml` and `example-plugs-meter.yaml` are the small test images used for the first runs.
+
 | Path | Purpose |
 |---|---|
 | `components/gen1_ota/` | the ESPHome component (Python glue, C++ receiver, `layout.py`, `partitions/*.csv` per model; the linker script is generated) |

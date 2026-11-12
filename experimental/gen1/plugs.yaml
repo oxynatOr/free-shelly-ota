@@ -1,0 +1,198 @@
+# Shelly Plug S (Gen1, SHPLG-S) as a complete ESPHome configuration, for the rBoot route of this folder (gen1_ota, not ESPHome's own ota).
+#
+# Where the facts come from: the relay (GPIO15) was read from the stock firmware v1.14.0; relay and button (GPIO13) work on a real Plug S
+# in this project. The LEDs (GPIO0 red, GPIO2 blue), the BL0937 meter (GPIO12 select, GPIO5 CF, GPIO14 CF1), the NTC on A0 and the first
+# meter values (current resistor, voltage divider) are documented on the ESPHome device page for the Plug S
+# (https://devices.esphome.io/devices/shelly-plug-s/), whose configuration credits gieljnssns as tester and thanks Tasmota (blakadder's
+# template for the BlitzWolf SHP6) and Tijmen. That page is GPL-3.0; this file is written from the ESPHome documentation and uses only
+# those facts (pins, resistor and divider values), not the page's text. The LED, meter and NTC parts have not been tried on a plug in this
+# project yet. The meter is NOT calibrated, see the note at "power".
+#
+# What is different from the device page: no `ota:` block (ESPHome's own OTA needs the eboot bootloader, a Shelly Gen1 keeps rBoot), and
+# `gen1_ota` instead; the partition table name tells it where the slots are. Nothing here replaces the stock firmware: it stays in the
+# other slot, and `python tools/gen1_ota.py revert --host <ip>` boots it again.
+#
+# Install and update: see PLUGS-TEST.md (first install through Shelly's updater with a package from tools/make_stock_pkg.py, later
+# updates with tools/gen1_ota.py send). Keep the `wifi: ap:` block: if the WiFi fails, the plug opens its own network and the update tool
+# can still reach it at 192.168.4.1. Never connect a UART adapter to a plug that is on mains.
+#
+# Secrets (see secrets.yaml.example): wifi_ssid, wifi_password, ap_password, api_key, gen1_ota_password.
+substitutions:
+  name: shelly-plug-s
+  friendly: "Shelly Plug S"
+  # BL0937 meter, values of the ESPHome device page: a higher current_resistor lowers the reading, a higher voltage_divider raises the
+  # voltage reading. Calibrate with a known load (see "power").
+  current_resistor: "0.000943"
+  voltage_divider: "2066"
+  # protection limits of the 10 A plug (not a safety device, the meter is not calibrated)
+  max_current: "10"
+  max_power: "2400"
+  max_temp: "70.0"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly}
+
+esp8266:
+  board: esp_wroom_02
+
+external_components:
+  - source:
+      type: local
+      path: components
+  # Instead of a local copy of this folder (NOT tested yet):
+  # - source:
+  #     type: git
+  #     url: https://github.com/oxynatOr/free-shelly-ota
+  #     ref: feature/gen1-ota-component
+  #     path: experimental/gen1/components
+
+logger:
+  baud_rate: 115200
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # own network if the WiFi is not reachable (keep it: gen1_ota can be reached there)
+  ap:
+    ssid: ${name}
+    password: !secret ap_password
+
+api:
+  encryption:
+    key: !secret api_key
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+# No `ota:` block: ESPHome's own OTA needs eboot, which a Shelly Gen1 does not have.
+gen1_ota:
+  password: !secret gen1_ota_password
+  partitions: SHPLG-S-stock.csv
+
+# blue LED: ESPHome's status LED (blinks while WiFi or the API have a problem)
+status_led:
+  pin:
+    number: GPIO2
+    inverted: true
+
+output:
+  # red LED, follows the relay
+  - platform: gpio
+    id: red_led
+    pin:
+      number: GPIO0
+      inverted: true
+
+switch:
+  - platform: gpio
+    id: relay
+    name: "Relay"
+    pin: GPIO15
+    # off after a power cut. RESTORE_DEFAULT_OFF brings back the last state instead; do that only if a load switching on by itself is fine.
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - output.turn_on: red_led
+    on_turn_off:
+      - output.turn_off: red_led
+
+binary_sensor:
+  - platform: gpio
+    name: "Button"
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - switch.toggle: relay
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi signal"
+    update_interval: 300s
+
+  - platform: hlw8012
+    model: BL0937
+    sel_pin:
+      number: GPIO12
+      inverted: true
+    cf_pin: GPIO5
+    cf1_pin: GPIO14
+    current_resistor: ${current_resistor}
+    voltage_divider: ${voltage_divider}
+    update_interval: 10s
+    current:
+      name: "Current"
+      id: current
+      on_value_range:
+        - above: ${max_current}
+          then:
+            - logger.log:
+                level: WARN
+                format: "Relay switched off: current above ${max_current} A"
+            - switch.turn_off: relay
+    voltage:
+      name: "Voltage"
+    power:
+      name: "Power"
+      id: power
+      # Calibration: put a steady load on the plug (a lamp or a kettle), compare "Power" with a reference meter, and add
+      #   filters:
+      #     - calibrate_linear:
+      #         - 0.0 -> 0.0
+      #         - <value shown by the plug> -> <value of the reference meter>
+      # The same for Voltage and Current if you want them accurate. Without it the values are only a rough guide.
+      on_value_range:
+        - above: ${max_power}
+          then:
+            - logger.log:
+                level: WARN
+                format: "Relay switched off: power above ${max_power} W"
+            - switch.turn_off: relay
+
+  - platform: total_daily_energy
+    name: "Energy today"
+    power_id: power
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    accuracy_decimals: 3
+
+  # internal temperature: NTC on the analog input, 32 kOhm to ground in the voltage divider (values of the ESPHome device page)
+  - platform: adc
+    id: temp_adc
+    pin: A0
+    update_interval: 10s
+  - platform: resistance
+    id: temp_resistance
+    sensor: temp_adc
+    configuration: DOWNSTREAM
+    resistor: 32kOhm
+  - platform: ntc
+    sensor: temp_resistance
+    name: "Temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    calibration:
+      b_constant: 3350
+      reference_resistance: 10kOhm
+      reference_temperature: 298.15K
+    # An open or shorted sensor (and a board without the NTC, like a dev board) gives nonsense: ignore readings outside -40 to 150 C and
+    # use the median of 5 readings, so one outlier cannot switch the relay off. If the plug switches itself off for "temperature" on the
+    # first run, look at the "Temperature" value before you trust it, and remove the on_value_range block below if it is wrong.
+    filters:
+      - lambda: |-
+          if (x < -40.0 || x > 150.0) return {};
+          return x;
+      - median:
+          window_size: 5
+          send_every: 3
+          send_first_at: 3
+    on_value_range:
+      - above: ${max_temp}
+        then:
+          - logger.log:
+              level: WARN
+              format: "Relay switched off: temperature above ${max_temp} C"
+          - switch.turn_off: relay

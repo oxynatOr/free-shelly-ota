@@ -153,6 +153,16 @@ wired the way the device page says. The image ran on the dev board (it starts an
 - Report: which LED lights when, whether red and blue are the right way round, whether the load is really switched on when the page says
   `ON`, and the readings with and without load.
 
+## The complete configuration
+
+`plugs.yaml` is the configuration meant for daily use: your WiFi (with the plug's own network `shelly-plug-s` as fallback), the API, relay,
+button, both LEDs, the meter with limits, daily energy and the temperature, and `gen1_ota` for updates. Use it after the first install and the
+two small tests worked. Fill `secrets.yaml` (`wifi_ssid`, `wifi_password`, `ap_password`, `api_key`, `gen1_ota_password`), build it like the test
+images (compile `/config/plugs.yaml`, firmware in `/cache/data/build/shelly-plug-s/.pioenvs/shelly-plug-s/firmware.bin`, convert, `send`). The
+image is about 400 kB; the receiver accepts up to 425,984 bytes. The LED, meter and temperature parts are from the ESPHome device page and not
+yet tried on a plug in this project; the meter is not calibrated. Keep the `wifi: ap:` block: if the WiFi fails, the plug opens its own network
+and `send` and `revert` still reach it at `192.168.4.1`.
+
 ## Open points
 
 - One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there, and putting ESPHome back through the stock updater after `revert` failed there once (cause open).
