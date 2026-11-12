@@ -102,7 +102,7 @@ post the serial log (115200 baud).
 
 ## Second update and the way back (optional, after the first test worked)
 
-Only with the UART adapter ready and your backup safe. `send` and `revert` worked on one real plug (2026-11-11); putting ESPHome back through the stock updater afterwards did not work there yet (cause open, it worked on the dev board).
+Only with the UART adapter ready and your backup safe. `send` and `revert` worked on one real plug (2026-11-11); putting ESPHome back through the stock updater afterwards did not work there: `revert` of the first image left byte 9 of the rBoot config at 1, and then the stock does not write a new package (see "The stock does not install after `revert`" below). Images built after 2026-11-12 clear it.
 
 What you need:
 
@@ -130,6 +130,24 @@ Steps:
 Good to know: `revert` refuses (`ERR stock`) if the other slot holds no valid image, and `ERR state` if the plug does not run from slot 0.
 After a `revert` there is no automatic fallback to ESPHome (the stock treats a set flag as a fresh update and drops it, see the README), so
 if the stock does not come up, the way back is UART and your backup.
+
+## The stock does not install after `revert`
+
+Symptom: after `revert` you fire the update URL, the plug restarts after about ten seconds, and the stock firmware is back, no `plugs-test`.
+The stock did download the package, but it did not write it. Cause: byte 9 of the rBoot config sector (`0x7000` on the Plug S) is `01`; the stock
+sets it when it installs a package, and a `revert` from an image built before 2026-11-12 did not clear it. While it is `01` the stock does not write
+a new package. How to see it: read the config (`esptool read-flash 0x7000 0x1000 cfg.bin`, the plug unplugged and powered by the adapter) and look at
+the 10th byte (the first 16 bytes as hex: `e1 01 00 01 00 02 00 00 00 01 ...`). Clear it once:
+
+```
+esptool read-flash 0x7000 0x1000 cfg.bin
+python -c "d=bytearray(open('cfg.bin','rb').read()); print(d[:16].hex(' ')); d[9]=0; open('cfg_fixed.bin','wb').write(d)"
+esptool write-flash 0x7000 cfg_fixed.bin
+```
+
+The `print` shows the bytes before the change; it should start with `e1 01 00 01 00 02 00 00 00 01` (current slot 1, byte 9 is 1). Only that one
+byte changes. Then the update URL works again. Build the next image with the current branch: its `revert` clears byte 9 itself, so this is needed only once.
+Do not do it while the plug runs ESPHome from slot 0 and you do not know why; ask first.
 
 ## LEDs and power meter (optional third test, needs a load)
 
@@ -165,7 +183,7 @@ and `send` and `revert` still reach it at `192.168.4.1`.
 
 ## Open points
 
-- One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there, and putting ESPHome back through the stock updater after `revert` failed there once (cause open).
+- One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there. Installing again after `revert` failed there because of byte 9 (see below); that fix ran on the dev board only.
 - The `boot` part is never replaced (the stock updater marks it `update: false`).
 - Power loss at other moments of the copy, repeated updates.
 - Relay (`GPIO15`, read from the firmware) and button (`GPIO13`, device page) are confirmed on one real plug, including the relay level. The LED and meter pins and the meter values are documented on the device page, but not yet tried on a plug in this project.

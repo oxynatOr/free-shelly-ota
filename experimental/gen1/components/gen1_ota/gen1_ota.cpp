@@ -71,6 +71,7 @@ static uint32_t crc32_update(uint32_t crc, const uint8_t *p, size_t n) {
 static uint32_t le32(const uint8_t *p) { return p[0] | (p[1] << 8) | (p[2] << 16) | ((uint32_t) p[3] << 24); }
 
 // rBoot config sector: [0]=0xE1 magic, [1]=version, [3]=current rom, [5]=rom count, [6]=previous rom, [7]=unconfirmed flag,
+// [9]=set to 1 by the stock's updater (found on a real plug; the stock does not write a new package while it is 1; `revert` clears it),
 // [8]=boot attempts, rom addresses at 0x0c and 0x10.
 static bool layout_ok(uint32_t *buf) {
   const uint8_t *b = reinterpret_cast<const uint8_t *>(buf);
@@ -165,6 +166,7 @@ static const char *revert_to_stock(uint32_t *buf) {
   b[6] = 0;
   b[7] = 0;
   b[8] = 0;
+  b[9] = 0;  // the stock sets this byte when it installs an update; while it is 1 the stock downloads a new package but does not write it
   if (spi_flash_erase_sector(CFG / SEC) != SPI_FLASH_RESULT_OK) return "ERR flash\n";
   if (spi_flash_write(CFG, buf, SEC) != SPI_FLASH_RESULT_OK) return "ERR flash\n";
   return nullptr;
