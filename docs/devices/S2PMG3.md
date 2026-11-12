@@ -17,7 +17,7 @@ Gen3 / ESP32-C3.
 | --- | --- |
 | Profile | `S2PMG3`, `S2PMG3-v2` (for Shelly's 2.2.0 layout, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
-| Official package | 2.1.0 |
+| Official package | 2.2.0 (stable, seen 2026-11-11), with the layout of `S2PMG3-v2`. The `S2PMG3` profile needs a 2.1.x package: on 2026-11-11 Shelly's own stable update took a unit on 1.4.99 to 2.1.1 first (`fetch S2PMG3 --from-version 1.4.99` asks the update API for that step; not run) |
 | Partition table | `0x10000` |
 | App slot size | `0x2c0000` |
 | ESPHome device page | [Shelly 2 PM Gen3](https://devices.esphome.io/devices/shelly-2-pm-gen3/) |
