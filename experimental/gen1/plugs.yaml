@@ -15,15 +15,23 @@
 # other slot, and `python tools/gen1_ota.py revert --host <ip>` boots it again.
 #
 # Install and update: see PLUGS-TEST.md (first install through Shelly's updater with a package from tools/make_stock_pkg.py, later
-# updates with tools/gen1_ota.py send). Keep the `wifi: ap:` block: if the WiFi fails, the plug opens its own network and the update tool
-# can still reach it at 192.168.4.1. Never connect a UART adapter to a plug that is on mains.
+# updates with tools/gen1_ota.py send). Keep the `wifi: ap:` block, but do not rely on it: if the WiFi fails, the plug
+# starts its own network after about 90 seconds, yet on the ESP8266 it is only up between the WiFi retries and was reachable in about one
+# of six tries on the bench. Check the WiFi name and password twice; if they are wrong, UART and the backup are the safe way back.
+# While the WiFi works, the own network is not open: send and revert then go to the plug's address in your own network.
+# Never connect a UART adapter to a plug that is on mains.
+#
+# Tested with ESPHome 2026.10.0 only (Arduino core 3.1.2, SDK 2.2.1); the component hooks into that SDK, so build with that version
+# (the Docker image ghcr.io/esphome/esphome:2026.10.0, see PLUGS-TEST.md). The image is about 400 kB, the receiver takes up to 425,984.
 #
 # Secrets (see secrets.yaml.example): wifi_ssid, wifi_password, ap_password, api_key, gen1_ota_password.
 substitutions:
   name: shelly-plug-s
   friendly: "Shelly Plug S"
   # BL0937 meter, values of the ESPHome device page: a higher current_resistor lowers the reading, a higher voltage_divider raises the
-  # voltage reading. Calibrate with a known load (see "power").
+  # voltage reading. Calibrate with a known load (see "power"). One measurement on a real plug (a 41 W lamp, reference 41 W and about
+  # 239 V) read 250 V and 48.5 W with these values; that single point would give voltage_divider about 1973 and current_resistor
+  # about 0.00107. That is an estimate from one point and one reference meter, check it with two or three loads before you use it.
   current_resistor: "0.000943"
   voltage_divider: "2066"
   # protection limits of the 10 A plug (not a safety device, the meter is not calibrated)
@@ -51,16 +59,20 @@ external_components:
 
 logger:
   baud_rate: 115200
+  level: INFO
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  # own network if the WiFi is not reachable (keep it: gen1_ota can be reached there)
+  # own network if the WiFi is not reachable (flaky on the ESP8266 while the WiFi retries, see the header)
   ap:
     ssid: ${name}
     password: !secret ap_password
 
 api:
+  # The default (15 min) restarts the plug when no client connects, for example when you do not use Home Assistant. A restart switches
+  # the relay off (restore_mode below), so this is turned off.
+  reboot_timeout: 0s
   encryption:
     key: !secret api_key
 
@@ -181,8 +193,8 @@ sensor:
       reference_resistance: 10kOhm
       reference_temperature: 298.15K
     # An open or shorted sensor (and a board without the NTC, like a dev board) gives nonsense: ignore readings outside -40 to 150 C and
-    # use the median of 5 readings, so one outlier cannot switch the relay off. If the plug switches itself off for "temperature" on the
-    # first run, look at the "Temperature" value before you trust it, and remove the on_value_range block below if it is wrong.
+    # use the median of 5 readings. The NTC part has not been tried on a real plug, so the over-temperature switch-off below is OFF
+    # (commented out): look at the "Temperature" value first, and when it is plausible (room temperature when idle), remove the # signs.
     filters:
       - lambda: |-
           if (x < -40.0 || x > 150.0) return {};
@@ -191,10 +203,10 @@ sensor:
           window_size: 5
           send_every: 3
           send_first_at: 3
-    on_value_range:
-      - above: ${max_temp}
-        then:
-          - logger.log:
-              level: WARN
-              format: "Relay switched off: temperature above ${max_temp} C"
-          - switch.turn_off: relay
+    # on_value_range:
+    #   - above: ${max_temp}
+    #     then:
+    #       - logger.log:
+    #           level: WARN
+    #           format: "Relay switched off: temperature above ${max_temp} C"
+    #       - switch.turn_off: relay

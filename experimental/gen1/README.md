@@ -9,6 +9,8 @@ A first test route for the Gen1 Plug S is in [PLUGS-TEST.md](PLUGS-TEST.md) (dra
 
 ## What does not work yet
 
+The plug's own network as a fallback is flaky on the ESP8266. With a configuration that has a WiFi client and `ap:`, ESPHome 2026.10.0 starts it after about 90 seconds, but keeps retrying your WiFi at the same time and restarts the radio every few seconds, which takes the network down again. On the bench it was reachable in about one of six tries. So check the WiFi name and password twice before you send an image; if they are wrong, the safe way back is UART and the backup.
+
 ESPHome's own wireless install does not work on a Shelly Gen1: `ota:` (platform `esphome`), the ESPHome dashboard's "Install wirelessly" and
 `esphome upload` need the `eboot` bootloader, and a Gen1 keeps rBoot. Updates go through this folder's tool instead (`gen1_ota.py send` or `push`, see
 below), and a config must keep `gen1_ota:` and `wifi:` (with `ap:`) or the next update cannot reach the plug. Making the dashboard's wireless install work

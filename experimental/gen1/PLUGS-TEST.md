@@ -182,8 +182,7 @@ button, both LEDs, the meter with limits, daily energy and the temperature, and 
 two small tests worked. Fill `secrets.yaml` (`wifi_ssid`, `wifi_password`, `ap_password`, `api_key`, `gen1_ota_password`), build it like the test
 images (compile `/config/plugs.yaml`, firmware in `/cache/data/build/shelly-plug-s/.pioenvs/shelly-plug-s/firmware.bin`, convert, `send`). The
 image is about 400 kB; the receiver accepts up to 425,984 bytes. The LED, meter and temperature parts are from the ESPHome device page and not
-yet tried on a plug in this project; the meter is not calibrated. Keep the `wifi: ap:` block: if the WiFi fails, the plug opens its own network
-and `send` and `revert` still reach it at `192.168.4.1`.
+yet tried on a plug in this project; the meter is not calibrated. Keep the `wifi: ap:` block, but do not rely on it: On the ESP8266 the plug's own network is NOT a reliable way in while the WiFi fails: ESPHome 2026.10.0 starts it after about 90 seconds, but keeps retrying your WiFi at the same time and restarts the radio every few seconds, which takes the network down again. On the bench it was reachable in about one of six tries. So check the WiFi name and password twice before you send an image; if they are wrong, the safe way back is UART and the backup.
 
 ## Open points
 
