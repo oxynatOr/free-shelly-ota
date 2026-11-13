@@ -36,7 +36,9 @@ class FakePlug(http.server.BaseHTTPRequestHandler):
             return
         path = urllib.parse.unquote(self.path.lstrip("/"))
         if path in self.state:
-            self._send({"id": path, "value": self.state[path], "state": str(self.state[path])})
+            v = self.state[path]
+            # like the real plug: a number entity sends its value as text, a sensor as a number
+            self._send({"id": path, "value": ("%.4f" % v) if path.startswith("number/") else v, "state": str(v)})
         else:
             self.send_response(404)
             self.end_headers()

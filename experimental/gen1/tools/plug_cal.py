@@ -38,7 +38,14 @@ def _request(base: str, method: str, path: str, user: str, password: str, timeou
 
 
 def get_value(base, kind, name, user, password):
-    return _request(base, "GET", "/%s/%s" % (kind, name), user, password)["value"]
+    """The plug sends sensor values as numbers and the value of a number entity as text ("1.0000"); both come back as float."""
+    v = _request(base, "GET", "/%s/%s" % (kind, name), user, password)["value"]
+    if isinstance(v, str):
+        try:
+            return float(v)
+        except ValueError:
+            return float("nan")
+    return v
 
 
 def read_values(base, user, password, seconds, step=4.0, out=print):
