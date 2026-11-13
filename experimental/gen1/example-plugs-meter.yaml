@@ -2,8 +2,8 @@
 # Relay GPIO15 is read from the stock firmware v1.14.0, button GPIO13 comes from the ESPHome device page; both worked on a real plug.
 # The LED pins (GPIO0 red, GPIO2 blue), the meter pins (GPIO12 select, GPIO5 CF, GPIO14 CF1) and the meter values (current resistor,
 # voltage divider) come from the same ESPHome device page for the Plug S, which credits a named tester for the configuration. They
-# have not been tried on a plug in this project yet.
-# There is no calibration: the readings only say whether the meter is wired the way the device page says, not how accurate it is.
+# worked on a real plug (2026-11-13): both LEDs light as described below and the meter shows voltage, current and power.
+# There is no calibration: with a 41 W lamp (reference from another plug: 41 W, about 239 V) it read 250 V, 0.24 A and 48.5 W.
 #
 # How to see it, WITHOUT a UART adapter (never connect a UART adapter to a plug that is on mains): join the network "plugs-meter" and use
 # the JSON interface at 192.168.4.1 (user admin, password = your gen1_ota_password). The addresses use the NAME of the entity with its

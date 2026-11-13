@@ -154,7 +154,7 @@ Do not do it while the plug runs ESPHome from slot 0 and you do not know why; as
 `example-plugs-meter.yaml` is the first test image plus both LEDs and the power meter. Only the relay is read from the firmware; the LED pins
 (GPIO0 red, GPIO2 blue), the meter pins (GPIO12 select, GPIO5 CF, GPIO14 CF1) and the meter values (current resistor, voltage divider) come
 from the ESPHome device page for the Plug S, which credits a named tester for the configuration. Nobody has tried them on a plug in this project yet. The readings are not calibrated, they only show whether the meter is
-wired the way the device page says. The image ran on the dev board (it starts and configures all of it); no signal was on the pins there.
+wired the way the device page says. On a real plug (2026-11-13) both LEDs and the meter pins worked; a 41 W lamp read 250.2 V, 0.24 A and 48.5 W (reference from another plug: 41 W, about 239 V), so the values need calibration. The image ran on the dev board (it starts and configures all of it); no signal was on the pins there.
 
 - Build it like the first image, with `example-plugs-meter.yaml` instead (the Docker command compiles `/config/example-plugs-meter.yaml`, the
   firmware is in `/cache/data/build/plugs-meter/.pioenvs/plugs-meter/firmware.bin`), same password, and `send` it as a second update. Its own
@@ -187,7 +187,7 @@ and `send` and `revert` still reach it at `192.168.4.1`.
 
 ## Open points
 
-- One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there. Installing again after `revert` failed there because of byte 9 (see below); after the one-time UART fix it worked there. `revert` with the fixed image has not run on a real plug yet.
+- One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there. Installing again after `revert` failed there because of byte 9 (see below); after the one-time UART fix it worked there. `revert` with the fixed image and installing again without UART worked there too (2026-11-13).
 - The `boot` part is never replaced (the stock updater marks it `update: false`).
 - Power loss at other moments of the copy, repeated updates.
-- Relay (`GPIO15`, read from the firmware) and button (`GPIO13`, device page) are confirmed on one real plug, including the relay level (a lamp on the plug lights when the relay is on). The LED and meter pins and the meter values are documented on the device page, but not yet tried on a plug in this project.
+- Relay (`GPIO15`, read from the firmware) and button (`GPIO13`, device page) are confirmed on one real plug, including the relay level (a lamp on the plug lights when the relay is on). The LED pins (red `GPIO0`, blue `GPIO2`) and the meter pins (`GPIO12`, `GPIO5`, `GPIO14`) are confirmed on the same plug (2026-11-13); the meter values are not calibrated and the NTC temperature is not tried.

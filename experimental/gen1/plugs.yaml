@@ -5,8 +5,8 @@
 # meter values (current resistor, voltage divider) are documented on the ESPHome device page for the Plug S
 # (https://devices.esphome.io/devices/shelly-plug-s/), whose configuration credits gieljnssns as tester and thanks Tasmota (blakadder's
 # template for the BlitzWolf SHP6) and Tijmen. That page is GPL-3.0; this file is written from the ESPHome documentation and uses only
-# those facts (pins, resistor and divider values), not the page's text. The LED, meter and NTC parts have not been tried on a plug in this
-# project yet. The meter is NOT calibrated, see the note at "power".
+# those facts (pins, resistor and divider values), not the page's text. The LEDs and the meter wiring worked on a real plug (2026-11-13); the NTC
+# part has not been tried. The meter is NOT calibrated (a 41 W lamp read 48.5 W and 250 V against 41 W and 239 V), see the note at "power".
 #
 # ESPHome's wireless install (the dashboard's "Install wirelessly", `esphome upload`) does not work on a Gen1 yet, use `tools/gen1_ota.py send`;
 # keep `gen1_ota:` and `wifi:` with `ap:` in every config you flash, or the next update cannot reach the plug.

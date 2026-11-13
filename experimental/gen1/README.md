@@ -196,11 +196,11 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
 
 ## What is not tested
 
-- A real Shelly 1 or any Gen1 device other than the Plug S (on the Plug S the first start, the config afterwards, restarts after power cuts and the relay were reported; a second update and `revert` were not tried). Flash size assumed 2 MB, GPIO pins of the relay and input not set up in the example:
+- A real Shelly 1 or any Gen1 device other than the Plug S (on the Plug S the first start, the config afterwards, restarts after power cuts, the relay, a second update, `revert`, installing again afterwards, both LEDs and the meter wiring were reported; the three-update case, the NTC temperature and the meter calibration were not tried). Flash size assumed 2 MB, GPIO pins of the relay and input not set up in the example:
   the stock app uses GPIO4 for the relay and GPIO5 for the switch input, read from the firmware).
 - The `boot` part (rBoot itself), which the stock updater marks as not updatable.
 - A power cut during the one-sector config write of `revert`. On one real Plug S `send` and `revert` worked (the stock came back with its settings and WiFi); installing
-  ESPHome again afterwards failed because of byte 9 (see above); after the one-time UART fix it worked on that plug. `revert` with the fixed image has not run on a real plug yet.
+  ESPHome again afterwards failed because of byte 9 (see above); after the one-time UART fix it worked on that plug. `revert` with the fixed image and installing again without UART worked there too.
 - Power loss at other moments of the copy, and several updates in a row on the same device.
 - Images close to the 425,984 byte limit; a running image larger than the limit would overlap the staging area (the check only
   looks at incoming images).
@@ -210,7 +210,7 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
 
 `plugs.yaml` is a complete ESPHome configuration for the Plug S Gen1 (WiFi with the plug's own network as fallback, API, relay, button, both LEDs,
 meter with limits, energy, temperature, `gen1_ota` instead of `ota:`), written from the ESPHome documentation with the pins and values of the ESPHome
-device page. It built, started and kept its fallback network on the dev board; the LED, meter and temperature parts have not been tried on a plug.
+device page. It built, started and kept its fallback network on the dev board; the LEDs and the meter wiring were confirmed on a real plug with the test image (2026-11-13); the meter is not calibrated and the NTC temperature part has not been tried.
 `example-plugs-test.yaml` and `example-plugs-meter.yaml` are the small test images used for the first runs.
 
 | Path | Purpose |
