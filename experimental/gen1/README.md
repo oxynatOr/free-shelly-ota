@@ -7,6 +7,13 @@ firmware over the network, installs it into the app slot and arms rBoot's fallba
 Status: **tested on a Wemos D1 mini that carries the Shelly 1 or Plug S flash layout; on a real device only the first start of the Plug S test image was seen** (2026-11-11: access point up, button switched the relay). See "What is tested".
 A first test route for the Gen1 Plug S is in [PLUGS-TEST.md](PLUGS-TEST.md) (draft).
 
+## What does not work yet
+
+ESPHome's own wireless install does not work on a Shelly Gen1: `ota:` (platform `esphome`), the ESPHome dashboard's "Install wirelessly" and
+`esphome upload` need the `eboot` bootloader, and a Gen1 keeps rBoot. Updates go through this folder's tool instead (`gen1_ota.py send` or `push`, see
+below), and a config must keep `gen1_ota:` and `wifi:` (with `ap:`) or the next update cannot reach the plug. Making the dashboard's wireless install work
+(the component would speak ESPHome's OTA protocol and convert the image on the device) is a goal; it is not started.
+
 ## What it does
 
 - Receives a firmware image on a TCP port (default 8267), authenticated with a password (HMAC-SHA256 challenge/response).

@@ -173,6 +173,10 @@ wired the way the device page says. The image ran on the dev board (it starts an
 
 ## The complete configuration
 
+ESPHome's own wireless install (the dashboard's "Install wirelessly", `esphome upload`) does not work on a Gen1 yet: it needs the `eboot` bootloader, and
+the plug keeps rBoot. Build the image in ESPHome (or the Docker command above), then send it with `tools/gen1_ota.py send`. Making the dashboard's
+wireless install work is a goal, not started.
+
 `plugs.yaml` is the configuration meant for daily use: your WiFi (with the plug's own network `shelly-plug-s` as fallback), the API, relay,
 button, both LEDs, the meter with limits, daily energy and the temperature, and `gen1_ota` for updates. Use it after the first install and the
 two small tests worked. Fill `secrets.yaml` (`wifi_ssid`, `wifi_password`, `ap_password`, `api_key`, `gen1_ota_password`), build it like the test

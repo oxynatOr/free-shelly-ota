@@ -8,6 +8,8 @@
 # those facts (pins, resistor and divider values), not the page's text. The LED, meter and NTC parts have not been tried on a plug in this
 # project yet. The meter is NOT calibrated, see the note at "power".
 #
+# ESPHome's wireless install (the dashboard's "Install wirelessly", `esphome upload`) does not work on a Gen1 yet, use `tools/gen1_ota.py send`;
+# keep `gen1_ota:` and `wifi:` with `ap:` in every config you flash, or the next update cannot reach the plug.
 # What is different from the device page: no `ota:` block (ESPHome's own OTA needs the eboot bootloader, a Shelly Gen1 keeps rBoot), and
 # `gen1_ota` instead; the partition table name tells it where the slots are. Nothing here replaces the stock firmware: it stays in the
 # other slot, and `python tools/gen1_ota.py revert --host <ip>` boots it again.
