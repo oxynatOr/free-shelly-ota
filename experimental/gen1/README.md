@@ -193,7 +193,7 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
   the stock app uses GPIO4 for the relay and GPIO5 for the switch input, read from the firmware).
 - The `boot` part (rBoot itself), which the stock updater marks as not updatable.
 - A power cut during the one-sector config write of `revert`. On one real Plug S `send` and `revert` worked (the stock came back with its settings and WiFi); installing
-  ESPHome again afterwards failed because of byte 9 (see above), and the fix is tested on the dev board only.
+  ESPHome again afterwards failed because of byte 9 (see above); after the one-time UART fix it worked on that plug. `revert` with the fixed image has not run on a real plug yet.
 - Power loss at other moments of the copy, and several updates in a row on the same device.
 - Images close to the 425,984 byte limit; a running image larger than the limit would overlap the staging area (the check only
   looks at incoming images).

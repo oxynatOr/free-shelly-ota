@@ -102,7 +102,7 @@ post the serial log (115200 baud).
 
 ## Second update and the way back (optional, after the first test worked)
 
-Only with the UART adapter ready and your backup safe. `send` and `revert` worked on one real plug (2026-11-11); putting ESPHome back through the stock updater afterwards did not work there: `revert` of the first image left byte 9 of the rBoot config at 1, and then the stock does not write a new package (see "The stock does not install after `revert`" below). Images built after 2026-11-12 clear it.
+Only with the UART adapter ready and your backup safe. `send` and `revert` worked on one real plug (2026-11-11); putting ESPHome back through the stock updater afterwards did not work there: `revert` of the first image left byte 9 of the rBoot config at 1, and then the stock does not write a new package (see "The stock does not install after `revert`" below). Images built after 2026-11-12 clear it. After the one-time UART fix it worked on that plug (2026-11-13).
 
 What you need:
 
@@ -183,7 +183,7 @@ and `send` and `revert` still reach it at `192.168.4.1`.
 
 ## Open points
 
-- One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there. Installing again after `revert` failed there because of byte 9 (see below); that fix ran on the dev board only.
+- One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there. Installing again after `revert` failed there because of byte 9 (see below); after the one-time UART fix it worked there. `revert` with the fixed image has not run on a real plug yet.
 - The `boot` part is never replaced (the stock updater marks it `update: false`).
 - Power loss at other moments of the copy, repeated updates.
-- Relay (`GPIO15`, read from the firmware) and button (`GPIO13`, device page) are confirmed on one real plug, including the relay level. The LED and meter pins and the meter values are documented on the device page, but not yet tried on a plug in this project.
+- Relay (`GPIO15`, read from the firmware) and button (`GPIO13`, device page) are confirmed on one real plug, including the relay level (a lamp on the plug lights when the relay is on). The LED and meter pins and the meter values are documented on the device page, but not yet tried on a plug in this project.
