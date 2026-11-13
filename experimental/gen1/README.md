@@ -13,8 +13,8 @@ The plug's own network as a fallback is flaky on the ESP8266. With a configurati
 
 ESPHome's own wireless install does not work on a Shelly Gen1: `ota:` (platform `esphome`), the ESPHome dashboard's "Install wirelessly" and
 `esphome upload` need the `eboot` bootloader, and a Gen1 keeps rBoot. Updates go through this folder's tool instead (`gen1_ota.py send` or `push`, see
-below), and a config must keep `gen1_ota:` and `wifi:` (with `ap:`) or the next update cannot reach the plug. Making the dashboard's wireless install work
-(the component would speak ESPHome's OTA protocol and convert the image on the device) is a goal; it is not started.
+below), and a config must keep `gen1_ota:` and `wifi:` (with `ap:`) or the next update cannot reach the plug. A prototype for this exists on the bench (the component speaks ESPHome's OTA protocol and converts the image on the device, so a plain `esphome upload` works on an ESP8266
+dev board with the Shelly 1 layout); it is not in this repository yet and has not run on a real Gen1.
 
 ## What it does
 
