@@ -171,6 +171,31 @@ wired the way the device page says. On a real plug (2026-11-13) both LEDs and th
 - Report: which LED lights when, whether red and blue are the right way round, whether the load is really switched on when the page says
   `ON`, and the readings with and without load.
 
+## Calibrating the meter (optional, needs a load and a reference meter)
+
+The meter image now includes `plugs-cali.yaml` (adapted from the cali.yaml sketch for the Power Strip 4 Gen4): the scales for voltage, current and
+power are numbers in the plug, stored in flash, so you can change them without building a new image. It also measures faster: a value is
+refreshed about every 24 seconds (the plugs.yaml default is minutes). It has **not been tried on a real plug yet**; the build and the web calls are
+tested on the bench only.
+
+Reference: use the Shelly Plus Plug S V2 if you have one (voltage, current and power), the Gen1 Plug S with its stock firmware as a second one
+(power only). Put the reference in series: wall socket, reference plug, the plug under test, the load. Loads: a lamp, a PC in the BIOS, a fan of
+about 500 W, a hairdryer on the middle setting (about 1000 W). Not a compressor (start current), and stay below about 1800 W.
+
+With your PC in the network `plugs-meter` (password `change-me-please`, plug at `192.168.4.1`), `tools/plug_cal.py` does the web calls (the password is
+your `gen1_ota_password`, in `G1OT_PASSWORD`):
+
+1. Switch the load on (button, or `curl -u admin:PASSWORD -X POST http://192.168.4.1/switch/Relay/toggle`) and wait 1 minute.
+2. `python tools/plug_cal.py read --host 192.168.4.1 --seconds 90` prints the distinct values of Voltage, Current and Power and their mean.
+   Read the reference at the same time and write both down. This alone is enough for me to compute the factors.
+3. If you want to set the factor on the plug: `python tools/plug_cal.py calibrate power 41.0 --host 192.168.4.1` (the reference power in W),
+   likewise `voltage 239.5` or `current 0.17`. It sets the target, presses the button and prints the old and new scale (new = old * reference / shown).
+4. `python tools/plug_cal.py scales --host 192.168.4.1` shows the three scales and the thresholds, `reset` puts them back to 1.0.
+5. Repeat with a second and third load. If one factor fits all loads, the meter is linear and one number per quantity is enough.
+
+If a `calibrate` leaves the scale unchanged, there was no valid reading yet (put a load on and wait about 30 seconds), or the deviation was above 60 %.
+The log of the plug (UART, plug unplugged) has the line `cal: ...` with the numbers.
+
 ## The complete configuration
 
 ESPHome's own wireless install (the dashboard's "Install wirelessly", `esphome upload`) does not work on a Gen1 yet: it needs the `eboot` bootloader, and

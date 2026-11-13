@@ -213,7 +213,9 @@ Host side: `python -m pytest tests` (conversion, image check, protocol against a
 `plugs.yaml` is a complete ESPHome configuration for the Plug S Gen1 (WiFi with the plug's own network as fallback, API, relay, button, both LEDs,
 meter with limits, energy, temperature, `gen1_ota` instead of `ota:`), written from the ESPHome documentation with the pins and values of the ESPHome
 device page. It built, started and kept its fallback network on the dev board; the LEDs and the meter wiring were confirmed on a real plug with the test image (2026-11-13); the meter is not calibrated and the NTC temperature part has not been tried.
-`example-plugs-test.yaml` and `example-plugs-meter.yaml` are the small test images used for the first runs.
+`example-plugs-test.yaml` and `example-plugs-meter.yaml` are the small test images used for the first runs. `plugs-cali.yaml` is a package with runtime
+calibration of the BL0937 meter (scales for voltage, current and power as numbers in the plug, adapted from the cali.yaml sketch for the Power Strip 4 Gen4);
+`example-plugs-meter.yaml` includes it, and `tools/plug_cal.py` does its web calls. Not tried on a real plug yet.
 
 | Path | Purpose |
 |---|---|

@@ -1,0 +1,234 @@
+# plugs-cali.yaml - runtime calibration of the BL0937 meter of the Shelly Plug S Gen1 (a package for plugs.yaml and example-plugs-meter.yaml)
+# Adapted from the cali.yaml sketch for the Power Strip 4 Gen4. NOT tried on a real plug yet; the arithmetic is the same as there.
+#
+# What it does
+#   Scales the published voltage, current and power: published = raw * scale. The scales are numbers (stored in flash), so you can
+#   change them without building a new image. Values below an idle threshold are shown as 0.
+#   The daily energy of plugs.yaml follows the power value, so it is scaled with it. The 'Energy' sensor of example-plugs-meter.yaml
+#   (the chip's own counter) is not scaled.
+#
+# What your config needs
+#   The hlw8012 sensor with the id  hlw  (plugs.yaml and example-plugs-meter.yaml have it). Nothing else.
+#
+# Use it (in your main YAML)
+#   packages:
+#     cali: !include plugs-cali.yaml
+#
+# Calibrate (with the web interface of example-plugs-meter.yaml: tools/plug_cal.py does the web calls for you)
+#   1. Put a steady load on the plug and a reference meter in series (see PLUGS-TEST.md). Wait 1 minute for stable values.
+#   2. Enter the reference value in 'Cal Target Power' (W), 'Cal Target Voltage' (V) or 'Cal Target Current' (A).
+#   3. Press 'Calibrate Power' / 'Calibrate Voltage' / 'Calibrate Current'.
+#      new scale = old scale * (reference value / displayed value); the log line "cal: ..." and the number 'Cal Scale ...' show it.
+#   4. Check with a second load; if one factor does not fit both, the meter is not linear and we need a second point.
+#
+# Faster measuring: the meter measures voltage and current in turns. plugs.yaml / the meter image measure every 10 s and change every
+# 8 steps, so one value is refreshed every few minutes. This package measures every 4 s and changes every 2 steps (about 24 s per value).
+
+globals:
+  # last value after the scale, before the idle threshold; the calibration reads these
+  - {id: cal_shown_v, type: float, initial_value: 'NAN'}
+  - {id: cal_shown_i, type: float, initial_value: 'NAN'}
+  - {id: cal_shown_p, type: float, initial_value: 'NAN'}
+
+number:
+  - platform: template
+    name: "Cal Scale Voltage"
+    id: cal_scale_v
+    optimistic: true
+    restore_value: true
+    initial_value: 1.0
+    min_value: 0.5
+    max_value: 2.0
+    step: 0.0001
+    mode: box
+    entity_category: config
+  - platform: template
+    name: "Cal Scale Current"
+    id: cal_scale_i
+    optimistic: true
+    restore_value: true
+    initial_value: 1.0
+    min_value: 0.5
+    max_value: 2.0
+    step: 0.0001
+    mode: box
+    entity_category: config
+  - platform: template
+    name: "Cal Scale Power"
+    id: cal_scale_p
+    optimistic: true
+    restore_value: true
+    initial_value: 1.0
+    min_value: 0.5
+    max_value: 2.0
+    step: 0.0001
+    mode: box
+    entity_category: config
+
+  - platform: template
+    name: "Cal Idle Power"
+    id: cal_idle_power
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    min_value: 0
+    max_value: 20
+    step: 0.1
+    mode: box
+    entity_category: config
+    unit_of_measurement: "W"
+  - platform: template
+    name: "Cal Idle Current"
+    id: cal_idle_current
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    min_value: 0
+    max_value: 0.5
+    step: 0.001
+    mode: box
+    entity_category: config
+    unit_of_measurement: "A"
+
+  # Largest allowed deviation between displayed and reference value; more aborts the calibration.
+  - platform: template
+    name: "Cal Max Deviation"
+    id: cal_max_dev
+    optimistic: true
+    restore_value: true
+    initial_value: 60
+    min_value: 1
+    max_value: 90
+    step: 1
+    mode: box
+    entity_category: config
+    unit_of_measurement: "%"
+
+  - platform: template
+    name: "Cal Target Voltage"
+    id: cal_target_voltage
+    optimistic: true
+    restore_value: false
+    initial_value: 0
+    min_value: 0
+    max_value: 300
+    step: 0.1
+    mode: box
+    entity_category: config
+    unit_of_measurement: "V"
+  - platform: template
+    name: "Cal Target Current"
+    id: cal_target_current
+    optimistic: true
+    restore_value: false
+    initial_value: 0
+    min_value: 0
+    max_value: 16
+    step: 0.001
+    mode: box
+    entity_category: config
+    unit_of_measurement: "A"
+  - platform: template
+    name: "Cal Target Power"
+    id: cal_target_power
+    optimistic: true
+    restore_value: false
+    initial_value: 0
+    min_value: 0
+    max_value: 3680
+    step: 0.1
+    mode: box
+    entity_category: config
+    unit_of_measurement: "W"
+
+# The filters are appended to the ones in your config.
+sensor:
+  - id: !extend hlw
+    update_interval: 4s
+    change_mode_every: 2
+    voltage:
+      filters:
+        - lambda: |-
+            float v = x * id(cal_scale_v).state;
+            id(cal_shown_v) = v;
+            return v;
+    current:
+      filters:
+        - lambda: |-
+            float v = x * id(cal_scale_i).state;
+            id(cal_shown_i) = v;
+            return fabsf(v) < id(cal_idle_current).state ? 0.0f : v;
+    power:
+      filters:
+        - lambda: |-
+            float v = x * id(cal_scale_p).state;
+            id(cal_shown_p) = v;
+            return fabsf(v) < id(cal_idle_power).state ? 0.0f : v;
+
+script:
+  # new scale = old scale * (reference value / displayed value)
+  - id: cal_run
+    mode: single
+    parameters:
+      quantity: string  # "voltage" | "current" | "power"
+      measured: float   # reference meter value
+    then:
+      - lambda: |-
+          if (measured <= 0.0f) {
+            ESP_LOGW("cal", "Aborted: a reference value > 0 is needed");
+            return;
+          }
+          float shown = NAN;
+          esphome::number::Number *n = nullptr;
+          if (quantity == "voltage") {
+            shown = id(cal_shown_v); n = id(cal_scale_v);
+          } else if (quantity == "current") {
+            shown = id(cal_shown_i); n = id(cal_scale_i);
+          } else {
+            shown = id(cal_shown_p); n = id(cal_scale_p);
+          }
+          float old_scale = n->state;
+          if (std::isnan(shown) || std::isnan(old_scale) || shown <= 0.0f) {
+            ESP_LOGW("cal", "Aborted: no valid reading yet (is a load plugged in? the values refresh every ~24 s)");
+            return;
+          }
+          float dev = (shown / measured - 1.0f) * 100.0f;
+          float limit = std::isnan(id(cal_max_dev).state) ? 60.0f : id(cal_max_dev).state;
+          if (fabsf(dev) > limit) {
+            ESP_LOGW("cal", "Aborted: deviation %.1f%% exceeds limit %.0f%% (shown %.3f, reference %.3f)", dev, limit, shown, measured);
+            return;
+          }
+          float new_scale = old_scale * (measured / shown);
+          ESP_LOGW("cal", "%s: shown %.3f vs reference %.3f (%+.2f%%) -> scale %.4f => %.4f", quantity.c_str(), shown, measured, dev, old_scale, new_scale);
+          n->publish_state(new_scale);
+
+  - id: cal_reset
+    mode: single
+    then:
+      - number.set: {id: cal_scale_v, value: 1.0}
+      - number.set: {id: cal_scale_i, value: 1.0}
+      - number.set: {id: cal_scale_p, value: 1.0}
+      - number.set: {id: cal_idle_power, value: 0}
+      - number.set: {id: cal_idle_current, value: 0}
+
+button:
+  - platform: template
+    name: "Calibrate Voltage"
+    entity_category: config
+    on_press:
+      - script.execute: {id: cal_run, quantity: "voltage", measured: !lambda "return id(cal_target_voltage).state;"}
+  - platform: template
+    name: "Calibrate Current"
+    entity_category: config
+    on_press:
+      - script.execute: {id: cal_run, quantity: "current", measured: !lambda "return id(cal_target_current).state;"}
+  - platform: template
+    name: "Calibrate Power"
+    entity_category: config
+    on_press:
+      - script.execute: {id: cal_run, quantity: "power", measured: !lambda "return id(cal_target_power).state;"}
+  - platform: template
+    name: "Reset Calibration"
+    entity_category: config
+    on_press:
+      - script.execute: cal_reset

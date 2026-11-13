@@ -127,6 +127,7 @@ sensor:
     update_interval: 300s
 
   - platform: hlw8012
+    id: hlw
     model: BL0937
     sel_pin:
       number: GPIO12

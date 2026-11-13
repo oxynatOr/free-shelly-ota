@@ -15,6 +15,11 @@
 # stays empty: use the addresses above.
 #   - press the button: the relay toggles, the red LED follows the relay, the blue LED is lit while the button is held
 #   - put a known load on the relay (a lamp, a kettle) and look at "Power", "Voltage" and "Current"
+# Runtime calibration (adjustable scales for voltage, current and power, stored in flash; faster measuring): see plugs-cali.yaml and
+# tools/plug_cal.py.
+packages:
+  cali: !include plugs-cali.yaml
+
 esphome:
   name: plugs-meter
 
@@ -87,6 +92,7 @@ binary_sensor:
 
 sensor:
   - platform: hlw8012
+    id: hlw
     model: BL0937
     sel_pin:
       number: GPIO12
