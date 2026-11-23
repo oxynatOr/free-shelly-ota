@@ -28,6 +28,7 @@ body:
         - PlusPlugS (Plus Plug S, Gen2)
         - Pill (The Pill)
         - Mini1PMG3 (Mini 1PM Gen3)
+        - Mini1PMG3-v2 (Mini 1PM Gen3, 2.2.1 layout)
         - MiniPMG3 (PM Mini Gen3, measures only)
         - Mini1PMG4 (Mini 1PM Gen4)
         - Mini1PMG4ZB (Mini 1PM Gen4, Zigbee)

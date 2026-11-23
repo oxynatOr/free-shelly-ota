@@ -3,6 +3,7 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
+![State of 2.2.1 layout: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
@@ -12,11 +13,11 @@ This is the Mini with a relay; the measuring-only [PM Mini Gen3](MiniPMG3.md) is
 
 | Fact | Value |
 | --- | --- |
-| Profile | `Mini1PMG3` |
+| Profile | `Mini1PMG3` and `Mini1PMG3-v2` |
 | Flash | 8 MB |
-| Official package | 2.1.0 (stable since 2026-10-14; Bootloader, partition table and filesystem are the same as in 2.0.1) |
+| Official packages tested | 2.1.0 for `Mini1PMG3` and 2.2.1 for `Mini1PMG3-v2`. The 2.0.1 and 2.1.0 packages share the same bootloader, partition table and filesystem. |
 | Partition table | `0xf000` |
-| App slot size | `0x2a0000` |
+| App slot size | `0x2a0000` on the original layout and `0x300000` on the [2.2.1 layout](#221-layout) |
 | ESPHome device page | [Shelly 1PM Mini Gen3](https://devices.esphome.io/devices/shelly-1pm-mini-gen3/) |
 
 ## Before you start
@@ -108,6 +109,19 @@ package, reads the update target slot. Command reference: [Commands](../commands
 - **Not checked yet:** a second (ESPHome) OTA, which is what proves that the bootloader step took effect, the relay under a load (it is almost silent without one, like the Mini 1 Gen3) and the BL0942 readings. The state goes to confirmed with a report on these.
 - **Pins used in the report** (from the [ESPHome device page](https://devices.esphome.io/devices/shelly-1pm-mini-gen3/), the pins as such not verified): relay GPIO5, switch input GPIO10, button GPIO1 (inverted, pull-up), LED GPIO0 (inverted), BL0942 on UART TX GPIO6 / RX GPIO7 (RX with pull-up, as on the [PM Mini Gen3](MiniPMG3.md)), NTC GPIO3 with B 3950, 10 kOhm, `DOWNSTREAM`, as in the [Mini 1 Gen3 notes](Mini1G3.md).
 - Please report the file written by `--log-file`, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
+
+## 2.2.1 layout
+
+Use the `Mini1PMG3-v2` profile and `partitions/Mini1PMG3-v2-stock.csv` with the official Shelly 2.2.1 package. Substitute the profile and CSV in the steps above and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`. The partition table stays at `0xf000`, both app slots grow to `0x300000`, and the second slot and filesystems move. The stock CSV keeps the original partition flags.
+
+| Official package | Profile | `app_0` start | `app_1` start | App slot size |
+| --- | --- | --- | --- | --- |
+| 2.1.0 | `Mini1PMG3` | `0x20000` | `0x3a0000` | `0x2a0000` |
+| 2.2.1 | `Mini1PMG3-v2` | `0x20000` | `0x400000` | `0x300000` |
+
+**Hardware verified on one `S3SW-001P8EU` running stock 2.2.1, thanks to [broglea](https://github.com/broglea).** The installer wrote to slot 0, replaced the bootloader and reported success. ESPHome connected through its native API, accepted a later ESPHome OTA and reconnected after reboot. The relay and BL0942 were verified with an approximately 17 W lighting load.
+
+The first ESPHome build reported the relay on while current and power stayed at zero. In the follow-up build, the config released the GPIO5 pad hold after initializing the output off and enabled GPIO5 input for readback. The relay then switched the load. The follow-up also calibrated line voltage against the stock reading on that unit. The cause of the first relay failure and the electrical protection trip points remain unverified.
 
 ## Way back
 
