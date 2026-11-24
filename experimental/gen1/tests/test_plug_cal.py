@@ -48,6 +48,9 @@ class FakePlug(http.server.BaseHTTPRequestHandler):
             return
         path = urllib.parse.unquote(self.path.lstrip("/"))
         FakePlug.log.append(path)
+        if path.startswith("number/") and "/set?value=" in path:
+            name, value = path.split("/set?value=")
+            self.state[name] = float(value)
         if path == "button/Calibrate Power/press":
             ref = float(FakePlug.log[-2].split("value=")[1])
             self.state["number/Cal Scale Power"] = round(self.state["number/Cal Scale Power"] * ref / self.state["sensor/Power"], 4)
@@ -88,3 +91,14 @@ def test_read_counts_distinct_values_and_wrong_password_fails():
         raised = True
     srv.shutdown()
     assert raised
+
+
+def test_set_scales_sets_the_numbers_and_reports_them():
+    FakePlug.log.clear()
+    srv = serve()
+    base = "http://127.0.0.1:%d" % srv.server_address[1]
+    lines = []
+    plug_cal.set_scales(base, {"voltage": 0.9186, "power": 0.8649}, "admin", "secret", out=lines.append)
+    srv.shutdown()
+    assert FakePlug.log == ["number/Cal Scale Voltage/set?value=0.9186", "number/Cal Scale Power/set?value=0.8649"]
+    assert "0.9186" in lines[0] and "0.8649" in lines[1]

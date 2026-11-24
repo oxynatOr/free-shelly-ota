@@ -4,6 +4,7 @@
   plug_cal.py read --host H [--seconds 90]      read voltage, current and power for a while; print the distinct values and their mean
   plug_cal.py calibrate voltage|current|power VALUE --host H   set the reference value and press the calibrate button
   plug_cal.py scales --host H                   print the scales and the thresholds
+  plug_cal.py set-scales --host H [--voltage F] [--current F] [--power F]   set the scales directly (for example the values worked out from a measurement series)
   plug_cal.py reset --host H                    put all scales back to 1.0 and the thresholds to 0
 
 The plug answers on port 80 with user "admin" and the gen1_ota password (environment variable G1OT_PASSWORD or --password-file).
@@ -83,6 +84,17 @@ def calibrate(base, quantity, value, user, password, out=print):
     return before, after
 
 
+def set_scales(base, values, user, password, out=print):
+    """values: {"voltage": 0.9186, ...}; sets the 'Cal Scale ...' numbers and prints them as the plug has them afterwards."""
+    for quantity, value in values.items():
+        name = QUANTITIES[quantity][2]
+        _request(base, "POST", "/number/%s/set?value=%s" % (name, value), user, password)
+    time.sleep(0.5)
+    for quantity in values:
+        name = QUANTITIES[quantity][2]
+        out("%-20s %.4f" % (name, get_value(base, "number", name, user, password)))
+
+
 def _password(args) -> str:
     if args.password_file:
         return open(args.password_file, encoding="utf-8").read().strip()
@@ -95,7 +107,7 @@ def _password(args) -> str:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("read", "calibrate", "scales", "reset"):
+    for name in ("read", "calibrate", "scales", "set-scales", "reset"):
         p = sub.add_parser(name)
         p.add_argument("--host", required=True)
         p.add_argument("--port", type=int, default=80)
@@ -103,6 +115,9 @@ def main(argv=None) -> int:
         p.add_argument("--password-file")
         if name == "read":
             p.add_argument("--seconds", type=float, default=90.0)
+        if name == "set-scales":
+            for q in sorted(QUANTITIES):
+                p.add_argument("--" + q, type=float)
         if name == "calibrate":
             p.add_argument("quantity", choices=sorted(QUANTITIES))
             p.add_argument("value", type=float)
@@ -114,6 +129,11 @@ def main(argv=None) -> int:
             read_values(base, args.user, pw, args.seconds)
         elif args.cmd == "calibrate":
             calibrate(base, args.quantity, args.value, args.user, pw)
+        elif args.cmd == "set-scales":
+            values = {q: getattr(args, q) for q in sorted(QUANTITIES) if getattr(args, q) is not None}
+            if not values:
+                sys.exit("give at least one of --voltage, --current, --power")
+            set_scales(base, values, args.user, pw)
         elif args.cmd == "scales":
             for n in SETTINGS:
                 print("%-20s %s" % (n, get_value(base, "number", n, args.user, pw)))

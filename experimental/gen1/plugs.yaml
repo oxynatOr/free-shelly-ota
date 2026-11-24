@@ -6,7 +6,8 @@
 # (https://devices.esphome.io/devices/shelly-plug-s/), whose configuration credits gieljnssns as tester and thanks Tasmota (blakadder's
 # template for the BlitzWolf SHP6) and Tijmen. That page is GPL-3.0; this file is written from the ESPHome documentation and uses only
 # those facts (pins, resistor and divider values), not the page's text. The LEDs and the meter wiring worked on a real plug (2026-11-13); the NTC
-# part has not been tried. The meter is NOT calibrated (a 41 W lamp read 48.5 W and 250 V against 41 W and 239 V), see the note at "power".
+# part has not been tried. The meter is calibrated with factors from one plug and one reference (see cal_* below), so the values are good to a
+# few percent on that plug and may differ on another.
 #
 # ESPHome's wireless install (the dashboard's "Install wirelessly", `esphome upload`) does not work on a Gen1 yet, use `tools/gen1_ota.py send`;
 # keep `gen1_ota:` and `wifi:` with `ap:` in every config you flash, or the next update cannot reach the plug.
@@ -28,13 +29,19 @@
 substitutions:
   name: shelly-plug-s
   friendly: "Shelly Plug S"
-  # BL0937 meter, values of the ESPHome device page: a higher current_resistor lowers the reading, a higher voltage_divider raises the
-  # voltage reading. Calibrate with a known load (see "power"). One measurement on a real plug (a 41 W lamp, reference 41 W and about
-  # 239 V) read 250 V and 48.5 W with these values; that single point would give voltage_divider about 1973 and current_resistor
-  # about 0.00107. That is an estimate from one point and one reference meter, check it with two or three loads before you use it.
+  # BL0937 meter, values of the ESPHome device page (current resistor and voltage divider).
   current_resistor: "0.000943"
   voltage_divider: "2066"
-  # protection limits of the 10 A plug (not a safety device, the meter is not calibrated)
+  # Calibration factors (published value = raw value * factor), worked out from one real Plug S against a Shelly Plus Plug S V2 on four loads
+  # (no load, a 41 W lamp, a PC in the BIOS, a hairdryer at 1034 W; 2026-11-23): without them the meter reads about 9 % high on voltage,
+  # 18 % on current and 16 % on power. After the factors every point is within about 0.3 % on voltage and power (the current is limited by
+  # the reference's display of 0.01 A). They hold for the measuring steps set below (4 s, change every 2); other steps change the
+  # readings. They come from ONE plug and ONE reference: another plug can differ by a few percent, check yours against a plug-in meter.
+  # If you also include plugs-cali.yaml (adjustable scales), set these three to 1.0 or the correction is applied twice.
+  cal_voltage: "0.9186"
+  cal_current: "0.8499"
+  cal_power: "0.8649"
+  # protection limits of the 10 A plug (not a safety device: the meter is calibrated on one plug only)
   max_current: "10"
   max_power: "2400"
   max_temp: "70.0"
@@ -136,10 +143,18 @@ sensor:
     cf1_pin: GPIO14
     current_resistor: ${current_resistor}
     voltage_divider: ${voltage_divider}
-    update_interval: 10s
+    # The meter measures voltage and current in turns; with these steps a value is refreshed about every 24 s. The calibration factors
+    # above were measured with exactly these two settings.
+    update_interval: 4s
+    change_mode_every: 2
     current:
       name: "Current"
       id: current
+      filters:
+        - multiply: ${cal_current}
+        # noise without load (about 0.007 A raw) is shown as 0
+        - lambda: |-
+            return x < 0.02f ? 0.0f : x;
       on_value_range:
         - above: ${max_current}
           then:
@@ -149,15 +164,13 @@ sensor:
             - switch.turn_off: relay
     voltage:
       name: "Voltage"
+      filters:
+        - multiply: ${cal_voltage}
     power:
       name: "Power"
       id: power
-      # Calibration: put a steady load on the plug (a lamp or a kettle), compare "Power" with a reference meter, and add
-      #   filters:
-      #     - calibrate_linear:
-      #         - 0.0 -> 0.0
-      #         - <value shown by the plug> -> <value of the reference meter>
-      # The same for Voltage and Current if you want them accurate. Without it the values are only a rough guide.
+      filters:
+        - multiply: ${cal_power}
       on_value_range:
         - above: ${max_power}
           then:

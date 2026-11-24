@@ -154,7 +154,7 @@ Do not do it while the plug runs ESPHome from slot 0 and you do not know why; as
 `example-plugs-meter.yaml` is the first test image plus both LEDs and the power meter. Only the relay is read from the firmware; the LED pins
 (GPIO0 red, GPIO2 blue), the meter pins (GPIO12 select, GPIO5 CF, GPIO14 CF1) and the meter values (current resistor, voltage divider) come
 from the ESPHome device page for the Plug S, which credits a named tester for the configuration. Nobody has tried them on a plug in this project yet. The readings are not calibrated, they only show whether the meter is
-wired the way the device page says. On a real plug (2026-11-13) both LEDs and the meter pins worked; a 41 W lamp read 250.2 V, 0.24 A and 48.5 W (reference from another plug: 41 W, about 239 V), so the values need calibration. The image ran on the dev board (it starts and configures all of it); no signal was on the pins there.
+wired the way the device page says. On a real plug (2026-11-13) both LEDs and the meter pins worked; a 41 W lamp read 250.2 V, 0.24 A and 48.5 W (reference from another plug: 41 W, about 239 V), so the values needed calibration (done on 2026-11-23, see below). The image ran on the dev board (it starts and configures all of it); no signal was on the pins there.
 
 - Build it like the first image, with `example-plugs-meter.yaml` instead (the Docker command compiles `/config/example-plugs-meter.yaml`, the
   firmware is in `/cache/data/build/plugs-meter/.pioenvs/plugs-meter/firmware.bin`), same password, and `send` it as a second update. Its own
@@ -196,6 +196,28 @@ your `gen1_ota_password`, in `G1OT_PASSWORD`):
 If a `calibrate` leaves the scale unchanged, there was no valid reading yet (put a load on and wait about 30 seconds), or the deviation was above 60 %.
 The log of the plug (UART, plug unplugged) has the line `cal: ...` with the numbers.
 
+### Result of the first series
+
+Result of a measurement series on one real plug (2026-11-23, [report](https://github.com/oxynatOr/free-shelly-ota/issues/47#issuecomment-7116160289); the reference was in series with the plug, the plug ran the meter
+image with the fast measuring steps of `plugs-cali.yaml`, read with `plug_cal.py read`, 90 s per load):
+
+| Load | Plug V / A / W (scales 1.0) | Shelly Plus Plug S V2 V / A / W |
+| --- | --- | --- |
+| no load, relay on | 264.7 / 0.007 / 0 | 242.5 / 0 / 0 |
+| 41 W lamp | 260.7 / 0.239 / 48.4 | 239.5 / 0.20 / 41.7 |
+| PC in the BIOS | 261.1 / 0.534 / 109.2 | 240.1 / 0.46 / 94.4 |
+| hairdryer, setting 1 | 259.2 / 5.080 / 1195.5 | 238.5 / 4.317 / 1034 |
+
+Reference divided by reading, per load: voltage 0.916 to 0.920, power 0.862 to 0.865 (from 42 W to 1034 W), current 0.837 to 0.861 (the reference shows two
+decimals, the hairdryer gives 0.850). A single factor per quantity fits all loads (a least-squares line through zero): **voltage 0.9186, current 0.8499,
+power 0.8649**. With them every point is within about 0.3 % on voltage and power, and the power factor of the hairdryer reads 1.006 against 1.004 on the
+reference (raw 0.908). `plugs.yaml` carries these factors. They come from one plug and one reference meter; another plug can differ by a few percent.
+The factors only hold for the measuring steps they were taken with (4 s, change every 2): the first meter image, with 10 s and 8, read 250 V for the same
+mains instead of 261 V. The no-load voltage of 0.2 V seen before was a stale value from the long measuring window; with the fast steps it reads 264.7 V.
+
+To try the factors on your plug without building a new image: `python tools/plug_cal.py set-scales --host 192.168.4.1 --voltage 0.9186 --current 0.8499 --power 0.8649`.
+Then compare with your reference on a few loads; `reset` puts the scales back to 1.0.
+
 ## The complete configuration
 
 ESPHome's own wireless install (the dashboard's "Install wirelessly", `esphome upload`) does not work on a Gen1 yet: it needs the `eboot` bootloader, and
@@ -207,11 +229,11 @@ button, both LEDs, the meter with limits, daily energy and the temperature, and 
 two small tests worked. Fill `secrets.yaml` (`wifi_ssid`, `wifi_password`, `ap_password`, `api_key`, `gen1_ota_password`), build it like the test
 images (compile `/config/plugs.yaml`, firmware in `/cache/data/build/shelly-plug-s/.pioenvs/shelly-plug-s/firmware.bin`, convert, `send`). The
 image is about 400 kB; the receiver accepts up to 425,984 bytes. The LED, meter and temperature parts are from the ESPHome device page and not
-yet tried on a plug in this project; the meter is not calibrated. Keep the `wifi: ap:` block, but do not rely on it: On the ESP8266 the plug's own network is NOT a reliable way in while the WiFi fails: ESPHome 2026.10.0 starts it after about 90 seconds, but keeps retrying your WiFi at the same time and restarts the radio every few seconds, which takes the network down again. On the bench it was reachable in about one of six tries. So check the WiFi name and password twice before you send an image; if they are wrong, the safe way back is UART and the backup.
+yet tried on a plug in this project; the meter is calibrated with the factors of one plug (see "Result of the first series"). Keep the `wifi: ap:` block, but do not rely on it: On the ESP8266 the plug's own network is NOT a reliable way in while the WiFi fails: ESPHome 2026.10.0 starts it after about 90 seconds, but keeps retrying your WiFi at the same time and restarts the radio every few seconds, which takes the network down again. On the bench it was reachable in about one of six tries. So check the WiFi name and password twice before you send an image; if they are wrong, the safe way back is UART and the backup.
 
 ## Open points
 
 - One real Plug S (short case) reported the first start, the config afterwards, restarts after power cuts and the relay, a second update (`send`) and `revert`. The three-update case is untested there. Installing again after `revert` failed there because of byte 9 (see below); after the one-time UART fix it worked there. `revert` with the fixed image and installing again without UART worked there too (2026-11-13).
 - The `boot` part is never replaced (the stock updater marks it `update: false`).
 - Power loss at other moments of the copy, repeated updates.
-- Relay (`GPIO15`, read from the firmware) and button (`GPIO13`, device page) are confirmed on one real plug, including the relay level (a lamp on the plug lights when the relay is on). The LED pins (red `GPIO0`, blue `GPIO2`) and the meter pins (`GPIO12`, `GPIO5`, `GPIO14`) are confirmed on the same plug (2026-11-13); the meter values are not calibrated and the NTC temperature is not tried.
+- Relay (`GPIO15`, read from the firmware) and button (`GPIO13`, device page) are confirmed on one real plug, including the relay level (a lamp on the plug lights when the relay is on). The LED pins (red `GPIO0`, blue `GPIO2`) and the meter pins (`GPIO12`, `GPIO5`, `GPIO14`) are confirmed on the same plug (2026-11-13); the meter was calibrated on this plug against a Shelly Plus Plug S V2 (2026-11-23) and the NTC temperature is not tried.
