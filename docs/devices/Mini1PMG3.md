@@ -3,6 +3,7 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
+![State of the 2.2.1 layout: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
@@ -10,11 +11,13 @@
 
 This is the Mini with a relay; the measuring-only [PM Mini Gen3](MiniPMG3.md) is a different device with its own profile. Like the H&T Gen3, the official package keeps its partition table at `0xf000`, so a default ESPHome build does not match.
 
+> **Shelly's stable 2.2.1 has another layout** (app slots of `0x300000` instead of `0x2a0000`). It has its own profile, `Mini1PMG3-v2`; see [2.2.1 layout](#221-layout). `build` refuses to mix the two layouts.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `Mini1PMG3` |
+| Profile | `Mini1PMG3`, `Mini1PMG3-v2` (for Shelly's 2.2.1 layout, see [2.2.1 layout](#221-layout)) |
 | Flash | 8 MB |
-| Official package | 2.1.0 (stable since 2026-10-14; Bootloader, partition table and filesystem are the same as in 2.0.1) |
+| Official package | 2.2.1 (stable, seen 2026-11-20), with the layout of `Mini1PMG3-v2`. The `Mini1PMG3` profile needs a 2.1.x or older package: 2.1.0 (stable from 2026-10-14) has the same bootloader, partition table and filesystem as 2.0.1, and the hardware runs were made with 2.1.0 |
 | Partition table | `0xf000` |
 | App slot size | `0x2a0000` |
 | ESPHome device page | [Shelly 1PM Mini Gen3](https://devices.esphome.io/devices/shelly-1pm-mini-gen3/) |
@@ -109,9 +112,37 @@ package, reads the update target slot. Command reference: [Commands](../commands
 - **Pins used in the report** (from the [ESPHome device page](https://devices.esphome.io/devices/shelly-1pm-mini-gen3/), the pins as such not verified): relay GPIO5, switch input GPIO10, button GPIO1 (inverted, pull-up), LED GPIO0 (inverted), BL0942 on UART TX GPIO6 / RX GPIO7 (RX with pull-up, as on the [PM Mini Gen3](MiniPMG3.md)), NTC GPIO3 with B 3950, 10 kOhm, `DOWNSTREAM`, as in the [Mini 1 Gen3 notes](Mini1G3.md).
 - Please report the file written by `--log-file`, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
 
+## 2.2.1 layout
+
+Shelly's stable `2.2.1` for this device has a **different flash layout**, the one of the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and of the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x2a0000`, and the filesystems and the second slot move up with them. The partition table stays at `0xf000`. The profile `Mini1PMG3-v2` describes it; `Mini1PMG3` does not fit it and `build` refuses the mix.
+
+| Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
+| --- | --- | --- | --- |
+| 2.0.1 to 2.1.x (`Mini1PMG3`) | `0x20000` / `0x2a0000` | `0x3a0000` / `0x2a0000` | `0x2c0000` / `0x640000`, `0xe0000` each |
+| 2.2.1 (`Mini1PMG3-v2`) | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
+
+`otadata`, `nvs`, `scratch` (`0x7e0000`) and `shelly` (`0x7f0000`) stay where they are.
+
+> [!NOTE]
+> **Partly checked (2026-11-24, one unit, `S3SW-001P8EU`, no UART, thanks to [andrewagner86](https://github.com/andrewagner86)):**
+>
+> - The table is read from the official 2.2.1 package (`partition-table.bin` at `0xf000`).
+> - The unit ran Shelly 2.2.1 (`20261113-111619/2.2.1-gffa2ea1`), the same build as the package.
+> - A plain package built with `Mini1PMG3-v2` (no `--esphome-factory`), whose app was a custom ESP-IDF app that replaces the bootloader itself and not ESPHome, was uploaded through Shelly's web interface (Settings → Firmware). One run: the installer took it and the app started. There is no device log of that run, so the slot it was written to is not recorded.
+> - That app then took the unit back to Shelly 2.2.1 from the official ZIP (all parts: `boot`, `pt`, `otadata`, `nvs`, `app`, `fs`). Shelly 2.2.1 started again and joined the Wi-Fi.
+>
+> **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `send` and `restore Mini1PMG3-v2` with `ota.py`, `inspect --device`, a later ESPHome OTA, the table in flash (no dump), the update path to 2.2.1, and whether Shelly's 2.2.0 for this device already had the layout (`layout_since` is `2.2.1`, the first version seen with it). `boot_min_version` is `1.0.9`, as for `Mini1PMG3`.
+
+> [!CAUTION]
+> **Do not send a `Mini1PMG3` package to a device on 2.2.1**, and no `Mini1PMG3-v2` package to one on firmware before 2.2.1. `send` refuses the second case (`layout_since`, `--force` overrides); the first one is not checked by the tool and was not tried.
+
+- Fetch the package: `python ota.py fetch Mini1PMG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.1 is the stable release and both profiles use the package called `Mini1PMG3`.
+- Build against its table: copy `partitions/Mini1PMG3-v2-stock.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
+- Then `python ota.py build Mini1PMG3-v2 app.ota.bin --esphome-factory app.factory.bin`, and `send Mini1PMG3-v2`, as above.
+
 ## Way back
 
-`python ota.py restore Mini1PMG3` sends the official firmware back while Shelly firmware still runs.
+`python ota.py restore Mini1PMG3` sends the official firmware back while Shelly firmware still runs. For a device on the 2.2.1 layout use `python ota.py restore Mini1PMG3-v2` (not tested with `ota.py`; the official 2.2.1 ZIP written back by another app ran, see [2.2.1 layout](#221-layout)).
 
 ---
 
