@@ -1,0 +1,11 @@
+# OTA profile: Shelly Multicolor Bulb E27 Gen3 with the flash layout of Shelly's stable 2.2.1 (app slots of 0x300000). OTA-relevant data only.
+# Not for 2.0.x: those have the layout of the RGBCCTBulbG3 profile and `build` refuses the mix.
+display_name: "Shelly Multicolor Bulb E27 Gen3 (2.2 layout)"
+platform: esp32c3
+update_id: RGBCCTBulbG3  # name used by https://updates.shelly.cloud/update/<update_id>
+package: RGBCCTBulbG3    # the official package and its folder in fw/ are called RGBCCTBulbG3
+layout_since: "2.2.1"    # first version seen with this layout; firmware older than this has the old layout: `send` refuses the package there
+app_ptn: app_0           # partition the manifest "app" part targets
+app_slot_size: 0x300000  # app_0 @0x20000, app_1 @0x400000
+boot_min_version: "1.0.9"   # same as the RGBCCTBulbG3 profile
+revision: 1   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)

@@ -22,6 +22,7 @@ body:
         - PlugSG3-v2 (Plug S Gen3, 2.2.0 layout)
         - HTG3 (H&T Gen3)
         - RGBCCTBulbG3 (Multicolor Bulb Gen3)
+        - RGBCCTBulbG3-v2 (Multicolor Bulb Gen3, 2.2.1 layout)
         - DuoBulbG3 (Duo Bulb Gen3)
         - PowerStrip (Power Strip 4 Gen4)
         - PowerStripZB (Power Strip 4 Gen4, Zigbee)
