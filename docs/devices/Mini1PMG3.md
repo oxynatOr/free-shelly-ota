@@ -133,6 +133,15 @@ Shelly's stable `2.2.1` for this device has a **different flash layout**, the on
 >
 > **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `send` and `restore Mini1PMG3-v2` with `ota.py`, `inspect --device`, a later ESPHome OTA, the table in flash (no dump), the update path to 2.2.1, and whether Shelly's 2.2.0 for this device already had the layout (`layout_since` is `2.2.1`, the first version seen with it). `boot_min_version` is `1.0.9`, as for `Mini1PMG3`.
 
+> **Partly checked with ESPHome (one unit, `S3SW-001P8EU`, thanks to [broglea](https://github.com/broglea)):**
+>
+> - Converted from stock 2.2.1 (`20261113-111619/2.2.1-gffa2ea1`) to ESPHome 2026.11.0 with `Mini1PMG3-v2`. The installer wrote to slot 0 and replaced the bootloader (`update? 1`). The update was confirmed although two eFuse writes failed with code 5636, the same as in the [eFuse note](../troubleshooting.md#esphome-does-not-start-after-the-update).
+> - ESPHome connected through its native API. A later encrypted ESPHome OTA to a different build worked, and the device reconnected after a reboot.
+> - Relay and meter under a lighting load of about 17 W: 16.9 W and 0.148 A with ESPHome, 17.3 W and 0.15 A on stock.
+> - The first ESPHome build showed the relay on with zero current and power. The follow-up config released the GPIO5 pad hold after setting the output off, enabled GPIO5 input for readback, and calibrated the line voltage against the stock reading on that unit. The cause of the first symptom is not confirmed.
+>
+> **Not checked:** a physical reset, the electrical protection trip points, and other hardware units.
+
 > [!CAUTION]
 > **Do not send a `Mini1PMG3` package to a device on 2.2.1**, and no `Mini1PMG3-v2` package to one on firmware before 2.2.1. `send` refuses the second case (`layout_since`, `--force` overrides); the first one is not checked by the tool and was not tried.
 

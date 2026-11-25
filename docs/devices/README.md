@@ -61,7 +61,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [1PM Gen3](S1PMG3.md) | `S1PMG3` | **`0xf000`** | `0x2c0000` | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
 | [2PM Gen3, 2.2.0 layout](S2PMG3.md#220-layout) | `S2PMG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0 and later; installer took a plain package with a non-ESPHome app, ESPHome not tested |
 | [Plug S Gen3, 2.2.0 layout](PlugSG3.md#220-layout) | `PlugSG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0 and later; `restore` to 2.2.0 and a plain package with a non-ESPHome app ran, ESPHome not tested |
-| [Mini 1PM Gen3, 2.2.1 layout](Mini1PMG3.md#221-layout) | `Mini1PMG3-v2` | **`0xf000`** | `0x300000` | 🟡 | Shelly 2.2.1 and later; a plain package with a non-ESPHome app and the way back to 2.2.1 ran, ESPHome not tested |
+| [Mini 1PM Gen3, 2.2.1 layout](Mini1PMG3.md#221-layout) | `Mini1PMG3-v2` | **`0xf000`** | `0x300000` | 🟡 | Shelly 2.2.1 and later; a plain package with a non-ESPHome app and the way back to 2.2.1 ran; ESPHome OTA, relay and meter partly checked on one more unit |
 | [Multicolor Bulb E27 Gen3, 2.2.1 layout](RGBCCTBulbG3.md#221-layout) | `RGBCCTBulbG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.1 and later; a plain package with a non-ESPHome app (second run, with `send`) and the way back to 2.2.1 ran, ESPHome not tested |
 | [The Pill](Pill.md) | `Pill` | `0x10000` | `0x280000` | 🧪 |  |
 | [1L Gen3](S1LG3.md) | `S1LG3` | `0x10000` | `0x2b0000` | 🧪 |  |
