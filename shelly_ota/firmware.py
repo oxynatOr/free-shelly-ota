@@ -17,7 +17,7 @@ from pathlib import Path
 
 from . import MODULE_DIR
 from . import ui
-from .builder import OtaError, read_official_manifest
+from .builder import OtaError, read_official_manifest, zip_layout_problems
 
 FW_DIR = MODULE_DIR / "fw" / "shelly"
 UPDATE_API = "https://updates.shelly.cloud/update/{update_id}"
@@ -69,6 +69,19 @@ def cached_zip(device: str, version: str | None = None, fw_dir: Path = FW_DIR, p
     if version is None or version not in versions:
         return None
     return fw_dir / device / version / f"{device}.zip"
+
+
+def zip_for_layout(variant, version: str | None = None, fw_dir: Path = FW_DIR) -> Path | None:
+    """The newest cached stable ZIP whose partition table fits this layout variant (with `version`: that one, if it fits)."""
+    wanted = [version] if version else [v for v in reversed(list_versions(variant.package_name, fw_dir)) if not is_prerelease(v)]
+    for v in wanted:
+        candidate = cached_zip(variant.package_name, v, fw_dir)
+        try:
+            if candidate and not zip_layout_problems(variant, candidate):
+                return candidate
+        except (OtaError, zipfile.BadZipFile, KeyError, OSError):
+            continue
+    return None
 
 
 def _ssl_context(insecure: bool = False, cafile: Path | None = None) -> ssl.SSLContext:

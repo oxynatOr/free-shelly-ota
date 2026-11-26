@@ -169,7 +169,9 @@ def cmd_fetch(args) -> None:
                            channel=args.channel, from_version=args.from_version)
     ui.say(f"Official firmware: {path}")
     with zipfile.ZipFile(path) as zf:
-        for problem in builder.package_layout_problems(p, zf, builder.read_official_manifest(zf)):
+        manifest = builder.read_official_manifest(zf)
+        p = builder.variant_for_zip(p, zf, manifest) or p
+        for problem in builder.package_layout_problems(p, zf, manifest):
             ui.say(f"WARNING: this package has another flash layout than the {p.name} profile: {problem}. "
                    f"`build` refuses it.")
 
@@ -201,7 +203,7 @@ def cmd_devkit(args) -> None:
     source = args.zip or firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
     if source is None:
         raise builder.OtaError(f"No official {p.name} ZIP cached. Run 'ota.py fetch {p.name}' first, or pass --zip <package>.")
-    image = devkit.build_image(source, p, flash_size=args.flash_size)
+    image = devkit.build_image(source, builder.resolve_layout(p, source), flash_size=args.flash_size)
     output = args.output or MODULE_DIR / "out" / f"{p.name}-devkit-{image.version}.bin"
     if output.exists() and not args.force:
         raise builder.OtaError(f"{output} already exists (use --force to overwrite).")
@@ -271,8 +273,59 @@ def _compile_for_build(args, p) -> None:
     args.esphome_yaml = args.esphome_yaml or args.compile
 
 
+def _table_app_size(p, yaml_path, factory, cfg=None) -> int | None:
+    """Size of the app partition in the user's own partition table: from the CSV of the ESPHome config, else from factory.bin."""
+    if yaml_path:
+        try:
+            config = cfg if cfg is not None else lint.load_file(yaml_path)
+            name = (config.get("esp32") or {}).get("partitions")
+            if isinstance(name, str) and (yaml_path.parent / name).is_file():
+                for line in (yaml_path.parent / name).read_text(encoding="utf-8").splitlines():
+                    cols = [c.strip() for c in line.split(",")]
+                    if not line.lstrip().startswith("#") and len(cols) > 4 and cols[0] == p.app_ptn:
+                        return int(cols[4], 0)
+        except (OSError, ValueError, AttributeError, lint.yaml.YAMLError):
+            pass
+    if factory and factory.is_file():
+        data = factory.read_bytes()
+        for offset in (p.pt_offset, builder.RELOCATED_PT_ADDR):
+            entry = next((e for e in devicegen.parse_partitions(data[offset:offset + 4096]) if e["name"] == p.app_ptn), None)
+            if entry:
+                return entry["size"]
+    return None
+
+
+def _layout_for_build(p, args):
+    """For a profile with several flash layouts: the one to build for, or None to let the official package decide.
+
+    --layout wins; otherwise the user's partition table says it."""
+    variants = p.variants()
+    if not variants[1:]:
+        if args.layout:
+            raise builder.OtaError(f"--layout: the {p.name} profile has only one flash layout.")
+        return None
+    names = ["base"] + [v.layout_since for v in variants[1:]]
+    if args.layout:
+        if args.layout not in names:
+            raise builder.OtaError(f"--layout {args.layout}: the {p.name} profile knows {', '.join(names)}.")
+        return variants[names.index(args.layout)]
+    size = _table_app_size(p, args.esphome_yaml or args.compile, args.esphome_factory)
+    if size is None:
+        return None
+    match = next((v for v in variants if v.app_slot_size == size), None)
+    if match is None:
+        known = ", ".join(f"0x{v.app_slot_size:x} ({v.csv_name})" for v in variants)
+        raise builder.OtaError(f"Your partition table has {p.app_ptn} = 0x{size:x}; the {p.name} profile knows {known}.")
+    return match
+
+
 def cmd_build(args) -> None:
     p = profile.load_profile(args.device)
+    wanted = _layout_for_build(p, args)
+    if wanted:
+        p = wanted
+        ui.say(f"Flash layout: {'since Shelly ' + p.layout_since if p.base else 'the first one'} "
+               f"(app slot 0x{p.app_slot_size:x}, {p.csv_name})")
     if not args.compile and not args.app:
         raise builder.OtaError("Give APP.bin, or --compile YAML to build it from an ESPHome config.")
     if not args.compile and (args.runner != "auto" or args.image):
@@ -304,7 +357,15 @@ def cmd_build(args) -> None:
     drop = tuple(x for x in args.drop.split(",") if x)
     if args.drop_fs:
         drop += ("fs",)
-    official = args.official or firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
+    if args.official:
+        official = args.official
+        if wanted and builder.zip_layout_problems(wanted, official):
+            raise builder.OtaError(f"--official {official.name} has another flash layout than your partition table "
+                                   f"({wanted.csv_name}). Give the matching package, or build with the matching CSV.")
+    elif wanted:
+        official = firmware.zip_for_layout(wanted, args.version)
+    else:
+        official = firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
     if official is None:
         if not args.download:
             raise builder.OtaError(
@@ -312,6 +373,9 @@ def cmd_build(args) -> None:
                 f"run 'ota.py fetch {p.name}', or add --download to build.")
         official = _fetch_official(p, version=args.version, insecure=args.insecure, cafile=args.cafile,
                                   channel=args.channel, from_version=args.from_version)
+        if wanted and builder.zip_layout_problems(wanted, official):
+            raise builder.OtaError(f"The package from the update API has another flash layout than your partition table "
+                                   f"({wanted.csv_name}), and no matching one is cached in {firmware.FW_DIR / p.package_name}.")
 
     def run_build(target: Path) -> builder.BuildResult:
         return builder.build(p, args.app, official, target, drop=drop, tag=args.tag, factory=args.esphome_factory,
@@ -691,6 +755,9 @@ def build_parser() -> argparse.ArgumentParser:
                         "'keep' leaves it unchanged")
     g.add_argument("--esphome-yaml", type=Path, metavar="YAML", help="also check this ESPHome config")
     g = b.add_argument_group("experimental")
+    g.add_argument("--layout", metavar="SINCE",
+                    help="for a profile with several flash layouts: the one to build for (base, or the Shelly version "
+                         "it starts with); default: the one of your partition table")
     g.add_argument("--pt-addr", type=lambda s: int(s, 0), metavar="ADDR", help=PT_ADDR_HELP)
     g = b.add_argument_group("secrets")
     g.add_argument("--secrets", type=Path, metavar="FILE",

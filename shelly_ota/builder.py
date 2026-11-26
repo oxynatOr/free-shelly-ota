@@ -129,6 +129,32 @@ def package_layout_problems(profile: Profile, zf: zipfile.ZipFile, manifest: dic
     return problems
 
 
+def zip_layout_problems(profile: Profile, zip_path: Path) -> list[str]:
+    """package_layout_problems for a ZIP on disk."""
+    with zipfile.ZipFile(zip_path) as zf:
+        return package_layout_problems(profile, zf, read_official_manifest(zf))
+
+
+def variant_for_zip(profile: Profile, zf: zipfile.ZipFile, manifest: dict, allow_relocated: bool = False) -> Profile | None:
+    """The layout variant of the profile that the package's partition table fits (the newest one), or None."""
+    for variant in reversed(profile.variants()):
+        if not package_layout_problems(variant, zf, manifest, allow_relocated):
+            return variant
+    return None
+
+
+def resolve_layout(profile: Profile, zip_path: Path) -> Profile:
+    """For a profile with several layouts: the variant of this package. Otherwise, or if none fits, the profile itself,
+    so that the checks that follow say what is wrong."""
+    if not profile.variants()[1:]:
+        return profile
+    try:
+        with zipfile.ZipFile(zip_path) as zf:
+            return variant_for_zip(profile, zf, read_official_manifest(zf), allow_relocated=True) or profile
+    except (zipfile.BadZipFile, KeyError, OSError):
+        return profile
+
+
 def _bump_patch(version: str | None) -> str | None:
     """1.0.2 -> 1.0.3; None if the value is not a plain x.y.z version."""
     m = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version or "")
@@ -179,6 +205,7 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
         raise OtaError("Cannot drop 'boot' or 'otadata' while taking them from a factory image.")
     check_output_is_no_input(output, official_zip, app_path)
 
+    profile = resolve_layout(profile, official_zip)
     app = app_path.read_bytes()
     warnings = check_app_image(app, profile.platform, profile.app_slot_size, profile.app_ptn)
     if PARTITION_ACCESS_MARKER not in app:
@@ -355,6 +382,10 @@ def inspect_zip(path: Path, profile: Profile | None = None) -> str:
         app = zf.read(manifest["parts"]["app"]["src"])
         lines.append(f"  app header: magic=0x{app[0]:02X} segments={app[1]} chip_id=0x{int.from_bytes(app[12:14], 'little'):04x}")
         if profile:
+            if profile.variants()[1:]:
+                profile = variant_for_zip(profile, zf, manifest, allow_relocated=True) or profile
+                since = f"the layout since {profile.layout_since}" if profile.base else "the first layout"
+                lines.append(f"  layout of the {profile.name} profile: {since} ({profile.csv_name})")
             lines.append(f"  slot fit: {len(app)} / {profile.app_slot_size} bytes "
                          f"({100 * len(app) / profile.app_slot_size:.0f}%)")
             for problem in package_layout_problems(profile, zf, manifest, allow_relocated=True):

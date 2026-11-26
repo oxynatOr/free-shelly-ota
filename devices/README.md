@@ -60,6 +60,18 @@ revision: 2
 | `pt_offset` | no | `0x10000` | Where the device keeps its partition table. Your ESPHome config must set `CONFIG_PARTITION_TABLE_OFFSET` to it (`build --esphome-yaml` checks); it is `0xf000` on `HTG3`, `Mini1PMG3` and `MiniPMG3`, `0x8000` on `PlusPlugS` |
 | `boot_min_version` | no | none | Default for `--boot-min-version` when you ship ESPHome's bootloader. Without it the tool uses one patch above Shelly's loader version. See [Bootloader and slots](../docs/bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version) |
 | `revision` | no | `1` | Counts the changes of the profile, see below |
+| `layouts` | no | none | Later flash layouts of the same device, oldest first, each with `since` (Shelly version it starts with), `app_slot_size` and optionally `csv` (default `<profile>-stock-<since>.csv`). The keys above describe the first layout. No shipped profile uses it yet, see below |
+
+### Several flash layouts
+
+```yaml
+app_slot_size: 0x2a0000      # the first layout, partitions/<profile>-stock.csv
+layouts:
+  - since: "2.2.0"
+    app_slot_size: 0x300000   # partitions/<profile>-stock-2.2.0.csv
+```
+
+`build` takes the layout from your own table: the CSV of `--esphome-yaml` or `--compile`, else `factory.bin` (or `--layout base`/`--layout 2.2.0`), and uses the newest cached official package that fits it. With neither, the official package decides. `send` reads the layout from the package: `layout_since` of that layout is checked against the device, and a package of an older layout than the device's firmware gets a warning, not a refusal. The layouts are told apart by the slot size, so two of them cannot have the same one.
 
 ## Changing a profile
 

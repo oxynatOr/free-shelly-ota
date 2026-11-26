@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Callable, NamedTuple
 
 from . import buildinfo, firmware, logview, logwatch, rpc, secrets_check, slotswap, ui
-from .builder import OtaError, read_official_manifest, require_zip
+from .builder import OtaError, read_official_manifest, require_zip, variant_for_zip
 from .logview import Level
 from .profile import Profile
 
@@ -486,6 +486,21 @@ def table_not_moved_text() -> str:
             "one, and the old app may start. If the device does not start ESPHome, a serial connection and a flash dump are needed.")
 
 
+def newer_layout_text(profile: Profile, device_version: str) -> str | None:
+    """A note for a package of an older layout than the device's firmware has (not a refusal: on a dev board such a
+    package ran, with Shelly's newer table left in flash)."""
+    have = _core_version(device_version)
+    if have is None:
+        return None
+    mine = _core_version(profile.layout_since) if profile.base else None
+    later = [v for v in profile.variants()[1:]
+             if (mine is None or _core_version(v.layout_since) > mine) and have >= _core_version(v.layout_since)]
+    if not later:
+        return None
+    return (f"The device runs Shelly {device_version}, which has the layout of {later[-1].layout_since} and later, but this package "
+            f"is built for an older one. The table in flash stays Shelly's newer one. Better: build with {later[-1].csv_name}.")
+
+
 def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str | None = None,
          port: int = 8000, timeout: float = 300, max_wait: float = MAX_WAIT, assume_yes: bool = False, dry_run: bool = False,
          force: bool = False, user: str | None = None, password: str | None = None,
@@ -515,6 +530,8 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     zip_path = require_zip(zip_path)
     with zipfile.ZipFile(zip_path) as zf:
         manifest = read_official_manifest(zf, profile.package_name)
+        if profile.variants()[1:]:   # the package says which of the device's layouts it is for
+            profile = variant_for_zip(profile, zf, manifest, allow_relocated=True) or profile
         if slot_swap is not None:
             if restoring:
                 raise OtaError("--slot-swap is not for restore: the official package keeps Shelly's own partition table.")
@@ -544,6 +561,9 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
 
     if not restoring:
         old_layout = old_layout_text(profile, str(info.get("ver") or ""), forced=force)
+        newer = newer_layout_text(profile, str(info.get("ver") or ""))
+        if newer and not restoring:
+            say(Level.quiet, "WARNING: " + newer)
         if old_layout and not force:
             raise OtaError(old_layout)
         if old_layout:
