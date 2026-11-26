@@ -11,15 +11,15 @@
 
 Gen3 / ESP32-C3.
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2c0000`). The `S1PMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2c0000`). The `S1PMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
 | Profile | `S1PMG3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
-| Official package | 2.1.0 |
+| Official package | 2.1.0; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0xf000` |
-| App slot size | `0x2c0000` |
+| App slot size | `0x2c0000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 | ESPHome device page | [Shelly 1PM Gen3](https://devices.esphome.io/devices/shelly-1pm-gen3/) |
 
 ## Before you start
@@ -114,7 +114,7 @@ The profile sets `boot_min_version: "1.0.9"`: devices of this family run Shelly'
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this device has a **different flash layout**. The `S1PMG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `S1PMG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |

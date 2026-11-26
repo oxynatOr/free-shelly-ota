@@ -11,16 +11,16 @@
 
 Gen2 / classic ESP32: dIN rail module, two relays (or a cover) with power metering. Partition table at the ESP-IDF default `0x8000`, bootloader at `0x1000`, 80 MHz flash frequency, like the [Plus Plug S](PlusPlugS.md).
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x200000`). The `Pro2PM` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x200000`). The `Pro2PM` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
 | Profile | `Pro2PM` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB (bootloader header and partition table) |
-| Official package | 2.1.1 |
+| Official package | 2.1.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | **`0x8000`** (ESP-IDF default) |
 | Bootloader address | `0x1000` |
-| App slot size | `0x200000` |
+| App slot size | `0x200000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 
 ## Before you start
 
@@ -119,7 +119,7 @@ Please report the file written by `--log-file`, especially the lines `Update tar
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Pro2PM` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Pro2PM` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |

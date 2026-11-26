@@ -11,7 +11,7 @@
 
 Gen3 / ESP32-C3.
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2c0000`). The `S2PMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2c0000`). The `S2PMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
@@ -19,7 +19,7 @@ Gen3 / ESP32-C3.
 | Flash | 8 MB |
 | Official package | 2.2.0 (stable, seen 2026-11-11), with the 2.2.0 layout. The first layout needs a 2.1.x package: on 2026-11-11 Shelly's own stable update took a unit on 1.4.99 to 2.1.1 first (`fetch S2PMG3 --from-version 1.4.99` asks the update API for that step; not run) |
 | Partition table | `0x10000` |
-| App slot size | `0x2c0000` |
+| App slot size | `0x2c0000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 | ESPHome device page | [Shelly 2 PM Gen3](https://devices.esphome.io/devices/shelly-2-pm-gen3/) |
 
 ## Before you start
@@ -117,7 +117,7 @@ The profile sets `boot_min_version: "1.0.9"`: devices of this family run Shelly'
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this device has a **different flash layout**, the same one as the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)): the app slots are `0x300000` instead of `0x2c0000`, and the filesystems and the second slot move up with them. The `S2PMG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this device has a **different flash layout**, the same one as the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)): the app slots are `0x300000` instead of `0x2c0000`, and the filesystems and the second slot move up with them. The `S2PMG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |
@@ -136,11 +136,12 @@ Shelly's stable `2.2.0` for this device has a **different flash layout**, the sa
 > **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `inspect --device`, a later ESPHome OTA, and `restore S2PMG3-v2`.
 
 > [!CAUTION]
-> **Do not send a package of the first layout to a device on 2.2.0** (`send` warns), and none of the 2.2.0 layout to one on 1.4.99 or 2.x before 2.2.0. `send` refuses the second case (`layout_since`, `--force` overrides); in the first case `send` only warns (on a dev board with `PlugSG3` such a package ran).
+> **Match the package to the firmware.** `send` refuses a package of the 2.2.0 layout on firmware before 2.2.0 (`layout_since`,
+> `--force` overrides). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch S2PMG3 --insecure` (2.2.0 is the stable release; both layouts use the package called `S2PMG3`).
 - Build against its table: copy `partitions/S2PMG3-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
-- Then `python ota.py build S2PMG3 app.ota.bin --esphome-factory app.factory.bin`, and `send S2PMG3`, as above.
+- Then `python ota.py build S2PMG3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send S2PMG3`.
 
 ## Way back
 

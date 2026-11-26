@@ -46,7 +46,7 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
 | [Plug M Gen3](PlugMG3.md) | `PlugMG3` | `0x10000` | `0x2a0000` | ✅ | 2.2.0 layout (`0x300000`): DevKit-tested |
-| [AZ Plug](PlugAZ.md) | `PlugAZ` | **`0xf000`** | `0x280000` | 🟡 | Later OTA and relay confirmed; power cycle needed; calibration not checked |
+| [AZ Plug](PlugAZ.md) | `PlugAZ` | **`0xf000`** | `0x280000` | 🟡 | Later OTA and relay confirmed; power cycle needed; calibration not checked; 2.2.0 layout (`0x300000`): untested |
 | [Plug S Gen3](PlugSG3.md) | `PlugSG3` | `0x10000` | `0x2a0000` | ✅ | 2.2.0 layout (`0x300000`): partly checked |
 | [H&T Gen3](HTG3.md) | `HTG3` | **`0xf000`** | `0x280000` | ✅ |  |
 | [PM Mini Gen3 (no relay)](MiniPMG3.md) | `MiniPMG3` | **`0xf000`** | `0x280000` | ✅ | Measures only, no relay; 2.2.0 layout (`0x300000`): DevKit-tested |

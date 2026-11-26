@@ -12,16 +12,16 @@
 
 This plug **only measures**: Shelly lists the Plug PM Gen3 as a monitoring device, and there is no relay in it. Do not confuse it with the [Plug M Gen3](PlugMG3.md), which switches.
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `PlugPMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `PlugPMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
 | Profile | `PlugPMG3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Model | S3PL-30116EU |
 | Flash | 8 MB |
-| Official package | 2.1.0 (stable since 2026-10-14; Bootloader, partition table and filesystem are the same as in 2.0.1; the hardware run was made with 2.0.1) |
+| Official package | 2.1.0 (stable since 2026-10-14; Bootloader, partition table and filesystem are the same as in 2.0.1; the hardware run was made with 2.0.1); for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0x10000` |
-| App slot size | `0x280000` (smaller than the Plug M and Plug S, `0x2a0000`) |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 
 > [!NOTE]
 > **Partly checked:** flashed over OTA with this tool on a real plug (`send` with `--esphome-factory`; reported by the owner, 2026-10-12). The log lines and the readings are not recorded here yet.
@@ -149,7 +149,7 @@ Please report what you see, also when it works: [open a device report](https://g
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this device has a **different flash layout**. The `PlugPMG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `PlugPMG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |

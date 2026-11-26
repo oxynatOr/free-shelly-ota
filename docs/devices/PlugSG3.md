@@ -9,7 +9,7 @@
 
 [🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [📍 Pins](#pins) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2a0000`). The `PlugSG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2a0000`). The `PlugSG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
@@ -17,7 +17,7 @@
 | Flash | 8 MB |
 | Official package | 2.2.0 (stable, seen 2026-11-11), with the 2.2.0 layout. The first layout needs a package before 2.2.0: 2.1.1 is the step the update API offered from 1.7.3 on 2026-11-11 (`fetch PlugSG3 --from-version 1.7.3`); 2.1.0 (stable from 2026-10-14) has the same bootloader, partition table and filesystem as 2.0.1, and the hardware runs were made with 2.0.1 |
 | Partition table | `0x10000` |
-| App slot size | `0x2a0000` |
+| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 | ESPHome device page | [Shelly Plug S Gen3](https://devices.esphome.io/devices/shelly-plug-s-gen3/) |
 
 > [!NOTE]
@@ -134,7 +134,7 @@ the update target slot. Command reference: [Commands](../commands.md).
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this plug has a **different flash layout**, the same one as the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x2a0000`, and the filesystems and the second slot move up with them. The `PlugSG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this plug has a **different flash layout**, the same one as the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x2a0000`, and the filesystems and the second slot move up with them. The `PlugSG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |
@@ -153,11 +153,12 @@ Shelly's stable `2.2.0` for this plug has a **different flash layout**, the same
 > **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `inspect --device`, a later ESPHome OTA, and the table in flash (no dump).
 
 > [!CAUTION]
-> **Do not send a package of the first layout to a plug on 2.2.0** (`send` warns), and none of the 2.2.0 layout to one on firmware before 2.2.0. `send` refuses the second case (`layout_since`, `--force` overrides); in the first case `send` only warns (on a dev board with `PlugSG3` such a package ran).
+> **Match the package to the firmware.** `send` refuses a package of the 2.2.0 layout on firmware before 2.2.0 (`layout_since`,
+> `--force` overrides). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch PlugSG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.0 is the stable release and both layouts use the package called `PlugSG3`. The 2.1.1 step: `--from-version 1.7.3`.
 - Build against its table: copy `partitions/PlugSG3-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
-- Then `python ota.py build PlugSG3 app.ota.bin --esphome-factory app.factory.bin`, and `send PlugSG3`, as above.
+- Then `python ota.py build PlugSG3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send PlugSG3`.
 
 ## Way back
 

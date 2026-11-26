@@ -11,7 +11,7 @@
 
 The LEDs sit behind a **KP18068** 5-channel driver on SDA GPIO4 / SCL GPIO5. ESPHome has no official driver for it, so the example config uses the external component [oxynatOr/esphome-kp18058](https://github.com/oxynatOr/esphome-kp18058).
 
-> **Shelly's stable 2.2.1 has another layout** (app slots of `0x300000` instead of `0x280000`). The `RGBCCTBulbG3` profile knows both layouts; see [2.2.1 layout](#221-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.1 has another layout** (app slots of `0x300000` instead of `0x280000`). The `RGBCCTBulbG3` profile knows both layouts; see [2.2.1 layout](#221-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
@@ -19,7 +19,7 @@ The LEDs sit behind a **KP18068** 5-channel driver on SDA GPIO4 / SCL GPIO5. ESP
 | Flash | 8 MB |
 | Official package | 2.2.1 (stable, seen 2026-11-23), with the 2.2.1 layout. The first layout needs a package before 2.2.1; the hardware runs were made with 2.0.1 |
 | Partition table | `0x10000` |
-| App slot size | `0x280000` |
+| App slot size | `0x280000` before Shelly 2.2.1, `0x300000` from 2.2.1 |
 
 > [!NOTE]
 > **Confirmed:** the whole chain ran on a real device: `send` with `--esphome-factory` ran through, ESPHome runs and the light was tested on the bulb (owner, 2026-10-11): channel order and the single warm white LED confirmed. Colour accuracy, the lowest dimming steps and the driver currents are not measured. The colour temperature light of the example config (`rgbw_ct_table`, stock table) was flashed afterwards and runs (owner, 2026-10-16); its colours were not compared with the stock firmware.
@@ -124,7 +124,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## 2.2.1 layout
 
-Shelly's stable `2.2.1` for this bulb has a **different flash layout**, the one of the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and of the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x280000`, the filesystems shrink from `0x100000` to `0xe0000`, and they and the second slot move up. The `RGBCCTBulbG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.1` for this bulb has a **different flash layout**, the one of the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and of the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x280000`, the filesystems shrink from `0x100000` to `0xe0000`, and they and the second slot move up. The `RGBCCTBulbG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |
@@ -145,11 +145,12 @@ Shelly's stable `2.2.1` for this bulb has a **different flash layout**, the one 
 > **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `restore RGBCCTBulbG3-v2` with `ota.py`, `inspect --device`, a later ESPHome OTA, the table in flash (no dump), and whether Shelly's 2.2.0 for this bulb already had the layout (`layout_since` is `2.2.1`, the first version seen with it). `boot_min_version` is `1.0.9`, as for `RGBCCTBulbG3`.
 
 > [!CAUTION]
-> **Do not send a package of the first layout to a bulb on 2.2.1** (`send` warns), and none of the 2.2.1 layout to one on firmware before 2.2.1. `send` refuses the second case (`layout_since`, `--force` overrides); in the first case `send` only warns (on a dev board with `PlugSG3` such a package ran).
+> **Match the package to the firmware.** `send` refuses a package of the 2.2.1 layout on firmware before 2.2.1 (`layout_since`,
+> `--force` overrides). A package of the first layout on 2.2.1 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch RGBCCTBulbG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.1 is the stable release and both layouts use the package called `RGBCCTBulbG3`.
 - Build against its table: copy `partitions/RGBCCTBulbG3-stock-2.2.1.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
-- Then `python ota.py build RGBCCTBulbG3 app.ota.bin --esphome-factory app.factory.bin`, and `send RGBCCTBulbG3`, as above.
+- Then `python ota.py build RGBCCTBulbG3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send RGBCCTBulbG3`.
 
 ## Way back
 

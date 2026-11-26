@@ -11,15 +11,15 @@
 
 Reported: the USB-C port exposes the chip's USB Serial/JTAG, so this device can be flashed and recovered with `esptool` without opening it. That makes UART recovery much easier than on the other models.
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `Pill` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `Pill` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
 | Profile | `Pill` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
-| Official package | 2.0.1 |
+| Official package | 2.0.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0x10000` |
-| App slot size | `0x280000` |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 | Bootloader `min_version` | `1.0.9` (set in the profile) |
 | ESPHome device page | [Shelly The Pill](https://devices.esphome.io/devices/shelly-the-pill/) |
 
@@ -120,7 +120,7 @@ No device-specific findings yet. Please report the file written by `--log-file`,
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Pill` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Pill` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |

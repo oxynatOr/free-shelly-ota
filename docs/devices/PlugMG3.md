@@ -15,17 +15,17 @@
 
 The first device this tool was confirmed on. A second plug, reported by [815rx1](https://github.com/815rx1) (October 2026, thanks), went through the same chain with the 2.1.0 package.
 
-> **Shelly's 2.2.0-beta2 has another layout** (app slots of `0x300000` instead of `0x2a0000`), found by [onkelfarmor](https://github.com/onkelfarmor) ([#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), thanks). It has its own profile, `PlugMG3-beta`, confirmed on a plug in the wall ([#122](https://github.com/oxynatOr/free-shelly-ota/issues/122)); see [Beta layout](#beta-layout). `build` refuses to mix the two layouts.
+> **Shelly's 2.2.0-beta2 has another layout** (app slots of `0x300000` instead of `0x2a0000`), found by [onkelfarmor](https://github.com/onkelfarmor) ([#102](https://github.com/oxynatOr/free-shelly-ota/issues/102), thanks). The beta has its own profile, `PlugMG3-beta`, confirmed on a plug in the wall ([#122](https://github.com/oxynatOr/free-shelly-ota/issues/122)); see [Beta layout](#beta-layout). Shelly's stable 2.2.0 uses the same table, which `PlugMG3` lists as its second layout.
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2a0000`). The `PlugMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2a0000`). The `PlugMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
-| Profile | `PlugMG3`, `PlugMG3-beta` (for Shelly's 2.2.0-beta2 layout, see [Beta layout](#beta-layout)) (both flash layouts, see [2.2.0 layout](#220-layout)) |
+| Profile | `PlugMG3` (both flash layouts, see [2.2.0 layout](#220-layout)), `PlugMG3-beta` (for Shelly's 2.2.0-beta2, see [Beta layout](#beta-layout)) |
 | Flash | 8 MB |
-| Official package | 2.1.0 (stable since 2026-10-14; on 2026-10-27 the update API lists no stable release for this device and the 2.0.1 and 2.1.0 files answer 404 on Shelly's CDN, so keep your cached package; bootloader, partition table and filesystem are the same as in 2.0.1; flashed on a real plug with 2.1.0 and with 2.0.1) |
+| Official package | 2.1.0 (stable since 2026-10-14; on 2026-10-27 the update API lists no stable release for this device and the 2.0.1 and 2.1.0 files answer 404 on Shelly's CDN, so keep your cached package; bootloader, partition table and filesystem are the same as in 2.0.1; flashed on a real plug with 2.1.0 and with 2.0.1); for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0x10000` |
-| App slot size | `0x2a0000` |
+| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 
 > [!NOTE]
 > **Confirmed:** the whole chain ran on two real plugs: `send` from stock 1.8.99 (running from slot 1), then two ESPHome OTAs. The second plug used the official 2.1.0 package and ESPHome 2026.9.1; both OTAs (ESPHome CLI and the Home Assistant ESPHome builder) took effect.
@@ -159,7 +159,7 @@ No `EFUSE write error` line appeared, only the `FW signatures` one ([eFuse note]
 
 ## Beta layout
 
-Shelly's `2.2.0-beta2` for this plug (found by [onkelfarmor](https://github.com/onkelfarmor), [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)) has a **different flash layout**: the app slots are `0x300000` instead of `0x2a0000`, and the filesystem and the second slot move up with them. The profile `PlugMG3-beta` describes it; `PlugMG3` does not fit it and `build` refuses the mix.
+Shelly's `2.2.0-beta2` for this plug (found by [onkelfarmor](https://github.com/onkelfarmor), [#102](https://github.com/oxynatOr/free-shelly-ota/issues/102)) has a **different flash layout**: the app slots are `0x300000` instead of `0x2a0000`, and the filesystem and the second slot move up with them. The profile `PlugMG3-beta` describes it; the stable 2.2.0 has the same table, which `PlugMG3` lists under `layouts:`.
 
 > [!NOTE]
 > **Partly checked (2026-10-28, one plug):** Shelly's 2.2.0-beta2 was written over UART, then `restore` and `send PlugMG3-beta` with `--esphome-factory` (the installer wrote to slot 0 and replaced the loader 1.0.3), ESPHome started, and a second ESPHome OTA from the Home Assistant builder (ESPHome 2026.10.1) succeeded. ESPHome ran from `app_1` at `0x400000` and logged Shelly's beta table (`app_0` `0x20000` / `0x300000`, `app_1` `0x400000` / `0x300000`, `scratch` and `shelly` unchanged).
@@ -189,7 +189,7 @@ Shelly can pull the beta at any time (the 2.0.1 and 2.1.0 files are gone from th
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this device has a **different flash layout**. The `PlugMG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `PlugMG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |

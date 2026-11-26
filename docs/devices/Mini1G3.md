@@ -12,15 +12,15 @@
 It is the [Mini 1PM Gen3](Mini1PMG3.md) without the power meter (relay, switch input, button, LED and an NTC).
 Like the H&T Gen3 and the Mini 1PM Gen3, the official package keeps its partition table at `0xf000`, so a default ESPHome build does not match.
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2a0000`). The `Mini1G3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2a0000`). The `Mini1G3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
 | Profile | `Mini1G3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
-| Official package | 2.0.1 |
+| Official package | 2.0.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0xf000` |
-| App slot size | `0x2a0000` |
+| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 | ESPHome device page | [Shelly 1 Mini Gen3](https://devices.esphome.io/devices/shelly-1-mini-gen3/) |
 
 ## Before you start
@@ -117,7 +117,7 @@ In the `--watch` log look for these lines, in this order:
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Mini1G3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Mini1G3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |

@@ -47,7 +47,9 @@ If you accept that, go on. If you are unsure, test the whole update on a spare d
 4. **Check what the device runs now.**
    - It must run **Shelly firmware**, not ESPHome. (Already ESPHome? Then use ESPHome's own OTA and skip this guide.)
    - Note the firmware version. Some versions need an extra step (1.8.99 on the Plug M Gen3, a device on slot 1, a beta). The device page says which.
-   - A **beta firmware** can have another flash layout (2.2.0-beta2). `build` and `send` refuse a mismatch; see [Beta firmware](bootloader-and-slots.md#beta-firmware-with-another-flash-layout).
+   - **Shelly 2.2.0 and 2.2.1 changed the flash layout** of many devices. Their profiles know both layouts: copy the CSV that matches the firmware on your
+     device (the device page says which), and `build` takes the matching package.
+   - A **beta firmware** can have another flash layout too. `build` and `send` refuse a mismatch; see [Beta firmware](bootloader-and-slots.md#beta-firmware-with-another-flash-layout).
 5. **Check the state symbol** of your device and decide if you want to be one of the first.
 
 ## 2. Prepare your PC

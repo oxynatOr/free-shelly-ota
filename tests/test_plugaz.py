@@ -10,10 +10,10 @@ from shelly_ota import builder, devicegen, firmware, profile
 
 class PlugAZPackageTests(unittest.TestCase):
     def test_official_layout_and_default_package_parts(self):
-        stock = firmware.cached_zip('PlugAZ')
-        if stock is None:
-            self.skipTest('no official PlugAZ ZIP cached')
         device = profile.load_profile('PlugAZ')
+        stock = firmware.zip_for_layout(device)   # the first layout; the newest package can be of the later one
+        if stock is None:
+            self.skipTest('no official PlugAZ ZIP of the first layout cached')
         with zipfile.ZipFile(stock) as z:
             manifest = builder.read_official_manifest(z, 'PlugAZ')
             self.assertEqual(builder.package_layout_problems(device, z, manifest), [])

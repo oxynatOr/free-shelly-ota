@@ -12,15 +12,15 @@
 
 The owner reports the same main board as the Multicolor Bulb with a different lamp module. The Duo's stock firmware has no I2C code: it drives the LEDs with PWM (LEDC), so the LED driver config of the [Multicolor Bulb](RGBCCTBulbG3.md) does not apply. The pins (below) come from the analysis of a flash dump of the stock firmware, not from a test on the lit lamp.
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `DuoBulbG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `DuoBulbG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
 | Profile | `DuoBulbG3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
-| Official package | 2.0.1 |
+| Official package | 2.0.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0x10000` |
-| App slot size | `0x280000` |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 
 > [!NOTE]
 > **Partly checked:** the owner flashed the package from this tool over OTA and the bulb runs ESPHome (before that an ESPHome config was flashed over UART). The GPIOs are **not confirmed on the hardware** (they were not checked with the LEDs); they come from the stock firmware, see [Pins](#pins). The log of the OTA run is not recorded here.
@@ -129,7 +129,7 @@ The OTA chain is the same as on the Multicolor Bulb, and the owner has run it wi
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this device has a **different flash layout**. The `DuoBulbG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `DuoBulbG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |

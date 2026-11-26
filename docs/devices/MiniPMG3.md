@@ -12,16 +12,16 @@
 
 The first device that was flashed and reported by someone else: thanks to [imsandli](https://github.com/imsandli) for the device report (October 2026) and the notes on this page. This device **only measures**: there is no relay in it. Do not confuse it with the [Mini 1PM Gen3](Mini1PMG3.md), which has one and is a different application in Shelly's update API (`Mini1PMG3`).
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `MiniPMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `MiniPMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
 | Profile | `MiniPMG3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Model | S3PM-001PCEU16 (device id `shellypmminig3-...`) |
 | Flash | 8 MB |
-| Official package | 2.1.0 (the reported flash started from stock 2.0.1, see the notes) |
+| Official package | 2.1.0 (the reported flash started from stock 2.0.1, see the notes); for the [second layout](#220-layout): 2.2.0 |
 | Partition table | **`0xf000`** (not `0x10000`) |
-| App slot size | `0x280000` |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 | Bootloader `min_version` | `1.0.9` (set in the profile) |
 | ESPHome device page | [Shelly PM Mini Gen3](https://devices.esphome.io/devices/shelly-pm-mini-gen3/) |
 
@@ -175,7 +175,7 @@ The `EFUSE write error` line also appeared on the [H&T Gen3](HTG3.md); the updat
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this device has a **different flash layout**. The `MiniPMG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `MiniPMG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |

@@ -81,7 +81,7 @@ class LoadingTests(Base):
     def test_every_shipped_layout_has_its_csv_with_that_slot_size(self):
         partitions = Path(__file__).resolve().parent.parent / "partitions"
         names = [n for n in profile.list_devices() if profile.load_profile(n).layouts]
-        self.assertEqual(len(names), 24, names)
+        self.assertEqual(len(names), 25, names)
         for name in names:
             for variant in profile.load_profile(name).variants():
                 text = (partitions / variant.csv_name).read_text(encoding="utf-8")
