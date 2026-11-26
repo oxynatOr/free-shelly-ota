@@ -237,7 +237,7 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
             raise OtaError(f"The official package {manifest['name']} {manifest['version']} has another flash layout than "
                            f"the {profile.name} profile: {'; '.join(layout)}.\n"
                            f"  Fix: use a package with the layout the profile describes (e.g. the stable release). A new layout "
-                           f"needs a new profile revision and a new stock CSV (`python ota.py partition-csv {profile.name} "
+                           f"needs an entry under `layouts:` in the profile and its stock CSV (`python ota.py partition-csv {profile.name} "
                            f"--version {manifest['version']}` shows the table). Nothing was built.")
         parts = manifest["parts"]
         if parts["app"].get("ptn") != profile.app_ptn:
@@ -261,7 +261,8 @@ def build(profile: Profile, app_path: Path, official_zip: Path, output: Path, *,
         replaced: list[str] = []
         if factory:
             from . import bootswap  # imported here: bootswap itself needs OtaError from this module
-            replacements, boot_warnings = bootswap.prepare(factory.read_bytes(), original, manifest, app, pt_addr=pt_addr)
+            replacements, boot_warnings = bootswap.prepare(factory.read_bytes(), original, manifest, app, pt_addr=pt_addr,
+                                                           csv_name=profile.csv_name)
             warnings += boot_warnings
             for key in ("boot", "otadata"):
                 data = replacements[parts[key]["src"]]

@@ -26,7 +26,8 @@ No adapter yet? [Build one](#build-your-own-uart-adapter) from an ESP32 dev boar
 3. **Read the eFuses, do not burn anything:** `espefuse summary`. Continue only if flash encryption is off
    (`FLASH_CRYPT_CNT = 0`) and secure boot is off (`ABS_DONE_0`/`ABS_DONE_1 = False`); otherwise a plain image will not boot.
 4. **Get the addresses:** take the official ZIP (`ota.py fetch <Device>`), unpack it and read `manifest.json`: `boot` and `pt`
-   have an `addr`, the other parts sit in the partition named by `ptn` (offsets in `partitions/<Profile>-stock.csv`).
+   have an `addr`, the other parts sit in the partition named by `ptn` (offsets in the CSV in `partitions/` of the same layout as the
+   package: `<Profile>-stock.csv`, or `<Profile>-stock-<version>.csv` for Shelly 2.2.x. The addresses differ, so never mix them).
 5. **Erase NVS, then write all parts in one command.** Example for the Plus Plug S (classic ESP32):
 
    ```
@@ -34,7 +35,8 @@ No adapter yet? [Build one](#build-your-own-uart-adapter) from an ESP32 dev boar
    esptool --chip esp32 --port COM4 --baud 460800 write-flash --flash-mode keep --flash-size keep --flash-freq keep 0x1000 bootloader.bin 0x8000 partition-table.bin 0xd000 boot_state.bin 0x10000 PlusPlugS.bin 0x1a0000 fs.img
    ```
 
-   The same for the Plug M Gen3 (ESP32-C3, addresses from `partitions/PlugMG3-stock.csv` and the manifest):
+   The same for the Plug M Gen3 (ESP32-C3, addresses from `partitions/PlugMG3-stock.csv` and the manifest, so for a package **before
+   2.2.0**; in a 2.2.0 package `fs` sits at `0x320000`):
 
    ```
    esptool --chip esp32c3 --port COM4 --baud 460800 erase-region 0x14000 0xc000

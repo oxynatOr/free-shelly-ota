@@ -111,7 +111,9 @@ The installer needs the device in a state it can accept. Do these checks in the 
 
 Your own YAML decides what the device does. Rules that make the update work:
 
-1. **Partition table.** Copy `partitions/<Profile>-stock.csv` from this repository next to your YAML. For a profile you made yourself:
+1. **Partition table.** Copy `partitions/<Profile>-stock.csv` from this repository next to your YAML.
+   **If the device runs Shelly 2.2.0 or later**, check the device page: many have a second table, `partitions/<Profile>-stock-<version>.csv`.
+   For a profile you made yourself:
    `python ota.py partition-csv <Profile> -o <Profile>-stock.csv`.
 2. **Offset.** `CONFIG_PARTITION_TABLE_OFFSET` must be the profile's `pt_offset` (`0x10000` for most, `0xf000` for H&T, Mini 1 Gen3, Mini 1PM Gen3, PM Mini Gen3,
    1 Gen3, 1PM Gen3, i4 Gen3, Dimmer 0/1-10V PM Gen3; `0x8000` for the classic ESP32 Gen2 devices). Your device page states it.

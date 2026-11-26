@@ -37,13 +37,15 @@ Check first:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/Pro2PM-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x8000"`.
+>
+> **On Shelly 2.2.0 or later** copy `partitions/Pro2PM-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
   variant: ESP32
   board: esp32dev
   flash_size: 8MB
-  partitions: Pro2PM-stock.csv        # copy from partitions/ in this repository
+  partitions: Pro2PM-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.0+: Pro2PM-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -104,7 +106,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## Notes for this device
 
-**Not tried on a device.** The profile is made from Shelly's package for the app name `Pro2PM`; nobody has flashed it yet. The stock partition table is in `partitions/Pro2PM-stock.csv`. The DevKit image `python ota.py devkit Pro2PM` is built for it, but it has not been run on a dev board either (so the state stays 🧪, see [DevKit](../devkit.md)).
+**Not tried on a device.** The profile is made from Shelly's package for the app name `Pro2PM`; nobody has flashed it yet. The stock partition tables are in `partitions/Pro2PM-stock.csv` (before 2.2.0) and `partitions/Pro2PM-stock-2.2.0.csv`. The DevKit image `python ota.py devkit Pro2PM` takes the layout of the newest cached package, but it has not been run on a dev board either (so the state stays 🧪, see [DevKit](../devkit.md)).
 
 **Pins.** Not mapped here. No stock dump of this device has been analysed here; pins read from firmware or templates are "not confirmed" until someone has measured them.
 

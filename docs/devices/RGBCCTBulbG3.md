@@ -39,13 +39,15 @@ Check first:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/RGBCCTBulbG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
+>
+> **On Shelly 2.2.1 or later** copy `partitions/RGBCCTBulbG3-stock-2.2.1.csv` instead and use that name under `partitions:` ([2.2.1 layout](#221-layout)).
 
 ```yaml
 esp32:
   variant: ESP32C3
   board: esp32-c3-devkitm-1
   flash_size: 8MB
-  partitions: RGBCCTBulbG3-stock.csv        # copy from partitions/ in this repository
+  partitions: RGBCCTBulbG3-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.1+: RGBCCTBulbG3-stock-2.2.1.csv
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -123,6 +125,8 @@ package, reads the update target slot. Command reference: [Commands](../commands
   than Shelly's 100 kHz. Details: [Notes & troubleshooting](https://github.com/oxynatOr/esphome-kp18058#notes--troubleshooting) of the driver component.
 
 ## 2.2.1 layout
+
+The reports below name `RGBCCTBulbG3-v2`: that was the separate profile for this layout before it became part of `RGBCCTBulbG3`.
 
 Shelly's stable `2.2.1` for this bulb has a **different flash layout**, the one of the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and of the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x280000`, the filesystems shrink from `0x100000` to `0xe0000`, and they and the second slot move up. The `RGBCCTBulbG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 

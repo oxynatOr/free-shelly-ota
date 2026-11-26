@@ -43,13 +43,15 @@ Also:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/DuoBulbG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
+>
+> **On Shelly 2.2.0 or later** copy `partitions/DuoBulbG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
   variant: ESP32C3
   board: esp32-c3-devkitm-1
   flash_size: 8MB
-  partitions: DuoBulbG3-stock.csv        # copy from partitions/ in this repository
+  partitions: DuoBulbG3-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.0+: DuoBulbG3-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:

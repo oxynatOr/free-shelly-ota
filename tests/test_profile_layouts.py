@@ -88,14 +88,10 @@ class LoadingTests(Base):
                 row = next(l for l in text.splitlines() if l.startswith(variant.app_ptn + ","))
                 self.assertEqual(int(row.split(",")[4], 0), variant.app_slot_size, variant.csv_name)
 
-    def test_the_old_v2_names_are_aliases_of_one_layout(self):
-        for name, since in (("PlugSG3", "2.2.0"), ("S2PMG3", "2.2.0"), ("Mini1PMG3", "2.2.1"), ("RGBCCTBulbG3", "2.2.1")):
-            alias = profile.load_profile(f"{name}-v2")
-            self.assertEqual((alias.name, alias.package_name, alias.app_slot_size, alias.layout_since),
-                             (f"{name}-v2", name, 0x300000, since))
-            self.assertEqual(alias.variants(), [alias])
-            self.assertEqual(alias.csv_name, f"{name}-stock-{since}.csv")
-            self.assertNotIn(f"{name}-v2", profile.list_devices())
+    def test_there_are_no_v2_profiles_any_more(self):
+        self.assertEqual([n for n in profile.list_devices() if n.endswith("-v2")], [])
+        with self.assertRaises(profile.ProfileError):
+            profile.load_profile("PlugSG3-v2")
 
     def test_bad_layout_lists_are_refused(self):
         for layouts in ('  - since: "2.2.0"\n', '  - app_slot_size: 0x300000\n',

@@ -271,14 +271,22 @@ Creates a profile from an official ZIP: `python ota.py add-device NewDevice.zip`
 ## partition-csv
 
 Writes Shelly's stock partition table as a CSV for ESPHome's `partitions:` option, read from the cached official package
-(run `fetch` first): `python ota.py partition-csv HTG3 -o HTG3-stock.csv`. Without `-o` it prints the CSV. The same files are
-in `partitions/`; use this command for a profile you added yourself. Set `CONFIG_PARTITION_TABLE_OFFSET` in your config to the
+from `fetch`: `python ota.py partition-csv HTG3 -o HTG3-stock.csv`. Without `-o` it prints the CSV. The same files are
+in `partitions/`; use this command for a profile you added yourself. For a device with several flash layouts the output is the table
+of the package it reads: the newest cached one, the one of `--version`, or with `--layout` the one of that layout. If that package
+is not cached, the command says so and, in a terminal, asks whether to download it and how to check TLS (a CA file or none).
+Set `CONFIG_PARTITION_TABLE_OFFSET` in your config to the
 profile's `pt_offset`.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
 | `DEVICE` | yes | | Profile name |
 | `-o`, `--output CSV` | no | print | Write to this file; refuses to overwrite an existing file |
+| `--layout SINCE` | no | newest | For a device with several flash layouts: `base` or the Shelly version the layout starts with |
+| `--version VER` | no | newest stable | Use this version |
+| `--official ZIP` | no | cache | Read this ZIP |
+| `--download` | no | off | Download a missing package without asking |
+| `--insecure` / `--cafile PEM` | no | none | How the download checks TLS (see [`fetch`](#fetch)) |
 | `--force` | no | off | Overwrite an existing output file |
 | `--official ZIP` | no | the cache | Use this official ZIP instead of the cached one |
 | `--version VER` | no | newest stable cached | Use this cached version (a pre-release only with this option) |
@@ -333,9 +341,26 @@ python ota.py fetch PlugMG3 --cafile fw/shelly-ca.pem
 - **Expiry.** The root expires on 2030-08-02. The tool then prints a warning; a newer version of the tool carries the new fingerprint.
 - **Not in the repository.** The PEM is written on your PC from your package; `fw/` is not committed.
 
+## profiles
+
+`python ota.py profiles` lists the profile revisions and checks `devices/profiles.lock`; `--update-lock` records them.
+
+`python ota.py profiles --check-api --insecure` asks Shelly's update API what it offers for each profile (or only for `DEVICE`) and says
+whether that version is cached, older than the cache, or new. Only the app name goes to the server. Nothing is downloaded without
+`--download`; with it a new package is fetched and its flash layout and loader are compared with the profile. The command ends with an
+error if a profile needs attention.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `DEVICE` | no | all | With `--check-api`: only this profile |
+| `--check-api` | no | off | Ask the update API |
+| `--download` | no | off | With `--check-api`: fetch new packages and compare them |
+| `--insecure` / `--cafile PEM` | no | none | With `--check-api`: how TLS is checked (see [`fetch`](#fetch)) |
+| `--update-lock` | no | off | Write `devices/profiles.lock` |
+
 ## list
 
-`python ota.py list` shows one line per device: profile, name, app slot size (all sizes, such as `0x2a0000/0x300000`, for a device with several flash layouts) and the cached official firmware versions. The former `-v2` names (`PlugSG3-v2` and the other three) are not listed; they still work in every command. The device name is shortened to fit the terminal. `--details` (or `--all`) shows two lines per device with the profile revision and the build id of each cached firmware.
+`python ota.py list` shows one line per device: profile, name, app slot size (all sizes, such as `0x2a0000/0x300000`, for a device with several flash layouts) and the cached official firmware versions. The device name is shortened to fit the terminal. `--details` (or `--all`) shows two lines per device with the profile revision and the build id of each cached firmware.
 
 ## clean
 

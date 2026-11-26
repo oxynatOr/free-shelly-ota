@@ -18,7 +18,7 @@ import zipfile
 import textwrap
 from pathlib import Path
 
-from shelly_ota import (MODULE_DIR, ble, buildinfo, builder, cacert, compile as compile_, devicegen, devkit, firmware, lint, logview, logwatch,
+from shelly_ota import (MODULE_DIR, apicheck, ble, buildinfo, builder, cacert, compile as compile_, devicegen, devkit, firmware, lint, logview, logwatch,
                         profile, rpc, secrets_check, sender, ui)
 from shelly_ota.logview import Level
 
@@ -101,7 +101,8 @@ def cmd_list(args) -> None:
         title_w = max((len(p.display_name) for p in profiles.values()), default=0)
         for name in names:
             p = profiles[name]
-            ui.say(f"{name:{name_w}s}  {p.display_name:{title_w}s}  app size=0x{p.app_slot_size:x}  profile rev {p.revision}")
+            ui.say(f"{name:{name_w}s}  {p.display_name:{title_w}s}  app size="
+                   f"{'/'.join(f'0x{v.app_slot_size:x}' for v in p.variants())}  profile rev {p.revision}")
             for ver in firmware.list_versions(name):
                 meta_path = firmware.FW_DIR / name / ver / "meta.json"
                 build_id = json.loads(meta_path.read_text(encoding="utf-8")).get("build_id") if meta_path.is_file() else None
@@ -136,6 +137,14 @@ def cmd_colors(args) -> None:
 
 
 def cmd_profiles(args) -> None:
+    if args.check_api:
+        names = [profile.load_profile(args.device).name] if args.device else profile.list_devices()
+        attention = apicheck.check_api(names, download=args.download, insecure=args.insecure, cafile=args.cafile, out=ui.say)
+        if attention:
+            raise builder.OtaError(f"{len(attention)} profile(s) need attention: {', '.join(attention)}.")
+        return
+    if args.device or args.download or args.insecure or args.cafile:
+        raise builder.OtaError("DEVICE, --download, --insecure and --cafile belong to --check-api.")
     if args.update_lock:
         lock = profile.write_lock()
         ui.say(f"Wrote devices/{profile.LOCK_FILE} ({len(lock)} profiles)")
@@ -183,12 +192,74 @@ def cmd_add_device(args) -> None:
     ui.say(f"Stored the ZIP in {firmware.FW_DIR / info['name']}")
 
 
+def _ask(question: str) -> str:
+    """A question on stderr, so that `partition-csv ... > file.csv` keeps only the table in the file."""
+    sys.stderr.write(question)
+    sys.stderr.flush()
+    return sys.stdin.readline().strip()
+
+
+def _ask_download_tls(args, missing: str) -> bool:
+    """Whether to download, and how TLS is checked: sets args.insecure / args.cafile. False: do not download."""
+    if args.download:
+        return True
+    if not (sys.stdin.isatty() and sys.stderr.isatty()):
+        return False
+    choice = _ask(f"{missing}\n"
+                  "Download it now? Shelly's servers use a private CA:\n"
+                  "  [c] check TLS against a CA file (PEM; 'ota.py ca' writes it from a package)\n"
+                  "  [i] insecure: no TLS check\n"
+                  "  [n] no (default)\n"
+                  "> ").lower()
+    if choice == "i":
+        args.insecure = True
+        return True
+    if choice == "c":
+        path = _ask("CA file: ").strip('"')
+        if path:
+            args.cafile = Path(path)
+            return True
+    return False
+
+
+def _partition_csv_package(p, args) -> Path:
+    """The official package to read the table from: --official, the cache, or (asked or --download) the update API."""
+    wanted = None
+    if args.layout:
+        wanted = _layout_for_build(p, args)
+    if args.official:
+        found = args.official
+    elif wanted:
+        found = firmware.zip_for_layout(wanted, args.version)
+    else:
+        found = firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
+    if found:
+        if wanted and builder.zip_layout_problems(wanted, found):
+            raise builder.OtaError(f"{found.name} has another flash layout than --layout {args.layout}.")
+        return found
+    what = f"No official {p.name} package"
+    if args.layout:
+        what += f" with the layout '{args.layout}'"
+    if args.version:
+        what += f" in version {args.version}"
+    what += f" is cached in {firmware.FW_DIR / p.package_name}."
+    shipped = MODULE_DIR / "partitions" / (wanted or p).csv_name
+    if args.layout and shipped.is_file():
+        what += f" The table of that layout also ships with the tool: {shipped}"
+    if not _ask_download_tls(args, what):
+        raise builder.OtaError(f"{what}\n  Fix: add --download (with --cafile PEM or --insecure), run 'ota.py fetch {p.name}', "
+                               f"or pass --official <zip>.")
+    with contextlib.redirect_stdout(sys.stderr):
+        found = _fetch_official(p, refresh=True, version=args.version, insecure=args.insecure, cafile=args.cafile)
+    if wanted and builder.zip_layout_problems(wanted, found):
+        raise builder.OtaError(f"The update API serves {found.parent.name}, which has another flash layout than --layout "
+                               f"{args.layout}. Older packages: 'ota.py fetch {p.name} --from-version <installed version>'.")
+    return found
+
+
 def cmd_partition_csv(args) -> None:
     p = profile.load_profile(args.device)
-    official = args.official or firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
-    if official is None:
-        raise builder.OtaError(f"No official {p.name} ZIP cached. Run 'ota.py fetch {p.name}' first, or pass --official <zip>.")
-    text = devicegen.partition_csv(official)
+    text = devicegen.partition_csv(_partition_csv_package(p, args))
     if args.output:
         if args.output.exists() and not args.force:
             raise builder.OtaError(f"{args.output} already exists (use --force to overwrite).")
@@ -582,7 +653,8 @@ def send_options() -> argparse.ArgumentParser:
     g.add_argument("--dry-run", action="store_true", help="check the device, send nothing")
     g.add_argument("--yes", action="store_true", help="do not ask before flashing")
     g.add_argument("--force", action="store_true",
-                   help="send even if the device model does not match, or the package keeps Shelly's bootloader (no --esphome-factory)")
+                   help="send even if the device model does not match, the package keeps Shelly's bootloader (no --esphome-factory), "
+                        "or its flash layout is newer than the device's firmware")
     g.add_argument("--ignore-slot", action="store_true",
                    help="send even if the installer would write to a slot that ESPHome's bootloader does not start")
     g.add_argument("--watch", type=float, default=0, metavar="SEC",
@@ -703,6 +775,12 @@ def build_parser() -> argparse.ArgumentParser:
     g = pc.add_argument_group("base firmware")
     g.add_argument("--official", type=Path, metavar="ZIP", help="use this official ZIP instead of the cache")
     g.add_argument("--version", metavar="VER", help="use this cached version (default: the newest stable one)")
+    g.add_argument("--layout", metavar="SINCE",
+                   help="for a profile with several flash layouts: base, or the Shelly version the layout starts with")
+    g = pc.add_argument_group("if the package is not cached")
+    g.add_argument("--download", action="store_true", help="download it without asking")
+    g.add_argument("--insecure", action="store_true", help="download without the TLS check")
+    g.add_argument("--cafile", type=Path, metavar="PEM", help="check TLS against this CA file")
     pc.set_defaults(func=cmd_partition_csv)
 
     dk = _command(sub, "devkit", usage="ota.py devkit DEVICE [options]",
@@ -838,6 +916,12 @@ def build_parser() -> argparse.ArgumentParser:
     pr = _command(sub, "profiles")
     pr.add_argument("--update-lock", action="store_true",
                     help="record the current revision and content of every profile (after raising a revision)")
+    pr.add_argument("device", nargs="?", metavar="DEVICE", help="with --check-api: only this profile")
+    pr.add_argument("--check-api", action="store_true", help="ask Shelly's update API what it offers for each profile")
+    pr.add_argument("--download", action="store_true",
+                    help="with --check-api: fetch a new package and compare its flash layout and loader with the profile")
+    pr.add_argument("--insecure", action="store_true", help="with --check-api: no TLS check (Shelly uses a private CA)")
+    pr.add_argument("--cafile", type=Path, metavar="PEM", help="with --check-api: check TLS against this CA file")
     pr.set_defaults(func=cmd_profiles)
 
     c = _command(sub, "clean", usage="ota.py clean [--keep N] [--yes]")

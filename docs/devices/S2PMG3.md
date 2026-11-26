@@ -37,13 +37,15 @@ Check first:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/S2PMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
+>
+> **On Shelly 2.2.0 or later** copy `partitions/S2PMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
   variant: ESP32C3
   board: esp32-c3-devkitm-1
   flash_size: 8MB
-  partitions: S2PMG3-stock.csv        # copy from partitions/ in this repository
+  partitions: S2PMG3-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.0+: S2PMG3-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -116,6 +118,8 @@ First report ([#92](https://github.com/oxynatOr/free-shelly-ota/issues/92), than
 The profile sets `boot_min_version: "1.0.9"`: devices of this family run Shelly's loader 1.0.3, which would otherwise skip ESPHome's bootloader (`update? 0`).
 
 ## 2.2.0 layout
+
+The reports below name `S2PMG3-v2`: that was the separate profile for this layout before it became part of `S2PMG3`.
 
 Shelly's stable `2.2.0` for this device has a **different flash layout**, the same one as the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)): the app slots are `0x300000` instead of `0x2c0000`, and the filesystems and the second slot move up with them. The `S2PMG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 

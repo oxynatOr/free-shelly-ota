@@ -47,6 +47,8 @@ Also:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/MiniPMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
+>
+> **On Shelly 2.2.0 or later** copy `partitions/MiniPMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
@@ -54,7 +56,7 @@ esp32:
   board: esp32-c3-devkitm-1
   flash_size: 8MB
   flash_mode: dio
-  partitions: MiniPMG3-stock.csv        # copy from partitions/ in this repository
+  partitions: MiniPMG3-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.0+: MiniPMG3-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:

@@ -142,7 +142,8 @@ above avoids it). Thanks to [inventor7777](https://github.com/inventor7777/ESPHo
 
 Shelly's `2.2.0-beta2` (checked 2026-10-28, all profiles) changes the flash layout of 17 G3 devices to one common table with app slots of `0x300000` (the table the DimmerG3 already had): Dimmer0110VPMG3, DuoBulbG3, I4G3, Mini1G3, Mini1PMG3, MiniPMG3, OutdoorPlugSG3, Pill, PlugMG3, PlugPMG3, PlugSG3, RGBCCTBulbG3, S1G3, S1LG3, S1PMG3, S2LG3, S2PMG3. The BLU Gateway Gen3 (no profile any more) has another table in its beta as well. Unchanged are all G4 devices, EMG3, S3EMG3, EMG4, MiniEMG4, Pro3EM, HTG3, PlusPlugIT, PlusUni and DimmerG3; PlusPlugS has no beta. The stable packages of the wave of 2026-10-26 (2.0.3, 2.1.1) kept bootloader and table (four samples checked).
 
-- `fetch` and `inspect` warn about such a package, `build` refuses it, so no image for the wrong layout can be made.
+- A package whose layout the profile does not know gets a warning from `fetch` and `inspect`, and `build` refuses it, so no image for
+  the wrong layout can be made.
 - For the beta itself only the Plug M Gen3 has a profile (`PlugMG3-beta`, [device page](devices/PlugMG3.md#beta-layout)).
 - **Shelly's stable 2.2.0 / 2.2.1 uses this layout.** The affected profiles list it as a second layout under `layouts:` ([profiles with several layouts](../devices/README.md#several-flash-layouts)), and `build` picks the layout that matches your partition table. The Pro line changed in 2.2.0 too (app slots from `0x200000` to `0x300000`).
 - **The 2PM Gen3 and the Plug S Gen3 have it in a stable release:** Shelly's stable `2.2.0` for these devices (seen 2026-11-11) has the same table. Their profiles `S2PMG3` ([device page](devices/S2PMG3.md#220-layout)) and `PlugSG3` ([device page](devices/PlugSG3.md#220-layout)) list it as a second layout.

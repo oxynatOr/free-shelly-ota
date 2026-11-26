@@ -73,8 +73,6 @@ layouts:
 
 `build` takes the layout from your own table: the CSV of `--esphome-yaml` or `--compile`, else `factory.bin` (or `--layout base`/`--layout 2.2.0`), and uses the newest cached official package that fits it. With neither, the official package decides. `send` reads the layout from the package: `layout_since` of that layout is checked against the device, and a package of an older layout than the device's firmware gets a warning, not a refusal. The layouts are told apart by the slot size, so two of them cannot have the same one.
 
-A file with only `alias_of: <profile>` and `layout: "<since>"` is an old profile name that stands for one layout (`PlugSG3-v2`, `S2PMG3-v2`, `Mini1PMG3-v2`, `RGBCCTBulbG3-v2`). It still works in every command and is not listed.
-
 ## Changing a profile
 
 Every profile has a `revision:`. When you change anything else in the file:

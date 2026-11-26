@@ -43,7 +43,7 @@ Check first:
 
 ## ESPHome config
 
-Copy `partitions/PlugAZ-stock.csv` next to your YAML. Keep your own Wi-Fi,
+Copy `partitions/PlugAZ-stock.csv` next to your YAML (**on Shelly 2.2.0 or later** `partitions/PlugAZ-stock-2.2.0.csv`, [2.2.0 layout](#220-layout)). Keep your own Wi-Fi,
 API and OTA credentials; no credentials or ready-made firmware are shipped here.
 
 ```yaml
@@ -53,7 +53,7 @@ esp32:
   flash_size: 8MB
   flash_mode: dio
   flash_frequency: 80MHz
-  partitions: PlugAZ-stock.csv
+  partitions: PlugAZ-stock.csv       # Shelly 2.2.0+: PlugAZ-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:

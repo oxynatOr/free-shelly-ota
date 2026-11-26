@@ -45,13 +45,15 @@ Also:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/PlugPMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
+>
+> **On Shelly 2.2.0 or later** copy `partitions/PlugPMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
   variant: ESP32C3
   board: esp32-c3-devkitm-1
   flash_size: 8MB
-  partitions: PlugPMG3-stock.csv        # copy from partitions/ in this repository
+  partitions: PlugPMG3-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.0+: PlugPMG3-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -173,7 +175,7 @@ Shelly's stable `2.2.0` for this device has a **different flash layout**. The `P
 `python ota.py restore PlugPMG3` sends the official firmware back while Shelly firmware still runs.
 
 The UART steps on that page were run on a Plus Plug S and a Plug M Gen3. For this plug the parts and addresses come from the official package's manifest and
-`partitions/PlugPMG3-stock.csv`; the command below is derived from them and **has not been run on a Plug PM Gen3**. The only difference to the Plug M command is the file system, which sits at
+`partitions/PlugPMG3-stock.csv`; the command below is derived from them and **has not been run on a Plug PM Gen3**. Addresses and the CSV are those of the first layout (before Shelly 2.2.0); for a 2.2.0 package take them from `partitions/PlugPMG3-stock-2.2.0.csv`. The only difference to the Plug M command is the file system, which sits at
 `0x2a0000` here (`0x2c0000` on the Plug M):
 
 ```

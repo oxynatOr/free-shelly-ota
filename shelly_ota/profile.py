@@ -95,13 +95,8 @@ def _read_layouts(file: str, name: str, raw: dict) -> tuple[Layout, ...]:
     return tuple(layouts)
 
 
-def _is_alias(path: Path) -> bool:
-    return any(line.startswith("alias_of:") for line in path.read_text(encoding="utf-8").splitlines())
-
-
 def list_devices(devices_dir: Path = DEVICES_DIR) -> list[str]:
-    """The profiles. Old names that only point at one layout of another profile (alias_of) still load, but are not listed."""
-    return sorted(p.stem for p in devices_dir.glob("*.yaml") if not _is_alias(p))
+    return sorted(p.stem for p in devices_dir.glob("*.yaml"))
 
 
 def load_profile(name: str, devices_dir: Path = DEVICES_DIR) -> Profile:
@@ -109,8 +104,6 @@ def load_profile(name: str, devices_dir: Path = DEVICES_DIR) -> Profile:
     if not path.is_file():
         raise ProfileError(f"Unknown device '{name}'. Available: {', '.join(list_devices(devices_dir)) or 'none'}")
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    if raw.get("alias_of"):
-        return _load_alias(path.name, name, raw, devices_dir)
     if "app_slot_size" not in raw:
         raise ProfileError(f"{path.name}: missing required key 'app_slot_size'")
     layouts = _read_layouts(path.name, name, raw)
@@ -130,16 +123,6 @@ def load_profile(name: str, devices_dir: Path = DEVICES_DIR) -> Profile:
         channel=str(raw.get("channel", "stable")),
         layout_since=str(raw["layout_since"]) if raw.get("layout_since") else None,
     )
-
-
-def _load_alias(file: str, name: str, raw: dict, devices_dir: Path) -> Profile:
-    """An old profile name: exactly one layout of another profile, under its own name."""
-    root = load_profile(str(raw["alias_of"]), devices_dir)
-    since = str(raw.get("layout") or "")
-    variant = next((v for v in root.variants()[1:] if v.layout_since == since), None)
-    if variant is None:
-        raise ProfileError(f"{file}: {root.name} has no layout since {since!r}")
-    return replace(variant, name=name, package=root.package_name, layouts=(), base=None)
 
 
 def content_hash(name: str, devices_dir: Path = DEVICES_DIR) -> str:

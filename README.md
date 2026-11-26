@@ -35,7 +35,7 @@ You need a Shelly of a supported model on **Shelly's own firmware**, **Python 3.
 
 **Download.** Get the [latest release](https://github.com/oxynatOr/free-shelly-ota/releases) (*Source code (zip)*) and unpack it, or run `git clone https://github.com/oxynatOr/free-shelly-ota`, then `pip install -r requirements.txt`.
 
-**1. Write your ESPHome config.** It must use Shelly's partition table and offset: copy `partitions/<Profile>-stock.csv` next to your YAML and set `CONFIG_PARTITION_TABLE_OFFSET` to the value on the device page. Without it `build` refuses; it checks the partition table, not the rest of your config. The exact YAML is in the [guide, step 5](docs/guide.md#5-write-the-esphome-config).
+**1. Write your ESPHome config.** It must use Shelly's partition table and offset: copy `partitions/<Profile>-stock.csv` next to your YAML (on Shelly 2.2.0 or later many devices need the second CSV their device page names) and set `CONFIG_PARTITION_TABLE_OFFSET` to the value on the device page. Without it `build` refuses; it checks the partition table, not the rest of your config. The exact YAML is in the [guide, step 5](docs/guide.md#5-write-the-esphome-config).
 
 **2. Compile and pack.** `--compile` runs ESPHome for you (the `esphome` command, else Docker; the first Docker compile downloads the toolchain, see [Compile](docs/commands.md#compile)).
 

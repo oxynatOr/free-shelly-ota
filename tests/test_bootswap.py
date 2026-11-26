@@ -208,6 +208,22 @@ class BootswapTests(unittest.TestCase):
         self.assertIn("same build", str(cm.exception))
         self.assertIn("Fix:", str(cm.exception))
 
+    @needs_fw
+    def test_layout_error_names_the_csv_of_the_chosen_layout(self):
+        later = profile.load_profile("PlugMG3").variants()[-1]
+        official = firmware.zip_for_layout(later)
+        if official is None:
+            self.skipTest("no package of the later layout cached")
+
+        def move_app0(pt):
+            pt[2 * 32 + 8:2 * 32 + 12] = (0x30000).to_bytes(4, "little")
+        app = fake_app(100_000)
+        (self.tmp / "app.bin").write_bytes(app)
+        (self.tmp / "factory.bin").write_bytes(make_factory(official, app, pt_mod=move_app0))
+        with self.assertRaises(builder.OtaError) as cm:
+            builder.build(later, self.tmp / "app.bin", official, self.tmp / "o.zip", factory=self.tmp / "factory.bin")
+        self.assertIn("partitions: PlugMG3-stock-2.2.0.csv", str(cm.exception))
+
     def test_app_checks_name_the_fix(self):
         with self.assertRaises(builder.OtaError) as cm:
             builder.check_app_image(fake_app(100_000), "esp32c6", 1 << 20, "app_0")   # fake_app has the C3 chip id

@@ -100,7 +100,7 @@ def _entry_key(e: dict) -> tuple:
 
 
 def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: bytes,
-            pt_addr: int | None = None) -> tuple[dict, list[str]]:
+            pt_addr: int | None = None, csv_name: str | None = None) -> tuple[dict, list[str]]:
     """Return ({zip file name: new bytes}, warnings) for the boot and otadata parts, or raise OtaError.
 
     pt_addr (EXPERIMENTAL, build --pt-addr): the package moves the partition table there, so the factory image has to carry
@@ -148,8 +148,8 @@ def prepare(factory: bytes, official: zipfile.ZipFile, manifest: dict, app: byte
                 offset_hint = ("CONFIG_PARTITION_TABLE_OFFSET as the CSV header says." if pt_addr is None else
                                f"leave CONFIG_PARTITION_TABLE_OFFSET unset (the table is at 0x{pt_addr:x}).")
                 raise OtaError(f"The ESPHome build uses another partition layout than the device: {msg}.\n"
-                               f"  Fix: build with Shelly's table: `esp32: partitions: {name}-stock.csv` (the file is in "
-                               f"partitions/, or `python ota.py partition-csv {name}` writes it) and set "
+                               f"  Fix: build with Shelly's table: `esp32: partitions: {csv_name or name + '-stock.csv'}` (the file is in "
+                               f"partitions/, or `python ota.py partition-csv {name}` writes the one of the cached package) and set "
                                + offset_hint)
             warnings.append(f"{msg}. Harmless here because Shelly's partition table is kept, but fix your "
                             f"partitions CSV.")
