@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import builder, firmware, profile, sender  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 from test_extras import FakeRpcShelly  # noqa: E402
@@ -19,7 +19,7 @@ class PlainPackageTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.profile = profile.load_profile("DuoBulbG3")
-        self.official = firmware.cached_zip("DuoBulbG3")
+        self.official = base_zip("DuoBulbG3")
         app = self.tmp / "app.bin"
         app.write_bytes(fake_app(100_000))
         self.plain = self.tmp / "plain.zip"

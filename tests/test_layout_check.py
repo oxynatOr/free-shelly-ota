@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import builder, devicegen, firmware, profile  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 
@@ -42,7 +42,7 @@ class LayoutCheckTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.profile = profile.load_profile("PlugMG3")
-        self.official = firmware.cached_zip("PlugMG3")
+        self.official = base_zip("PlugMG3")
         self.assertIsNotNone(self.official, "seed ZIP missing in fw/shelly")
         self.app = self.tmp / "app.bin"
         self.app.write_bytes(fake_app(100_000))
@@ -58,17 +58,17 @@ class LayoutCheckTests(unittest.TestCase):
     @needs_fw
     def test_build_refuses_a_bigger_app_slot(self):
         other = self.tmp / "beta.zip"
-        zip_with_app_slot(self.official, other, "app_0", 0x300000)  # the layout of PlugMG3 2.2.0-beta2
+        zip_with_app_slot(self.official, other, "app_0", 0x340000)  # a layout the profile does not know
         with self.assertRaises(builder.OtaError) as cm:
             builder.build(self.profile, self.app, other, self.tmp / "out.zip")
-        self.assertIn("app_0 is 0x300000", str(cm.exception))
+        self.assertIn("app_0 is 0x340000", str(cm.exception))
         self.assertIn("Nothing was built", str(cm.exception))
         self.assertFalse((self.tmp / "out.zip").exists())
 
     @needs_fw
     def test_build_refuses_it_also_when_pt_is_dropped(self):
         other = self.tmp / "beta.zip"
-        zip_with_app_slot(self.official, other, "app_0", 0x300000)
+        zip_with_app_slot(self.official, other, "app_0", 0x340000)
         with self.assertRaises(builder.OtaError):
             builder.build(self.profile, self.app, other, self.tmp / "out.zip", drop=("pt",))
 
@@ -81,7 +81,7 @@ class LayoutCheckTests(unittest.TestCase):
     @needs_fw
     def test_inspect_warns(self):
         other = self.tmp / "beta.zip"
-        zip_with_app_slot(self.official, other, "app_0", 0x300000)
+        zip_with_app_slot(self.official, other, "app_0", 0x340000)
         self.assertIn("WARNING: another layout", builder.inspect_zip(other, self.profile))
         self.assertNotIn("WARNING", builder.inspect_zip(self.official, self.profile))
 
@@ -108,17 +108,19 @@ class CachedPackagesMatchStockCsvTests(unittest.TestCase):
         checked = 0
         for name in profile.list_devices():
             prof = profile.load_profile(name)
-            zip_path = firmware.cached_zip(prof.package_name, prerelease=prof.channel == "beta")
-            if zip_path is None:
+            newest = firmware.cached_zip(prof.package_name, prerelease=prof.channel == "beta")
+            if newest is None:
                 continue
             checked += 1
-            with zipfile.ZipFile(zip_path) as zf:
-                manifest = builder.read_official_manifest(zf)
-                with self.subTest(device=name, check="profile"):
-                    self.assertEqual(builder.package_layout_problems(prof, zf, manifest), [])
-            csv = PARTITIONS_DIR / f"{name}-stock.csv"
-            if csv.is_file():
-                with self.subTest(device=name, check="stock csv"):
+            with zipfile.ZipFile(newest) as zf:
+                with self.subTest(device=name, check="the newest package has a layout the profile knows"):
+                    self.assertIsNotNone(builder.variant_for_zip(prof, zf, builder.read_official_manifest(zf)))
+            for variant in prof.variants():
+                zip_path = newest if prof.channel == "beta" else firmware.zip_for_layout(variant)
+                csv = PARTITIONS_DIR / variant.csv_name
+                if zip_path is None or not csv.is_file():
+                    continue
+                with self.subTest(device=name, check=variant.csv_name):
                     self.assertEqual(self._rows(csv.read_text(encoding="utf-8")),
                                      self._rows(devicegen.partition_csv(zip_path)))
         self.assertGreater(checked, 0, "no cached package found in fw/shelly")

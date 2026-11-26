@@ -2,7 +2,8 @@
 
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
-![State: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![State: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
+![State of the 2.2.0 layout: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
@@ -10,9 +11,11 @@
 
 Reported: the USB-C port exposes the chip's USB Serial/JTAG, so this device can be flashed and recovered with `esptool` without opening it. That makes UART recovery much easier than on the other models.
 
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `Pill` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `Pill` |
+| Profile | `Pill` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
 | Official package | 2.0.1 |
 | Partition table | `0x10000` |
@@ -114,6 +117,27 @@ package, reads the update target slot. Command reference: [Commands](../commands
 ## Notes for this device
 
 No device-specific findings yet. Please report the file written by `--log-file`, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
+
+## 2.2.0 layout
+
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Pill` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+
+| Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
+| --- | --- | --- | --- |
+| before 2.2.0 | `0x20000` / `0x280000` | `0x3a0000` / `0x280000` | `0x2a0000` / `0x620000`, `0x100000` each |
+| 2.2.0 and later | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
+
+> [!NOTE]
+> **DevKit-tested (2026-11-25/26), not on the real device:** `restore` and `send` of an ESPHome SoftAP package with this layout
+> ran on an ESP32-C3 dev board and ESPHome started with this table ([Dev board runs](../devkit-runs.md)).
+
+> [!CAUTION]
+> `send` refuses a package of this layout on firmware before 2.2.0 (`layout_since`, `--force` overrides; on a dev board such a forced package installed
+> nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
+
+- Fetch the package: `python ota.py fetch Pill --insecure`. A device on older firmware: `python ota.py restore Pill` first, then `send Pill`.
+- Build against its table: copy `partitions/Pill-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
+- Then `python ota.py build Pill app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send Pill`.
 
 ## Way back
 

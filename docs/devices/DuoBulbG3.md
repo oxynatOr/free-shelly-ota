@@ -3,6 +3,7 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
+![State of the 2.2.0 layout: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 ![Pins: not confirmed](https://img.shields.io/badge/pins-not%20confirmed-yellow.svg?style=flat-square)
@@ -11,9 +12,11 @@
 
 The owner reports the same main board as the Multicolor Bulb with a different lamp module. The Duo's stock firmware has no I2C code: it drives the LEDs with PWM (LEDC), so the LED driver config of the [Multicolor Bulb](RGBCCTBulbG3.md) does not apply. The pins (below) come from the analysis of a flash dump of the stock firmware, not from a test on the lit lamp.
 
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `DuoBulbG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `DuoBulbG3` |
+| Profile | `DuoBulbG3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
 | Official package | 2.0.1 |
 | Partition table | `0x10000` |
@@ -123,6 +126,27 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 The OTA chain is the same as on the Multicolor Bulb, and the owner has run it with this tool. The profile sets `boot_min_version: 1.0.9` because the Multicolor Bulb
 (same main board) runs loader 1.0.3 after a return to stock, which the default 1.0.3 would skip. Please report the file written by `--log-file`, especially the line `Boot: cur ... min ... update?`.
+
+## 2.2.0 layout
+
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `DuoBulbG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+
+| Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
+| --- | --- | --- | --- |
+| before 2.2.0 | `0x20000` / `0x280000` | `0x3a0000` / `0x280000` | `0x2a0000` / `0x620000`, `0x100000` each |
+| 2.2.0 and later | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
+
+> [!NOTE]
+> **DevKit-tested (2026-11-25/26), not on the real device:** `restore` and `send` of an ESPHome SoftAP package with this layout
+> ran on an ESP32-C3 dev board and ESPHome started with this table ([Dev board runs](../devkit-runs.md)).
+
+> [!CAUTION]
+> `send` refuses a package of this layout on firmware before 2.2.0 (`layout_since`, `--force` overrides; on a dev board such a forced package installed
+> nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
+
+- Fetch the package: `python ota.py fetch DuoBulbG3 --insecure`. A device on older firmware: `python ota.py restore DuoBulbG3` first, then `send DuoBulbG3`.
+- Build against its table: copy `partitions/DuoBulbG3-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
+- Then `python ota.py build DuoBulbG3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send DuoBulbG3`.
 
 ## Way back
 

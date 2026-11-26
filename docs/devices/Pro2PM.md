@@ -3,6 +3,7 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![State of the 2.2.0 layout: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
 ![Generation: 2](https://img.shields.io/badge/gen-2-lightgrey.svg?style=flat-square)
 ![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
 
@@ -10,9 +11,11 @@
 
 Gen2 / classic ESP32: dIN rail module, two relays (or a cover) with power metering. Partition table at the ESP-IDF default `0x8000`, bootloader at `0x1000`, 80 MHz flash frequency, like the [Plus Plug S](PlusPlugS.md).
 
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x200000`). The `Pro2PM` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `Pro2PM` |
+| Profile | `Pro2PM` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB (bootloader header and partition table) |
 | Official package | 2.1.1 |
 | Partition table | **`0x8000`** (ESP-IDF default) |
@@ -113,6 +116,26 @@ default of the newer profiles, because a unit that Shelly has already updated ca
 the target slot for you ([why](../bootloader-and-slots.md#the-app-must-land-in-slot-0)).
 
 Please report the file written by `--log-file`, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
+
+## 2.2.0 layout
+
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Pro2PM` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+
+| Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
+| --- | --- | --- | --- |
+| before 2.2.0 | `0x10000` / `0x200000` | `0x290000` / `0x200000` | `0x210000` / `0x490000`, `0x80000` each |
+| 2.2.0 and later | `0x10000` / `0x300000` | `0x3f0000` / `0x300000` | `0x310000` / `0x6f0000`, `0xe0000` each |
+
+> [!NOTE]
+> **Untested:** read from the official 2.2.0 package; nobody has flashed a package for this layout yet.
+
+> [!CAUTION]
+> `send` refuses a package of this layout on firmware before 2.2.0 (`layout_since`, `--force` overrides; on a dev board such a forced package installed
+> nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
+
+- Fetch the package: `python ota.py fetch Pro2PM --insecure`. A device on older firmware: `python ota.py restore Pro2PM` first, then `send Pro2PM`.
+- Build against its table: copy `partitions/Pro2PM-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x8000"`.
+- Then `python ota.py build Pro2PM app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send Pro2PM`.
 
 ## Way back
 

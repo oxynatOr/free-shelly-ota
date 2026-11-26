@@ -5,4 +5,7 @@ update_id: PlugPMG3       # app name in the image; the manifest name on updates.
 app_ptn: app_0
 app_slot_size: 0x280000   # app_0 @0x20000 (smaller than the Plug M / Plug S slot 0x2a0000)
 boot_min_version: "1.0.9"   # the device already runs Shelly OS loader 1.0.3 (boot log), so the default 1.0.3 would be skipped (see README)
-revision: 2   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)
+revision: 3   # counts changes of this profile: raise it when anything else in this file changes (see devices/profiles.lock)
+layouts:   # later flash layouts of this device; the keys above describe the first one
+  - since: "2.2.0"    # firmware older than this has the first layout: `send` refuses this one there
+    app_slot_size: 0x300000   # app_0 @0x20000, app_1 @0x400000

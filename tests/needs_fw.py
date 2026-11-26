@@ -10,7 +10,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from shelly_ota import firmware  # noqa: E402
+from shelly_ota import firmware, profile  # noqa: E402
 
 HAVE_FW = any(firmware.FW_DIR.glob("*/*/*.zip"))
 needs_fw = unittest.skipUnless(HAVE_FW, "no official Shelly ZIPs in fw/shelly")
+
+
+def base_zip(name: str):
+    """The cached package of a profile's FIRST flash layout (with several layouts the newest package may be of a later one)."""
+    p = profile.load_profile(name)
+    return firmware.zip_for_layout(p.variants()[0]) or firmware.cached_zip(p.package_name)

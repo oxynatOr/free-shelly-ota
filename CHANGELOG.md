@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- The flash layout of Shelly 2.2.0 for 20 more devices, as `layouts:` of their profiles (no new profiles): `Dimmer0110VPMG3`, `DuoBulbG3`, `I4G3`, `Mini1G3`, `MiniPMG3`, `OutdoorPlugSG3`, `Pill`, `PlugMG3`, `PlugPMG3`, `S1G3`, `S1LG3`, `S1PMG3`, `S2LG3`, `Pro1`, `Pro1PM`, `Pro2`, `Pro2PM`, `Pro3`, `Pro4PM`, `ProRGBWWPM`, each with the CSV `partitions/<name>-stock-2.2.0.csv` and a section on its page. The 13 Gen3 ran on a dev board with that layout, the 7 Pro were only read from the packages; none on a real device. Profiles whose newest package ran on a board are now DevKit-tested (🔬). Not breaking: the first layout, its CSV and the commands are unchanged; `send` refuses the new layout on firmware before 2.2.0, as it did for the `-v2` profiles.
 - One profile per device for the new flash layout of `PlugSG3`, `S2PMG3`, `Mini1PMG3` and `RGBCCTBulbG3`: the layouts that were the profiles `<name>-v2` (see below, thanks to [andrewagner86](https://github.com/andrewagner86)) are now `layouts:` of the base profile, with the CSV `partitions/<name>-stock-<version>.csv` (was `<name>-v2-stock.csv`). `build <name>` takes the layout from your partition table. The `-v2` names still work as aliases and are not listed any more. Not breaking against 0.8.0, where the `-v2` profiles did not exist: the first layout, its CSV and the commands are unchanged. For anyone who used `main` in between: the `-v2` CSV files are renamed.
 
 ### Added

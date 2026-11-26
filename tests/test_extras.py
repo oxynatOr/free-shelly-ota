@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import builder, devicegen, firmware, lint, logwatch, profile, rpc, sender  # noqa: E402
 
 
@@ -201,7 +201,7 @@ class SlotAndChipTests(unittest.TestCase):
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         z = tmp / "t.zip"
-        shutil.copy(firmware.cached_zip("DuoBulbG3"), z)
+        shutil.copy(base_zip("DuoBulbG3"), z)
         for slot in (0, 1):
             s = FakeRpcShelly(slot=slot)
             self.addCleanup(s.close)
@@ -333,7 +333,7 @@ class NetworkTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.zip = self.tmp / "t.zip"
-        shutil.copy(firmware.cached_zip("DuoBulbG3"), self.zip)
+        shutil.copy(base_zip("DuoBulbG3"), self.zip)
         self.profile = profile.load_profile("DuoBulbG3")
 
     def _shelly(self, **kw):
@@ -409,7 +409,7 @@ class OfflineTests(unittest.TestCase):
     @needs_fw
     def test_add_device_reads_slot_size_from_partition_table(self):
         for name in ("PlugMG3", "DuoBulbG3"):
-            path, info = devicegen.create_profile(firmware.cached_zip(name), devices_dir=self.tmp)
+            path, info = devicegen.create_profile(base_zip(name), devices_dir=self.tmp)
             written = profile.load_profile(name, self.tmp)
             self.assertEqual(written.app_slot_size, profile.load_profile(name).app_slot_size)
             self.assertEqual(info["ptn"], "app_0")
@@ -432,11 +432,13 @@ class OfflineTests(unittest.TestCase):
             return re.sub(r"official \S+ package", "official <version> package", text)
 
         for name in profile.list_devices():
-            committed = profile.MODULE_DIR / "partitions" / f"{name}-stock.csv"
-            zip_path = firmware.cached_zip(name)
-            if not zip_path:
-                continue
-            self.assertEqual(table(devicegen.partition_csv(zip_path)), table(committed.read_text(encoding="utf-8")), name)
+            prof = profile.load_profile(name)
+            for variant in prof.variants():
+                committed = profile.MODULE_DIR / "partitions" / variant.csv_name
+                zip_path = firmware.zip_for_layout(variant) if prof.channel != "beta" else firmware.cached_zip(name)
+                if not zip_path or not committed.is_file():
+                    continue
+                self.assertEqual(table(devicegen.partition_csv(zip_path)), table(committed.read_text(encoding="utf-8")), variant.csv_name)
 
     @needs_fw
     def test_partition_csv_rows_pass_the_lint_slot_check(self):
@@ -448,9 +450,9 @@ class OfflineTests(unittest.TestCase):
 
     @needs_fw
     def test_add_device_refuses_overwrite(self):
-        devicegen.create_profile(firmware.cached_zip("PlugMG3"), devices_dir=self.tmp)
+        devicegen.create_profile(base_zip("PlugMG3"), devices_dir=self.tmp)
         with self.assertRaises(builder.OtaError):
-            devicegen.create_profile(firmware.cached_zip("PlugMG3"), devices_dir=self.tmp)
+            devicegen.create_profile(base_zip("PlugMG3"), devices_dir=self.tmp)
 
     def _yaml(self, text, csv=None):
         y = self.tmp / "app.yaml"
@@ -480,7 +482,7 @@ class OfflineTests(unittest.TestCase):
     def test_add_device_writes_pt_offset_only_when_not_default(self):
         path, _ = devicegen.create_profile(firmware.cached_zip("HTG3"), devices_dir=self.tmp)
         self.assertEqual(profile.load_profile("HTG3", self.tmp).pt_offset, 0xf000)
-        path, _ = devicegen.create_profile(firmware.cached_zip("PlugMG3"), devices_dir=self.tmp)
+        path, _ = devicegen.create_profile(base_zip("PlugMG3"), devices_dir=self.tmp)
         self.assertNotIn("pt_offset", path.read_text(encoding="utf-8"))
 
     def test_lint_flags_missing_offset_and_wrong_slot(self):

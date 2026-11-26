@@ -3,6 +3,7 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
+![State of the 2.2.0 layout: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 ![Relay: none](https://img.shields.io/badge/relay-none-lightgrey.svg?style=flat-square)
@@ -11,9 +12,11 @@
 
 The first device that was flashed and reported by someone else: thanks to [imsandli](https://github.com/imsandli) for the device report (October 2026) and the notes on this page. This device **only measures**: there is no relay in it. Do not confuse it with the [Mini 1PM Gen3](Mini1PMG3.md), which has one and is a different application in Shelly's update API (`Mini1PMG3`).
 
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `MiniPMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` takes the one of your partition table.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `MiniPMG3` |
+| Profile | `MiniPMG3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Model | S3PM-001PCEU16 (device id `shellypmminig3-...`) |
 | Flash | 8 MB |
 | Official package | 2.1.0 (the reported flash started from stock 2.0.1, see the notes) |
@@ -169,6 +172,27 @@ The `EFUSE write error` line also appeared on the [H&T Gen3](HTG3.md); the updat
   `http://<Shelly IP>/rpc/HTTP.GET?url="http://<PC IP>:8000/"` answered `Connection error: -13`. Any HTTP status in the answer (a 404 is fine) means the way is open.
 - **Package versions:** the profile and `MiniPMG3-stock.csv` were made from the 2.1.0 package; the flash on the tester's unit was done with the 2.0.1 table. The two tables were not compared.
 - Check the app name (`MiniPMG3`) and the model (S3PM-001PCEU16) before you use this page. The Mini 1PM Gen3 (`Mini1PMG3`) has a relay, another partition layout (app slot `0x2a0000`) and was not tested.
+
+## 2.2.0 layout
+
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `MiniPMG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
+
+| Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
+| --- | --- | --- | --- |
+| before 2.2.0 | `0x20000` / `0x280000` | `0x3a0000` / `0x280000` | `0x2a0000` / `0x620000`, `0x100000` each |
+| 2.2.0 and later | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
+
+> [!NOTE]
+> **DevKit-tested (2026-11-25/26), not on the real device:** `restore` and `send` of an ESPHome SoftAP package with this layout
+> ran on an ESP32-C3 dev board and ESPHome started with this table ([Dev board runs](../devkit-runs.md)).
+
+> [!CAUTION]
+> `send` refuses a package of this layout on firmware before 2.2.0 (`layout_since`, `--force` overrides; on a dev board such a forced package installed
+> nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
+
+- Fetch the package: `python ota.py fetch MiniPMG3 --insecure`. A device on older firmware: `python ota.py restore MiniPMG3` first, then `send MiniPMG3`.
+- Build against its table: copy `partitions/MiniPMG3-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
+- Then `python ota.py build MiniPMG3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send MiniPMG3`.
 
 ## Way back
 

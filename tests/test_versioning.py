@@ -12,7 +12,7 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import MODULE_DIR, __version__, buildinfo, builder, firmware, profile, sender  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 from test_extras import FakeRpcShelly  # noqa: E402
@@ -117,7 +117,7 @@ class ReportTests(unittest.TestCase):
 
     def _built(self):
         out = self.tmp / "o.zip"
-        res = builder.build(self.profile, self.tmp / "app.bin", firmware.cached_zip("PlugMG3"), out, tag="t1")
+        res = builder.build(self.profile, self.tmp / "app.bin", base_zip("PlugMG3"), out, tag="t1")
         builder.write_report(res)
         return out, json.loads(Path(str(out) + ".report.json").read_text(encoding="utf-8"))
 

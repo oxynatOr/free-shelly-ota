@@ -81,7 +81,7 @@ class LoadingTests(Base):
     def test_every_shipped_layout_has_its_csv_with_that_slot_size(self):
         partitions = Path(__file__).resolve().parent.parent / "partitions"
         names = [n for n in profile.list_devices() if profile.load_profile(n).layouts]
-        self.assertEqual(sorted(names), ["Mini1PMG3", "PlugSG3", "RGBCCTBulbG3", "S2PMG3"])
+        self.assertEqual(len(names), 24, names)
         for name in names:
             for variant in profile.load_profile(name).variants():
                 text = (partitions / variant.csv_name).read_text(encoding="utf-8")
@@ -123,7 +123,7 @@ class ChoiceTests(Base):
         self.assertIsNone(ota._layout_for_build(self.p, self.args()))
 
     def test_a_profile_with_one_layout_is_left_alone(self):
-        p = profile.load_profile("PlugMG3")
+        p = profile.load_profile("HTG3")
         self.assertIsNone(ota._layout_for_build(p, self.args(esphome_yaml=self.config("0x123000"))))
         with self.assertRaises(builder.OtaError):
             ota._layout_for_build(p, self.args(layout="2.2.0"))
@@ -180,7 +180,7 @@ class SendTextTests(Base):
         self.assertIsNone(sender.old_layout_text(old, "2.2.0"))
         self.assertIsNone(sender.newer_layout_text(old, "2.1.1"))
         self.assertIsNone(sender.newer_layout_text(new, "2.2.1"))
-        self.assertIsNone(sender.newer_layout_text(profile.load_profile("PlugMG3"), "2.2.0"))
+        self.assertIsNone(sender.newer_layout_text(profile.load_profile("HTG3"), "2.2.0"))
 
 
 if __name__ == "__main__":
