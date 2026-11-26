@@ -11,13 +11,13 @@
 
 This is the Mini with a relay; the measuring-only [PM Mini Gen3](MiniPMG3.md) is a different device with its own profile. Like the H&T Gen3, the official package keeps its partition table at `0xf000`, so a default ESPHome build does not match.
 
-> **Shelly's stable 2.2.1 has another layout** (app slots of `0x300000` instead of `0x2a0000`). It has its own profile, `Mini1PMG3-v2`; see [2.2.1 layout](#221-layout). `build` refuses to mix the two layouts.
+> **Shelly's stable 2.2.1 has another layout** (app slots of `0x300000` instead of `0x2a0000`). The `Mini1PMG3` profile knows both layouts; see [2.2.1 layout](#221-layout). `build` takes the one of your partition table.
 
 | Fact | Value |
 | --- | --- |
-| Profile | `Mini1PMG3`, `Mini1PMG3-v2` (for Shelly's 2.2.1 layout, see [2.2.1 layout](#221-layout)) |
+| Profile | `Mini1PMG3` (both flash layouts, see [2.2.1 layout](#221-layout)) |
 | Flash | 8 MB |
-| Official package | 2.2.1 (stable, seen 2026-11-20), with the layout of `Mini1PMG3-v2`. The `Mini1PMG3` profile needs a 2.1.x or older package: 2.1.0 (stable from 2026-10-14) has the same bootloader, partition table and filesystem as 2.0.1, and the hardware runs were made with 2.1.0 |
+| Official package | 2.2.1 (stable, seen 2026-11-20), with the 2.2.1 layout. The first layout needs a 2.1.x or older package: 2.1.0 (stable from 2026-10-14) has the same bootloader, partition table and filesystem as 2.0.1, and the hardware runs were made with 2.1.0 |
 | Partition table | `0xf000` |
 | App slot size | `0x2a0000` |
 | ESPHome device page | [Shelly 1PM Mini Gen3](https://devices.esphome.io/devices/shelly-1pm-mini-gen3/) |
@@ -114,12 +114,12 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## 2.2.1 layout
 
-Shelly's stable `2.2.1` for this device has a **different flash layout**, the one of the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and of the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x2a0000`, and the filesystems and the second slot move up with them. The partition table stays at `0xf000`. The profile `Mini1PMG3-v2` describes it; `Mini1PMG3` does not fit it and `build` refuses the mix.
+Shelly's stable `2.2.1` for this device has a **different flash layout**, the one of the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and of the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x2a0000`, and the filesystems and the second slot move up with them. The partition table stays at `0xf000`. The `Mini1PMG3` profile lists it under `layouts:`; `build` takes it when your partition table is this one.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |
 | 2.0.1 to 2.1.x (`Mini1PMG3`) | `0x20000` / `0x2a0000` | `0x3a0000` / `0x2a0000` | `0x2c0000` / `0x640000`, `0xe0000` each |
-| 2.2.1 (`Mini1PMG3-v2`) | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
+| 2.2.1 (`Mini1PMG3`) | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
 
 `otadata`, `nvs`, `scratch` (`0x7e0000`) and `shelly` (`0x7f0000`) stay where they are.
 
@@ -143,15 +143,15 @@ Shelly's stable `2.2.1` for this device has a **different flash layout**, the on
 > **Not checked:** a physical reset, the electrical protection trip points, and other hardware units.
 
 > [!CAUTION]
-> **Do not send a `Mini1PMG3` package to a device on 2.2.1**, and no `Mini1PMG3-v2` package to one on firmware before 2.2.1. `send` refuses the second case (`layout_since`, `--force` overrides); the first one is not checked by the tool and was not tried.
+> **Do not send a package of the first layout to a device on 2.2.1** (`send` warns), and none of the 2.2.1 layout to one on firmware before 2.2.1. `send` refuses the second case (`layout_since`, `--force` overrides); in the first case `send` only warns (on a dev board with `PlugSG3` such a package ran).
 
-- Fetch the package: `python ota.py fetch Mini1PMG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.1 is the stable release and both profiles use the package called `Mini1PMG3`.
-- Build against its table: copy `partitions/Mini1PMG3-v2-stock.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
-- Then `python ota.py build Mini1PMG3-v2 app.ota.bin --esphome-factory app.factory.bin`, and `send Mini1PMG3-v2`, as above.
+- Fetch the package: `python ota.py fetch Mini1PMG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.1 is the stable release and both layouts use the package called `Mini1PMG3`.
+- Build against its table: copy `partitions/Mini1PMG3-stock-2.2.1.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
+- Then `python ota.py build Mini1PMG3 app.ota.bin --esphome-factory app.factory.bin`, and `send Mini1PMG3`, as above.
 
 ## Way back
 
-`python ota.py restore Mini1PMG3` sends the official firmware back while Shelly firmware still runs. For a device on the 2.2.1 layout use `python ota.py restore Mini1PMG3-v2` (not tested with `ota.py`; the official 2.2.1 ZIP written back by another app ran, see [2.2.1 layout](#221-layout)).
+`python ota.py restore Mini1PMG3` sends the official firmware back while Shelly firmware still runs. For a device on the 2.2.1 layout the same command applies (not tested with `ota.py`; the official 2.2.1 ZIP written back by another app ran, see [2.2.1 layout](#221-layout)).
 
 ---
 

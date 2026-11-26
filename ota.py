@@ -109,7 +109,7 @@ def cmd_list(args) -> None:
         return
     # one line per device; the device title is shortened so the line fits the terminal
     width = shutil.get_terminal_size((100, 24)).columns
-    rows = [(name, profiles[name].display_name, f"0x{profiles[name].app_slot_size:x}",
+    rows = [(name, profiles[name].display_name, "/".join(f"0x{v.app_slot_size:x}" for v in profiles[name].variants()),
              ", ".join(firmware.list_versions(name)) or "-") for name in names]
     slot_w = max((len(r[2]) for r in rows), default=0)
     fw_w = max((len(r[3]) for r in rows), default=0)

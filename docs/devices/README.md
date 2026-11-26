@@ -41,28 +41,24 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 
 ### Gen3 (ESP32-C3)
 
-30 profiles: ✅ 9 · 🟡 9 · 🔬 0 · 🧪 12
+26 profiles: ✅ 9 · 🟡 5 · 🔬 0 · 🧪 12
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
 | [Plug M Gen3](PlugMG3.md) | `PlugMG3` | `0x10000` | `0x2a0000` | ✅ |  |
 | [AZ Plug](PlugAZ.md) | `PlugAZ` | **`0xf000`** | `0x280000` | 🟡 | Later OTA and relay confirmed; power cycle needed; calibration not checked |
-| [Plug S Gen3](PlugSG3.md) | `PlugSG3` | `0x10000` | `0x2a0000` | ✅ |  |
+| [Plug S Gen3](PlugSG3.md) | `PlugSG3` | `0x10000` | `0x2a0000` | ✅ | 2.2.0 layout (`0x300000`): partly checked |
 | [H&T Gen3](HTG3.md) | `HTG3` | **`0xf000`** | `0x280000` | ✅ |  |
 | [PM Mini Gen3 (no relay)](MiniPMG3.md) | `MiniPMG3` | **`0xf000`** | `0x280000` | ✅ | Measures only, no relay |
-| [Multicolor Bulb E27 Gen3](RGBCCTBulbG3.md) | `RGBCCTBulbG3` | `0x10000` | `0x280000` | ✅ |  |
+| [Multicolor Bulb E27 Gen3](RGBCCTBulbG3.md) | `RGBCCTBulbG3` | `0x10000` | `0x280000` | ✅ | 2.2.1 layout (`0x300000`): partly checked |
 | [Mini 1 Gen3](Mini1G3.md) | `Mini1G3` | **`0xf000`** | `0x2a0000` | ✅ |  |
 | [1 Gen3](S1G3.md) | `S1G3` | **`0xf000`** | `0x2b0000` | ✅ |  |
-| [2PM Gen3](S2PMG3.md) | `S2PMG3` | `0x10000` | `0x2c0000` | ✅ | Relays and meter not reported |
+| [2PM Gen3](S2PMG3.md) | `S2PMG3` | `0x10000` | `0x2c0000` | ✅ | Relays and meter not reported; 2.2.0 layout (`0x300000`): partly checked |
 | [Plug M Gen3, beta layout](PlugMG3.md#beta-layout) | `PlugMG3-beta` | `0x10000` | `0x300000` | ✅ | Shelly 2.2.0-beta2 only |
 | [Plug PM Gen3 (no relay)](PlugPMG3.md) | `PlugPMG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
 | [Duo Bulb Gen3](DuoBulbG3.md) | `DuoBulbG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
-| [Mini 1PM Gen3](Mini1PMG3.md) | `Mini1PMG3` | **`0xf000`** | `0x2a0000` | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
+| [Mini 1PM Gen3](Mini1PMG3.md) | `Mini1PMG3` | **`0xf000`** | `0x2a0000` | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked; 2.2.1 layout (`0x300000`): partly checked |
 | [1PM Gen3](S1PMG3.md) | `S1PMG3` | **`0xf000`** | `0x2c0000` | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
-| [2PM Gen3, 2.2.0 layout](S2PMG3.md#220-layout) | `S2PMG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0 and later; installer took a plain package with a non-ESPHome app, ESPHome not tested |
-| [Plug S Gen3, 2.2.0 layout](PlugSG3.md#220-layout) | `PlugSG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0 and later; `restore` to 2.2.0 and a plain package with a non-ESPHome app ran, ESPHome not tested |
-| [Mini 1PM Gen3, 2.2.1 layout](Mini1PMG3.md#221-layout) | `Mini1PMG3-v2` | **`0xf000`** | `0x300000` | 🟡 | Shelly 2.2.1 and later; a plain package with a non-ESPHome app and the way back to 2.2.1 ran; ESPHome OTA, relay and meter partly checked on one more unit |
-| [Multicolor Bulb E27 Gen3, 2.2.1 layout](RGBCCTBulbG3.md#221-layout) | `RGBCCTBulbG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.1 and later; a plain package with a non-ESPHome app (second run, with `send`) and the way back to 2.2.1 ran, ESPHome not tested |
 | [The Pill](Pill.md) | `Pill` | `0x10000` | `0x280000` | 🧪 |  |
 | [1L Gen3](S1LG3.md) | `S1LG3` | `0x10000` | `0x2b0000` | 🧪 |  |
 | [2L Gen3](S2LG3.md) | `S2LG3` | `0x10000` | `0x2b0000` | 🧪 |  |
