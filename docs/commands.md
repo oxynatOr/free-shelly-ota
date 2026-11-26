@@ -77,7 +77,7 @@ file.
 | `--image NAME:TAG` | no | a fixed ESPHome version | Only with `--compile` and Docker: the ESPHome image |
 | `--esphome-yaml YAML` | no | none | Also check the partition offset and `partitions:` CSV of this config, and run the [credential check](credential-check.md) |
 | `--esphome-factory FACTORY.bin` | no | none | Also ship ESPHome's bootloader and a clean `otadata` taken from this factory image (same build as `APP.bin`). See [Bootloader and slots](bootloader-and-slots.md) |
-| `--layout SINCE` | no | your table | Only for a profile with [several flash layouts](../devices/README.md#several-flash-layouts): build for `base` or the layout starting with Shelly `SINCE`. Without it the CSV of the ESPHome config or `factory.bin` decides. the Gen3 and Pro devices that Shelly 2.2.x moved have two |
+| `--layout SINCE` | no | your table | Only for a profile with [several flash layouts](../devices/README.md#several-flash-layouts): build for `base` or the layout starting with Shelly `SINCE`. Without it the CSV of the ESPHome config or `factory.bin` decides; with neither, the newest cached official package does. Gen3 and Pro devices whose layout Shelly 2.2.x changed have two |
 | `--pt-addr ADDR` | no | none | **Experimental, seen working on dev boards, and on a real device with a plain send.** Only with `--esphome-factory`, from an ESPHome build that leaves `CONFIG_PARTITION_TABLE_OFFSET` unset: ship Shelly's partition table at `ADDR` (only `0x8000`) instead of where Shelly's is, which stays untouched. Needed for `send --slot-swap`; at Shelly's own address the installer keeps the table in a journal ESPHome's bootloader does not read. Going back to Shelly's firmware afterwards worked on two dev boards (ESPHome OTA of Shelly's app image, then `restore`, [how](slot-swap.md#the-way-back-over-the-network-seen-on-two-boards)) ([details](slot-swap.md)) |
 | `--boot-min-version VER` | no | profile value, else one patch above Shelly's | Only with `--esphome-factory`: the bootloader `min_version` in the manifest. The installer writes only a newer bootloader. `keep` leaves it, which probably makes the installer skip the bootloader |
 | `--secrets FILE` | no | `secrets.yaml` next to `--esphome-yaml` | Values to look for in the image |
@@ -140,6 +140,10 @@ For a package that replaces the bootloader, `send` first reads the update target
 app subtypes swapped in the package's partition table, which `build --pt-addr 0x8000` has moved to a new address
 ([how, and what is not tested](slot-swap.md)).
 
+For a profile with [several flash layouts](../devices/README.md#several-flash-layouts) `send` reads the layout from the package; there is no option for it.
+It refuses a package of a later layout on firmware older than that layout (`--force` overrides), and only warns when the package has an
+older layout than the firmware on the device.
+
 It also asks the device to fetch `http://<this PC>:<port>/` itself (RPC `HTTP.GET`), so a Shelly that cannot reach this PC
 (firewall, VLAN) is reported at once instead of after the `--timeout`. With `--dry-run` that is an error; a real `send` only
 warns and goes on, because the download is what counts. A device without `HTTP.GET` gets a note.
@@ -165,7 +169,7 @@ warns and goes on, because the download is what counts. A device without `HTTP.G
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `--force` | off | Send even if the device model does not match, or if the package keeps Shelly's bootloader (not built with `--esphome-factory`). Without `--force`, `send` stops in that case: the old image would come back after three starts, and only the first ESPHome OTA could change that ([why](bootloader-and-slots.md#without-esphomes-bootloader-plain-package)) |
+| `--force` | off | Send even if the device model does not match, or if the package keeps Shelly's bootloader (not built with `--esphome-factory`). Without `--force`, `send` stops in that case: the old image would come back after three starts, and only the first ESPHome OTA could change that ([why](bootloader-and-slots.md#without-esphomes-bootloader-plain-package)). `--force` also overrides the refusal of a package whose flash layout is newer than the device's firmware |
 | `--host IP` | auto | This PC's address as seen by the Shelly |
 | `--port PORT` | `8000` | Local web server port |
 | `--log-port PORT` | `9514` | UDP port for the debug log |
@@ -331,7 +335,7 @@ python ota.py fetch PlugMG3 --cafile fw/shelly-ca.pem
 
 ## list
 
-`python ota.py list` shows one line per device: profile, name, app slot size and the cached official firmware versions. The device name is shortened to fit the terminal. `--details` (or `--all`) shows two lines per device with the profile revision and the build id of each cached firmware.
+`python ota.py list` shows one line per device: profile, name, app slot size (all sizes, such as `0x2a0000/0x300000`, for a device with several flash layouts) and the cached official firmware versions. The former `-v2` names (`PlugSG3-v2` and the other three) are not listed; they still work in every command. The device name is shortened to fit the terminal. `--details` (or `--all`) shows two lines per device with the profile revision and the build id of each cached firmware.
 
 ## clean
 
