@@ -77,7 +77,7 @@ def create_profile(zip_path: Path, *, name: str | None = None, devices_dir: Path
     path = devices_dir / f"{name}.yaml"
     if path.exists() and not force:
         raise OtaError(f"{path.name} already exists (use --force to overwrite).")
-    info = {"name": name, "platform": manifest.get("platform", "esp32c3"), "ptn": ptn,
+    info = {"name": name, "package": manifest["name"], "platform": manifest.get("platform", "esp32c3"), "ptn": ptn,
             "slot_size": slot["size"], "slot_offset": slot["offset"]}
     devices_dir.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -85,6 +85,8 @@ def create_profile(zip_path: Path, *, name: str | None = None, devices_dir: Path
         f"display_name: \"{name}\"\n"
         f"platform: {info['platform']}\n"
         f"update_id: {manifest['name']}        # name used by https://updates.shelly.cloud/update/<update_id>\n"
+        + (f"package: {manifest['name']}        # the official package and its folder in fw/ are called {manifest['name']}\n"
+           if name != manifest["name"] else "")
         + (f"parent: {parent}        # variant: listed under \"alt\" in the update API reply of {parent}\n" if parent else "")
         + f"app_ptn: {ptn}\n"
         f"app_slot_size: 0x{slot['size']:x}   # {ptn} @0x{slot['offset']:x}\n"
