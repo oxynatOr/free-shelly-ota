@@ -71,9 +71,11 @@ def cached_zip(device: str, version: str | None = None, fw_dir: Path = FW_DIR, p
     return fw_dir / device / version / f"{device}.zip"
 
 
-def zip_for_layout(variant, version: str | None = None, fw_dir: Path = FW_DIR) -> Path | None:
-    """The newest cached stable ZIP whose partition table fits this layout variant (with `version`: that one, if it fits)."""
-    wanted = [version] if version else [v for v in reversed(list_versions(variant.package_name, fw_dir)) if not is_prerelease(v)]
+def zip_for_layout(variant, version: str | None = None, fw_dir: Path = FW_DIR, prerelease: bool = False) -> Path | None:
+    """The newest cached stable ZIP (prerelease=True: pre-release) whose partition table fits this layout variant; with
+    `version`: that one, if it fits."""
+    wanted = [version] if version else [v for v in reversed(list_versions(variant.package_name, fw_dir))
+                                        if is_prerelease(v) == prerelease]
     for v in wanted:
         candidate = cached_zip(variant.package_name, v, fw_dir)
         try:

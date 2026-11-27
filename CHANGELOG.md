@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- `build --channel beta` and `partition-csv --channel beta` use the newest cached beta (before, `--channel` only counted when something was downloaded, so a cached stable package was taken silently). `profiles --check-api` also reports an offered beta. Visible: `build --channel beta` stops if no beta is cached.
 - `build` warns when your partition CSV differs from the shipped one in more than the app slot (it did not look at the other partitions), and `profiles --check-api --download` flags a new package whose table differs. Warnings only, not breaking.
 - `send` compares the whole Shelly version, betas in order (`2.2.0-beta1` < `2.2.0-beta2` < `2.2.0`). A layout entry can say `from:`, the first firmware that has it; the 17 devices whose 2.2.0-beta2 package already has the new layout say `2.2.0-beta2`. Visible effect: a device on `2.2.0-beta1` is refused for the new layout (`--force` overrides; whether beta1 had the old layout is not confirmed), Mini 1PM Gen3 and Multicolor Bulb on `2.2.0-beta2` are accepted.
 - `build --compile` finds the layout also when `esp32:` comes from `packages:` or `!include` (it stopped before with the wrong size), partition sizes may be written as `3M` or `3072K`, and a missing package for the chosen layout is named with the way to get it. Not breaking.

@@ -222,17 +222,25 @@ def _ask_download_tls(args, missing: str) -> bool:
     return False
 
 
+def _cached_official(p, wanted, version: str | None, channel: str) -> Path | None:
+    """The cached official package: `version`, else the newest stable one, or with --channel beta (and for a -beta
+    profile) the newest beta. `wanted`: a layout the package must have. OtaError if only the other channel has it."""
+    beta = channel == "beta" or p.channel == "beta"
+    if wanted:
+        found = firmware.zip_for_layout(wanted, version, prerelease=beta)
+        if found is None and not version and not beta and firmware.zip_for_layout(wanted, prerelease=True):
+            raise builder.OtaError(f"Only a beta in the cache has this flash layout ({wanted.csv_name}). "
+                                   "Add --channel beta to use it.")
+        return found
+    return firmware.cached_zip(p.package_name, version, prerelease=beta)
+
+
 def _partition_csv_package(p, args) -> Path:
     """The official package to read the table from: --official, the cache, or (asked or --download) the update API."""
     wanted = None
     if args.layout:
         wanted = _layout_for_build(p, args)
-    if args.official:
-        found = args.official
-    elif wanted:
-        found = firmware.zip_for_layout(wanted, args.version)
-    else:
-        found = firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
+    found = args.official or _cached_official(p, wanted, args.version, args.channel)
     if found:
         if wanted and builder.zip_layout_problems(wanted, found):
             raise builder.OtaError(f"{found.name} has another flash layout than --layout {args.layout}.")
@@ -250,7 +258,8 @@ def _partition_csv_package(p, args) -> Path:
         raise builder.OtaError(f"{what}\n  Fix: add --download (with --cafile PEM or --insecure), run 'ota.py fetch {p.name}', "
                                f"or pass --official <zip>.")
     with contextlib.redirect_stdout(sys.stderr):
-        found = _fetch_official(p, refresh=True, version=args.version, insecure=args.insecure, cafile=args.cafile)
+        found = _fetch_official(p, refresh=True, version=args.version, insecure=args.insecure, cafile=args.cafile,
+                                channel=args.channel)
     if wanted and builder.zip_layout_problems(wanted, found):
         raise builder.OtaError(f"The update API serves {found.parent.name}, which has another flash layout than --layout "
                                f"{args.layout}. Older packages: 'ota.py fetch {p.name} --from-version <installed version>'.")
@@ -450,15 +459,17 @@ def cmd_build(args) -> None:
         drop += ("fs",)
     if args.official:
         official = args.official
-        if wanted and builder.zip_layout_problems(wanted, official):
+        if wanted and builder.zip_layout_problems(wanted, builder.require_zip(official, "official ZIP")):
             raise builder.OtaError(f"--official {official.name} has another flash layout than your partition table "
                                    f"({wanted.csv_name}). Give the matching package, or build with the matching CSV.")
-    elif wanted:
-        official = firmware.zip_for_layout(wanted, args.version)
     else:
-        official = firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
+        official = _cached_official(p, wanted, args.version, args.channel)
     if official is None:
         if not args.download:
+            if args.channel == "beta" and not args.version:
+                raise builder.OtaError(f"No beta of {p.name} with the layout needed is cached in "
+                                       f"{firmware.FW_DIR / p.package_name}. Fix: 'ota.py fetch {p.name} --channel beta', "
+                                       "or add --download.")
             if wanted:
                 raise builder.OtaError(
                     f"No official {p.name} package with this flash layout ({p.csv_name}, app slot 0x{p.app_slot_size:x}) in "
@@ -803,6 +814,8 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--version", metavar="VER", help="use this cached version (default: the newest stable one)")
     g.add_argument("--layout", metavar="SINCE",
                    help="for a profile with several flash layouts: base, or the Shelly version the layout starts with")
+    g.add_argument("--channel", choices=["stable", "beta"], default="stable",
+                   help="beta: read the newest cached beta (default: %(default)s)")
     g = pc.add_argument_group("if the package is not cached")
     g.add_argument("--download", action="store_true", help="download it without asking")
     g.add_argument("--insecure", action="store_true", help="download without the TLS check")
@@ -886,7 +899,7 @@ def build_parser() -> argparse.ArgumentParser:
     tls.add_argument("--insecure", action="store_true", help="with --download: skip TLS check")
     tls.add_argument("--cafile", type=Path, metavar="PEM", help=f"with --download: {CAFILE_HELP}")
     g.add_argument("--channel", choices=["stable", "beta"], default="stable",
-                   help="with --download: release channel of the update API (default: %(default)s)")
+                   help="beta: use the newest cached beta (with --download: ask for the beta); default: %(default)s")
     g.add_argument("--from-version", metavar="VER", help="with --download: ask the update API as a device running VER would")
     b.set_defaults(func=cmd_build)
 

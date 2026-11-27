@@ -140,7 +140,7 @@ Shelly's stable `2.2.0` for this device has a **different flash layout**, the sa
 > **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `inspect --device`, a later ESPHome OTA, and `restore S2PMG3-v2`.
 
 > [!CAUTION]
-> **Match the package to the firmware.** `send` refuses a package of the 2.2.0 layout on firmware before 2.2.0 (`layout_since`,
+> **Match the package to the firmware.** `send` refuses a package of the 2.2.0 layout on firmware before 2.2.0-beta2 (`layouts:`,
 > `--force` overrides). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch S2PMG3 --insecure` (2.2.0 is the stable release; both layouts use the package called `S2PMG3`).

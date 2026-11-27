@@ -99,7 +99,7 @@ file.
 | `--download` | Download the official ZIP if none is cached (off by default) |
 | `--insecure` | With `--download`: skip the TLS check |
 | `--cafile PEM` | With `--download`: check TLS against the CA certificates in this file only (see [`fetch`](#fetch)) |
-| `--channel stable\|beta` | With `--download`: release channel of the update API |
+| `--channel stable\|beta` | `beta`: build from the newest cached beta (never the default); with `--download` the release channel of the update API |
 | `--from-version VER` | With `--download`: ask the update API as a device running VER would (see [`fetch`](#fetch)) |
 
 </details>
@@ -286,6 +286,7 @@ profile's `pt_offset`.
 | `--layout SINCE` | no | newest | For a device with several flash layouts: `base` or the Shelly version the layout starts with |
 | `--version VER` | no | newest stable | Use this version |
 | `--official ZIP` | no | cache | Read this ZIP |
+| `--channel stable\|beta` | no | `stable` | `beta`: read the newest cached beta |
 | `--download` | no | off | Download a missing package without asking |
 | `--insecure` / `--cafile PEM` | no | none | How the download checks TLS (see [`fetch`](#fetch)) |
 | `--force` | no | off | Overwrite an existing output file |
@@ -347,7 +348,7 @@ python ota.py fetch PlugMG3 --cafile fw/shelly-ca.pem
 `python ota.py profiles` lists the profile revisions and checks `devices/profiles.lock`; `--update-lock` records them.
 
 `python ota.py profiles --check-api --insecure` asks Shelly's update API what it offers for each profile (or only for `DEVICE`) and says
-whether that version is cached, older than the cache, or new. Only the app name goes to the server. Nothing is downloaded without
+whether that version is cached, older than the cache, or new. An offered beta gets a line of its own, so a new flash layout shows up early. Only the app name goes to the server. Nothing is downloaded without
 `--download`; with it a new package is fetched and its flash layout and loader are compared with the profile. The command ends with an
 error if a profile needs attention.
 

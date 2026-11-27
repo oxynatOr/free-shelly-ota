@@ -147,7 +147,7 @@ Shelly's stable `2.2.1` for this device has a **different flash layout**, the on
 > **Not checked:** a physical reset, the electrical protection trip points, and other hardware units.
 
 > [!CAUTION]
-> **Match the package to the firmware.** `send` refuses a package of the 2.2.1 layout on firmware before 2.2.1 (`layout_since`,
+> **Match the package to the firmware.** `send` refuses a package of the 2.2.1 layout on firmware before 2.2.0-beta2 (`layouts:`,
 > `--force` overrides). A package of the first layout on 2.2.1 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch Mini1PMG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.1 is the stable release and both layouts use the package called `Mini1PMG3`.

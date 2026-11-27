@@ -149,7 +149,7 @@ Shelly's stable `2.2.1` for this bulb has a **different flash layout**, the one 
 > **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `restore RGBCCTBulbG3-v2` with `ota.py`, `inspect --device`, a later ESPHome OTA, the table in flash (no dump), and whether Shelly's 2.2.0 for this bulb already had the layout (`layout_since` is `2.2.1`, the first version seen with it). `boot_min_version` is `1.0.9`, as for `RGBCCTBulbG3`.
 
 > [!CAUTION]
-> **Match the package to the firmware.** `send` refuses a package of the 2.2.1 layout on firmware before 2.2.1 (`layout_since`,
+> **Match the package to the firmware.** `send` refuses a package of the 2.2.1 layout on firmware before 2.2.0-beta2 (`layouts:`,
 > `--force` overrides). A package of the first layout on 2.2.1 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch RGBCCTBulbG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.1 is the stable release and both layouts use the package called `RGBCCTBulbG3`.

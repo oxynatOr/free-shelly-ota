@@ -27,6 +27,6 @@ python -m unittest discover tests >/tmp/tests.log 2>&1 || status=$?
 if [ "$status" -ne 0 ]; then
     cat /tmp/tests.log
 else
-    tail -n 4 /tmp/tests.log
+    grep -E "^(Ran |OK|FAILED)" /tmp/tests.log      # the end of the log can be buffered output of a test
 fi
 exit "$status"

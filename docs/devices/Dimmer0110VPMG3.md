@@ -124,7 +124,7 @@ Shelly's stable `2.2.0` for this device has a **different flash layout**. The `D
 > ran on an ESP32-C3 dev board and ESPHome started with this table ([Dev board runs](../devkit-runs.md)).
 
 > [!CAUTION]
-> `send` refuses a package of this layout on firmware before 2.2.0 (`layout_since`, `--force` overrides; on a dev board such a forced package installed
+> `send` refuses a package of this layout on firmware before 2.2.0-beta2 (`layouts:`, `--force` overrides; on a dev board such a forced package installed
 > nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch Dimmer0110VPMG3 --insecure`. A device on older firmware: `python ota.py restore Dimmer0110VPMG3` first, then `send Dimmer0110VPMG3`.

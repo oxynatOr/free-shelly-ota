@@ -15,7 +15,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import ota  # noqa: E402
-from shelly_ota import builder, compile as compile_, devicegen, lint, profile, sender  # noqa: E402
+from shelly_ota import builder, compile as compile_, firmware, lint, profile, sender  # noqa: E402
 
 
 class VersionTests(unittest.TestCase):
@@ -84,6 +84,27 @@ class CompileLayoutTests(unittest.TestCase):
             with self.assertRaises(builder.OtaError):
                 ota._compile_for_build(self.args(), self.p)
         compiled.assert_not_called()
+
+
+class ChannelTests(unittest.TestCase):
+    def setUp(self):
+        self.p = profile.load_profile("PlugSG3").variants()[-1]
+
+    def test_beta_only_on_request(self):
+        with mock.patch.object(firmware, "zip_for_layout", return_value=None) as pick:
+            self.assertIsNone(ota._cached_official(self.p, self.p, None, "beta"))
+        self.assertTrue(pick.call_args.kwargs["prerelease"])
+        with mock.patch.object(firmware, "cached_zip", return_value=None) as cached:
+            ota._cached_official(self.p, None, None, "stable")
+        self.assertFalse(cached.call_args.kwargs["prerelease"])
+
+    def test_a_layout_only_a_beta_has_is_named_not_taken(self):
+        found = lambda v, version=None, prerelease=False: Path("b.zip") if prerelease else None
+        with mock.patch.object(firmware, "zip_for_layout", side_effect=found):
+            with self.assertRaises(builder.OtaError) as cm:
+                ota._cached_official(self.p, self.p, None, "stable")
+            self.assertIn("--channel beta", str(cm.exception))
+            self.assertEqual(ota._cached_official(self.p, self.p, None, "beta"), Path("b.zip"))
 
 
 class TableTests(unittest.TestCase):

@@ -73,6 +73,11 @@ layouts:
 
 `build` takes the layout from your own table: the CSV of `--esphome-yaml` or `--compile`, else `factory.bin` (or `--layout base`/`--layout 2.2.0`), and uses the newest cached official package that fits it. With neither, the official package decides. `send` reads the layout from the package: `layout_since` of that layout is checked against the device, and a package of an older layout than the device's firmware gets a warning, not a refusal. The layouts are told apart by the slot size, so two of them cannot have the same one.
 
+**Betas** need no profile of their own: a beta is a version with one of these layouts. Nothing uses a beta unless you ask
+(`--version 2.2.0-beta2`, or `--channel beta` for the newest cached one). A layout that only a beta has yet is a normal entry
+under `layouts:`; `build` then says that `--channel beta` is needed. `PlugMG3-beta` is the older way and stays; it equals
+`PlugMG3` with `--channel beta`.
+
 ## Changing a profile
 
 Every profile has a `revision:`. When you change anything else in the file:

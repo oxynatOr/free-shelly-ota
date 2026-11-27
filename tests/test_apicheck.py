@@ -35,6 +35,10 @@ class CheckApiTests(unittest.TestCase):
         self.assertEqual((lines, attention), (["PlugMG3: stable 2.3.0 NEW (not cached)"], []))
         fetch.assert_not_called()
 
+    def test_an_offered_beta_gets_its_own_line(self):
+        lines = run({"stable": {"version": "2.2.0"}, "beta": {"version": "2.3.0-beta1"}})[0]
+        self.assertEqual(lines, ["PlugMG3: stable 2.2.0 cached", "PlugMG3: beta 2.3.0-beta1 NEW (not cached)"])
+
     def test_no_release(self):
         self.assertEqual(run({"time": 1})[0], ["PlugMG3: no stable release listed"])
 
@@ -70,7 +74,7 @@ class PartitionCsvDownloadTests(unittest.TestCase):
         self.p = profile.load_profile("PlugMG3")
 
     def args(self, **kw):
-        base = dict(layout="2.2.0", official=None, version=None, download=False, insecure=False, cafile=None,
+        base = dict(layout="2.2.0", official=None, version=None, download=False, insecure=False, cafile=None, channel="stable",
                     esphome_yaml=None, compile=None, esphome_factory=None)
         return argparse.Namespace(**{**base, **kw})
 

@@ -157,7 +157,7 @@ Shelly's stable `2.2.0` for this plug has a **different flash layout**, the same
 > **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `inspect --device`, a later ESPHome OTA, and the table in flash (no dump).
 
 > [!CAUTION]
-> **Match the package to the firmware.** `send` refuses a package of the 2.2.0 layout on firmware before 2.2.0 (`layout_since`,
+> **Match the package to the firmware.** `send` refuses a package of the 2.2.0 layout on firmware before 2.2.0-beta2 (`layouts:`,
 > `--force` overrides). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch PlugSG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.0 is the stable release and both layouts use the package called `PlugSG3`. The 2.1.1 step: `--from-version 1.7.3`.

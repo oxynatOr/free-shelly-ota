@@ -179,9 +179,9 @@ class BuildOutputTests(unittest.TestCase):
         with mock.patch.object(ota.compile_, "pick_runner"), \
                 mock.patch.object(ota.compile_, "resolve_config", return_value=resolved) as res, \
                 mock.patch.object(ota.compile_, "compile_yaml", return_value=compiled) as comp, \
-                mock.patch.object(ota.builder, "build", side_effect=ota.builder.OtaError("stop here")):
+                mock.patch.object(ota.builder, "require_zip", side_effect=lambda path, what: path),                 mock.patch.object(ota.builder, "zip_layout_problems", return_value=[]),                 mock.patch.object(ota.builder, "build", side_effect=ota.builder.OtaError("stop here")):
             code, text = self.run_ota("build", "PlugMG3", "--compile", str(yaml),
-                                      "--official", str(base_zip("PlugMG3")))
+                                      "--official", str(self.tmp / "official.zip"))     # no firmware cache needed
         res.assert_called_once()
         comp.assert_called_once()                                  # the check passed on the resolved config
         self.assertIn("asking ESPHome for the full config", text)

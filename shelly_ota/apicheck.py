@@ -50,7 +50,9 @@ def check_api(names: list[str], *, download: bool = False, insecure: bool = Fals
         channel = "beta" if p.channel == "beta" else "stable"
         asked = profile.load_profile(p.parent).update_id if p.parent else p.update_id
         try:
-            release = _release(_ask(query, asked, insecure, cafile, None, sleep), p, channel)
+            reply = _ask(query, asked, insecure, cafile, None, sleep)
+            release = _release(reply, p, channel)
+            beta = _release(reply, p, "beta") if channel == "stable" else None
             if release is None:
                 release = _release(_ask(query, asked, insecure, cafile, OLD_DEVICE, sleep), p, channel)
         except OtaError as e:
@@ -61,43 +63,48 @@ def check_api(names: list[str], *, download: bool = False, insecure: bool = Fals
             continue
         if release is None:
             out(f"{name}: no {channel} release listed")
-            continue
-        version = str(release.get("version"))
-        cached = firmware.list_versions(p.package_name)
-        newest = cached[-1] if cached else None
-        if version in cached:
-            out(f"{name}: {channel} {version} cached")
-            continue
-        if newest and firmware._version_key(version) < firmware._version_key(newest):
-            out(f"{name}: {channel} {version} offered, older than the cached {newest}")
-            continue
-        line = f"{name}: {channel} {version} NEW (not cached)"
-        if not download:
+        offered = [(channel, release)] if release else []
+        if beta:
+            offered.append(("beta", beta))
+        for kind, entry in offered:
+            line, bad = _report(p, name, asked, kind, str(entry.get("version")), download=download, insecure=insecure,
+                                cafile=cafile, fetch=fetch)
             out(line)
-            continue
-        try:
-            path = fetch(p.package_name, asked, insecure=insecure, cafile=cafile, refresh=True, channel=channel,
-                         alt=p.update_id if p.parent else None)
-        except OtaError as e:
-            out(f"{line}; WARNING: download failed: {e}")
-            attention.append(name)
-            continue
-        with zipfile.ZipFile(path) as zf:
-            manifest = read_official_manifest(zf)
-            variant = variant_for_zip(p, zf, manifest)
-            loader = (manifest["parts"].get("boot") or {}).get("min_version")
-        if variant is None:
-            line += "; WARNING: a flash layout the profile does not know"
-        else:
-            line += "; layout fits: " + (f"since {variant.layout_since}" if variant.base else "the first one")
-        shipped = lint.shipped_table(variant) if variant else None
-        differ = lint.table_differences(devicegen.partition_csv(path), shipped) if shipped else []
-        if differ:
-            line += f"; WARNING: the table differs from {variant.csv_name} in {', '.join(differ)}"
-        low_boot = bool(loader and p.boot_min_version and _numbers(p.boot_min_version) <= _numbers(loader))
-        if low_boot:
-            line += f"; WARNING: boot_min_version {p.boot_min_version} is not above the package's loader {loader}"
-        if variant is None or low_boot or differ:
-            attention.append(name)
-        out(line)
+            if bad and name not in attention:
+                attention.append(name)
     return attention
+
+
+def _report(p: profile.Profile, name: str, asked: str, channel: str, version: str, *, download: bool, insecure: bool,
+            cafile: Path | None, fetch) -> tuple[str, bool]:
+    """The line for one offered version, and whether it needs attention."""
+    cached = firmware.list_versions(p.package_name)
+    if version in cached:
+        return f"{name}: {channel} {version} cached", False
+    newest = cached[-1] if cached else None
+    if newest and firmware._version_key(version) < firmware._version_key(newest):
+        return f"{name}: {channel} {version} offered, older than the cached {newest}", False
+    line = f"{name}: {channel} {version} NEW (not cached)"
+    if not download:
+        return line, False
+    try:
+        path = fetch(p.package_name, asked, insecure=insecure, cafile=cafile, refresh=True, channel=channel,
+                     alt=p.update_id if p.parent else None)
+    except OtaError as e:
+        return f"{line}; WARNING: download failed: {e}", True
+    with zipfile.ZipFile(path) as zf:
+        manifest = read_official_manifest(zf)
+        variant = variant_for_zip(p, zf, manifest)
+        loader = (manifest["parts"].get("boot") or {}).get("min_version")
+    if variant is None:
+        line += "; WARNING: a flash layout the profile does not know"
+    else:
+        line += "; layout fits: " + (f"since {variant.layout_since}" if variant.base else "the first one")
+    shipped = lint.shipped_table(variant) if variant else None
+    differ = lint.table_differences(devicegen.partition_csv(path), shipped) if shipped else []
+    if differ:
+        line += f"; WARNING: the table differs from {variant.csv_name} in {', '.join(differ)}"
+    low_boot = bool(loader and p.boot_min_version and _numbers(p.boot_min_version) <= _numbers(loader))
+    if low_boot:
+        line += f"; WARNING: boot_min_version {p.boot_min_version} is not above the package's loader {loader}"
+    return line, bool(variant is None or low_boot or differ)

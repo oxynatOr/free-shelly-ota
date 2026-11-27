@@ -144,7 +144,10 @@ Shelly's `2.2.0-beta2` (checked 2026-10-28, all profiles) changes the flash layo
 
 - A package whose layout the profile does not know gets a warning from `fetch` and `inspect`, and `build` refuses it, so no image for
   the wrong layout can be made.
-- For the beta itself only the Plug M Gen3 has a profile (`PlugMG3-beta`, [device page](devices/PlugMG3.md#beta-layout)).
+- A beta needs no profile of its own: `build <profile> … --channel beta` uses the newest cached beta. `PlugMG3-beta`
+  ([device page](devices/PlugMG3.md#beta-layout)) is the older way and stays.
+- `send` compares the whole version: on `2.2.0-beta1` the new layout is refused, from `2.2.0-beta2` it is accepted where the
+  beta2 package has it (`from:` in the profile). Which layout beta1 had is not confirmed.
 - **Shelly's stable 2.2.0 / 2.2.1 uses this layout.** The affected profiles list it as a second layout under `layouts:` ([profiles with several layouts](../devices/README.md#several-flash-layouts)), and `build` picks the layout that matches your partition table. The Pro line changed in 2.2.0 too (app slots from `0x200000` to `0x300000`).
 - **The 2PM Gen3 and the Plug S Gen3 have it in a stable release:** Shelly's stable `2.2.0` for these devices (seen 2026-11-11) has the same table. Their profiles `S2PMG3` ([device page](devices/S2PMG3.md#220-layout)) and `PlugSG3` ([device page](devices/PlugSG3.md#220-layout)) list it as a second layout.
 - **The Mini 1PM Gen3 and the Multicolor Bulb E27 Gen3 have it in their stable 2.2.1** (seen 2026-11-20 and 2026-11-23): same table, the Mini keeps its partition table at `0xf000`. Their profiles `Mini1PMG3` ([device page](devices/Mini1PMG3.md#221-layout)) and `RGBCCTBulbG3` ([device page](devices/RGBCCTBulbG3.md#221-layout)) list it as a second layout.
