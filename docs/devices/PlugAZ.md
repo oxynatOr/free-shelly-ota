@@ -3,7 +3,7 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
-![State of the 2.2.0 layout: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![State of the 2.2.0 layout: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
@@ -177,10 +177,11 @@ Shelly's stable `2.2.0` for this device has a **different flash layout**. The `P
 | 2.2.0 and later | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
 
 > [!NOTE]
-> **Untested:** read from the official 2.2.0 package; nobody has flashed a package for this layout yet.
+> **DevKit-tested (2026-11-27), not on the real device:** `restore` and `send` of an ESPHome SoftAP package with this layout ran on an
+> ESP32-C3 dev board ([dev board runs](../devkit-runs.md)). No inputs, relays or meters were checked.
 
 > [!CAUTION]
-> `send` refuses a package of this layout on firmware before 2.2.0 (`layout_since`, `--force` overrides; on a dev board such a forced package installed
+> `send` refuses a package of this layout on firmware before 2.2.0 (`layouts:`, `--force` overrides; on a dev board such a forced package installed
 > nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch PlugAZ --insecure`. A device on older firmware: `python ota.py restore PlugAZ` first, then `send PlugAZ`.

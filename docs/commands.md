@@ -229,6 +229,9 @@ takes the next word as its path. Without a log that reaches this PC (a firewall)
 
 Takes the same options as `send`, but sends the cached official firmware instead of a ZIP you choose. `--version VER` picks a cached version (default: the newest stable one).
 
+**Going back to a version with an older flash layout** (for example 2.2.0 to 2.1.1) needs two runs: the first only switches the slot
+and still reports success. `restore` warns about it; check the version in between.
+
 > [!WARNING]
 > It works only while Shelly firmware is still running: a device that already runs ESPHome with ESPHome's bootloader does not
 > answer, and the way back is UART ([Recovery over UART](recovery-uart.md)).

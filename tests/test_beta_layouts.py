@@ -47,6 +47,15 @@ class VersionTests(unittest.TestCase):
         self.assertIsNotNone(sender.old_layout_text(p, "1.8.99-plugmg3prod0"))
 
 
+class DowngradeTests(unittest.TestCase):
+    def test_restore_warns_only_when_the_package_has_the_older_layout(self):
+        p = profile.load_profile("PlugSG3")
+        self.assertIsNotNone(sender.newer_layout_text(p.variants()[0], "2.2.0"))
+        self.assertIsNone(sender.newer_layout_text(p.variants()[-1], "2.2.0"))
+        self.assertIsNone(sender.newer_layout_text(p.variants()[0], "2.1.1"))
+        self.assertIn("run the same restore again", sender.layout_downgrade_text("2.2.0"))
+
+
 class CsvSizeTests(unittest.TestCase):
     def test_suffixes(self):
         for text, value in (("0x300000", 0x300000), ("3M", 0x300000), ("3072K", 0x300000), (" 16k ", 0x4000), ("x", None), ("", None)):

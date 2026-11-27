@@ -507,6 +507,14 @@ def newer_layout_text(profile: Profile, device_version: str) -> str | None:
             f"is built for an older one. The table in flash stays Shelly's newer one. Better: build with {later[-1].csv_name}.")
 
 
+def layout_downgrade_text(device_version: str) -> str:
+    """restore of a package whose flash layout is older than the device's: the first run only switches the slot."""
+    return (f"The package has an older flash layout than Shelly {device_version} on the device. Shelly's installer may only "
+            "switch the slot on the first run and still report success, so the version does not change (seen on a dev board "
+            "going from 2.2.0 to 2.1.1). Wait until the device is back and about 2 minutes up, check its version and run the "
+            "same restore again.")
+
+
 def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str | None = None,
          port: int = 8000, timeout: float = 300, max_wait: float = MAX_WAIT, assume_yes: bool = False, dry_run: bool = False,
          force: bool = False, user: str | None = None, password: str | None = None,
@@ -568,12 +576,14 @@ def send(profile: Profile, zip_path: Path, addr: str = DEFAULT_IP, *, host: str 
     if not restoring:
         old_layout = old_layout_text(profile, str(info.get("ver") or ""), forced=force)
         newer = newer_layout_text(profile, str(info.get("ver") or ""))
-        if newer and not restoring:
+        if newer:
             say(Level.quiet, "WARNING: " + newer)
         if old_layout and not force:
             raise OtaError(old_layout)
         if old_layout:
             say(Level.quiet, "WARNING: " + old_layout)
+    elif newer_layout_text(profile, str(info.get("ver") or "")):
+        say(Level.quiet, "WARNING: " + layout_downgrade_text(str(info.get("ver"))))
 
     host = host or local_ip_for(addr)
     server = FileServer(zip_path, port)

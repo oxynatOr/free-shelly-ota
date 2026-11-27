@@ -86,3 +86,5 @@ Tested on two dev boards (C6 `S1PMG4`, C3 `S1PMG3`, stock 2.1.0 images, Shelly's
 
 The same steps also worked after a plain install (no `--slot-swap`) with the 2.2.0 layout, on a C3 dev board with Shelly's app 2.2.0
 (`PlugSG3` and `S1G3`, 2026-11-26, [dev board runs](devkit-runs.md)).
+
+On 2026-11-27, `send --slot-swap` was also run from stock 2.2.0 on `S1G3` (table moved from `0xf000` to `0x8000`, later OTA to `app_0`).
