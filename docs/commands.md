@@ -272,7 +272,8 @@ Creates a profile from an official ZIP: `python ota.py add-device NewDevice.zip`
 
 Writes Shelly's stock partition table as a CSV for ESPHome's `partitions:` option, read from the cached official package
 from `fetch`: `python ota.py partition-csv HTG3 -o HTG3-stock.csv`. Without `-o` it prints the CSV. The same files are
-in `partitions/`; use this command for a profile you added yourself. For a device with several flash layouts the output is the table
+in `partitions/`; use this command for a profile you added yourself. `<Profile>-stock.csv` is always the **first** layout; for an image
+for Shelly 2.2.x (also over UART) take `<Profile>-stock-<version>.csv`. For a device with several flash layouts the output is the table
 of the package it reads: the newest cached one, the one of `--version`, or with `--layout` the one of that layout. If that package
 is not cached, the command says so and, in a terminal, asks whether to download it and how to check TLS (a CA file or none).
 Set `CONFIG_PARTITION_TABLE_OFFSET` in your config to the

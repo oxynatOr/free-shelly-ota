@@ -5,6 +5,7 @@ Beta firmware and flash layouts: version order in send, layouts of compiled conf
 
 import argparse
 import shutil
+import struct
 import sys
 import tempfile
 import unittest
@@ -83,6 +84,37 @@ class CompileLayoutTests(unittest.TestCase):
             with self.assertRaises(builder.OtaError):
                 ota._compile_for_build(self.args(), self.p)
         compiled.assert_not_called()
+
+
+class TableTests(unittest.TestCase):
+    def test_a_wrong_row_beside_the_app_slot_is_a_warning(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        p = profile.load_profile("PlugSG3").variants()[-1]
+        good = lint.shipped_table(p)
+        (tmp / "t.csv").write_text(good, encoding="utf-8")
+        config = ["esp32:", "  partitions: t.csv", "ota:", "  - platform: esphome", "    allow_partition_access: true"]
+        (tmp / "my.yaml").write_text(chr(10).join(config), encoding="utf-8")
+        self.assertEqual(lint.lint_warnings(tmp / "my.yaml", profile=p), [])
+        (tmp / "t.csv").write_text(good.replace("0x700000", "0x6f0000"), encoding="utf-8")
+        warnings = lint.lint_warnings(tmp / "my.yaml", profile=p)
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("fs_1", warnings[0])
+
+    def test_every_shipped_csv_agrees_with_itself_and_suffixes_compare_equal(self):
+        self.assertEqual(lint.table_differences("app_0, app, ota_0, , 3M,", "app_0, app, ota_0, 0x20000, 0x300000,"), [])
+
+    def test_a_moved_table_is_read_for_the_layout(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        for name in ("PlugSG3", "S1G3"):       # table at 0x10000 and at 0xf000
+            for variant in profile.load_profile(name).variants():
+                entry = struct.pack("<2sBBII16sI", bytes((0xAA, 0x50)), 0, 0x10, 0x20000, variant.app_slot_size, b"app_0", 0)
+                factory = bytearray(bytes((0xFF,)) * 0x12000)
+                factory[builder.RELOCATED_PT_ADDR:builder.RELOCATED_PT_ADDR + 32] = entry
+                (tmp / "factory.bin").write_bytes(bytes(factory))
+                with self.subTest(name=name, size=variant.app_slot_size):
+                    self.assertEqual(ota._table_app_size(variant, None, tmp / "factory.bin"), variant.app_slot_size)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable
 
-from . import firmware, profile
+from . import devicegen, firmware, lint, profile
 from .builder import OtaError, read_official_manifest, variant_for_zip
 
 TRIES = 3               # the update server answers 502 or 408 now and then
@@ -90,10 +90,14 @@ def check_api(names: list[str], *, download: bool = False, insecure: bool = Fals
             line += "; WARNING: a flash layout the profile does not know"
         else:
             line += "; layout fits: " + (f"since {variant.layout_since}" if variant.base else "the first one")
+        shipped = lint.shipped_table(variant) if variant else None
+        differ = lint.table_differences(devicegen.partition_csv(path), shipped) if shipped else []
+        if differ:
+            line += f"; WARNING: the table differs from {variant.csv_name} in {', '.join(differ)}"
         low_boot = bool(loader and p.boot_min_version and _numbers(p.boot_min_version) <= _numbers(loader))
         if low_boot:
             line += f"; WARNING: boot_min_version {p.boot_min_version} is not above the package's loader {loader}"
-        if variant is None or low_boot:
+        if variant is None or low_boot or differ:
             attention.append(name)
         out(line)
     return attention

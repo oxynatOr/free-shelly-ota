@@ -438,7 +438,7 @@ def cmd_build(args) -> None:
             raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
         if not args.compile:      # --compile has said it before the compile
             ui.say(f"ESPHome config check OK ({args.esphome_yaml.name})")
-        for w in lint.lint_warnings(args.esphome_yaml, bootloader_shipped=bool(args.esphome_factory), cfg=resolved):
+        for w in lint.lint_warnings(args.esphome_yaml, bootloader_shipped=bool(args.esphome_factory), cfg=resolved, profile=p):
             ui.say(f"  WARNING: {w}")
     secrets = None
     if args.esphome_yaml or args.secrets:
