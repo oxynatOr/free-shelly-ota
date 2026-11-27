@@ -78,6 +78,23 @@ python -m unittest discover tests
 - CI (`.github/workflows/tests.yml`) runs `unittest` on Python 3.10 and 3.12 for pushes to `main` and for pull requests, without the firmware cache.
 - New code needs a test. Prefer small synthetic inputs over copies of Shelly firmware.
 
+### In Docker
+
+`docker/check.sh` (PowerShell: `docker\check.ps1`) runs the same in a Linux container. The checkout is mounted read-only and copied
+inside, so nothing is written into it. Docker has to be running; the script does not start it.
+
+| Call | What runs |
+| --- | --- |
+| `docker/check.sh ci` | The suite without a firmware cache on Python 3.10 and 3.12, like CI |
+| `docker/check.sh fw --sync` | The suite with the firmware cache; `--sync` (`-Sync`) first copies new files from your `fw/` into the volume `free-shelly-fw-cache`, `--fw DIR` (`-Fw`) names another folder. It lists the packages that are missing and never downloads one |
+| `docker/check.sh docs` | `mkdocs build --strict` |
+
+A git worktree without its own `fw/` takes the cache of the main checkout.
+
+> [!NOTE]
+> Five slow-download tests fail in the Linux container with the cache (also on `main`): Linux buffers up to a few MB of the ZIP, so
+> `send` counts it as downloaded long before the receiver has it.
+
 ## 4. Rules of the project
 
 The rules are in [CONTRIBUTING.md](../CONTRIBUTING.md): evidence for every hardware claim (and *not confirmed* for unmeasured pins), no private data, no dumps, ZIPs or firmware in the repository, credits for reporters, the breaking-change statement, opt-in for risky behavior, English docs, and the rule for AI-assisted work. Read it before your first pull request. What follows is what needs project context.
