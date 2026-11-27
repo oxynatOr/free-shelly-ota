@@ -22,8 +22,11 @@ _Loader.add_multi_constructor("!", lambda loader, suffix, node: None)
 
 
 def _parse_size(text: str) -> int | None:
+    """A size or offset of a partition CSV: decimal, 0x..., or with the ESP-IDF suffixes K and M. None: not a number."""
+    text = text.strip()
+    factor = {"K": 1024, "M": 1024 * 1024}.get(text[-1:].upper(), 1)
     try:
-        return int(text.strip(), 0)
+        return int(text[:-1] if factor > 1 else text, 0) * factor
     except ValueError:
         return None
 

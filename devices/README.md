@@ -60,7 +60,7 @@ revision: 2
 | `pt_offset` | no | `0x10000` | Where the device keeps its partition table. Your ESPHome config must set `CONFIG_PARTITION_TABLE_OFFSET` to it (`build --esphome-yaml` checks); it is `0xf000` on `HTG3`, `Mini1PMG3` and `MiniPMG3`, `0x8000` on `PlusPlugS` |
 | `boot_min_version` | no | none | Default for `--boot-min-version` when you ship ESPHome's bootloader. Without it the tool uses one patch above Shelly's loader version. See [Bootloader and slots](../docs/bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version) |
 | `revision` | no | `1` | Counts the changes of the profile, see below |
-| `layouts` | no | none | Later flash layouts of the same device, oldest first, each with `since` (Shelly version it starts with), `app_slot_size` and optionally `csv` (default `<profile>-stock-<since>.csv`). The keys above describe the first layout. See below |
+| `layouts` | no | none | Later flash layouts of the same device, oldest first, each with `since` (Shelly version it starts with), `app_slot_size` and optionally `csv` (default `<profile>-stock-<since>.csv`) and `from` (first firmware that has it, if that is an earlier beta). The keys above describe the first layout. See below |
 
 ### Several flash layouts
 

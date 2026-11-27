@@ -433,6 +433,14 @@ def _core_version(version: str) -> tuple[int, int, int] | None:
     return (int(m[1]), int(m[2]), int(m[3])) if m else None
 
 
+def _has_layout(device_version: str, first: str) -> bool | None:
+    """Whether firmware `device_version` is `first` or later, pre-releases in order (beta1 < beta2 < release).
+    None: one of them cannot be read."""
+    if _core_version(device_version) is None or _core_version(first) is None:
+        return None
+    return firmware._version_key(device_version) >= firmware._version_key(first)
+
+
 def old_layout_text(profile: Profile, device_version: str, forced: bool = False) -> str | None:
     """Why a package must not go to a device whose firmware still has the old flash layout (None: fine or not applicable).
 
@@ -441,12 +449,12 @@ def old_layout_text(profile: Profile, device_version: str, forced: bool = False)
     """
     if not profile.layout_since:
         return None
-    have, need = _core_version(device_version), _core_version(profile.layout_since)
-    if have is not None and need is not None and have >= need:
+    first = profile.layout_from or profile.layout_since
+    if _has_layout(device_version, first):
         return None
     shown = device_version or "unknown"
     return (f"The device runs Shelly {shown}, which has the old flash layout (or one that cannot be told), but this package is for the "
-            f"layout of {profile.layout_since} and later ({profile.name}).\n"
+            f"layout of {first} and later ({profile.name}).\n"
             "  Shelly's installer would replace the bootloader with ESPHome's but skip the app and the partition table; the device "
             "then only starts if the old app is still in app_0, otherwise only UART brings it back.\n"
             f"  Fix: update to Shelly's own package of that layout first (`python ota.py restore {profile.name}`), then send this "
@@ -489,15 +497,13 @@ def table_not_moved_text() -> str:
 def newer_layout_text(profile: Profile, device_version: str) -> str | None:
     """A note for a package of an older layout than the device's firmware has (not a refusal: on a dev board such a
     package ran, with Shelly's newer table left in flash)."""
-    have = _core_version(device_version)
-    if have is None:
-        return None
-    mine = _core_version(profile.layout_since) if profile.base else None
-    later = [v for v in profile.variants()[1:]
-             if (mine is None or _core_version(v.layout_since) > mine) and have >= _core_version(v.layout_since)]
+    variants = profile.variants()
+    mine = next((i for i, v in enumerate(variants) if v.app_slot_size == profile.app_slot_size), 0)
+    later = [v for v in variants[mine + 1:] if _has_layout(device_version, v.layout_from or v.layout_since)]
     if not later:
         return None
-    return (f"The device runs Shelly {device_version}, which has the layout of {later[-1].layout_since} and later, but this package "
+    since = later[-1].layout_from or later[-1].layout_since
+    return (f"The device runs Shelly {device_version}, which has the layout of {since} and later, but this package "
             f"is built for an older one. The table in flash stays Shelly's newer one. Better: build with {later[-1].csv_name}.")
 
 

@@ -27,6 +27,7 @@ class Layout:
     since: str
     app_slot_size: int
     csv: str
+    first: str | None = None  # `from:`: first firmware that has it, may be a pre-release (None: since)
 
 
 @dataclass(frozen=True)
@@ -46,6 +47,7 @@ class Profile:
     layout_since: str | None = None  # firmware version from which the device has this profile's flash layout; `send` refuses older ones
     layouts: tuple[Layout, ...] = ()  # later layouts, oldest first; empty: the profile has exactly one layout
     csv: str | None = None  # the stock CSV of this layout (None: <name>-stock.csv)
+    layout_from: str | None = None  # first firmware with this layout if it is earlier than layout_since, e.g. a beta
     base: "Profile | None" = None  # set on a variant for a later layout: the profile it was made from
 
     @property
@@ -56,7 +58,8 @@ class Profile:
         """One profile per flash layout, oldest first. Each is an ordinary Profile with that layout's slot size, CSV and
         `layout_since`, so the code that builds and sends does not need to know about layouts."""
         root = self.base or self
-        return [root] + [replace(root, app_slot_size=l.app_slot_size, layout_since=l.since, csv=l.csv, base=root)
+        return [root] + [replace(root, app_slot_size=l.app_slot_size, layout_since=l.since, csv=l.csv, layout_from=l.first,
+                                 base=root)
                          for l in root.layouts]
 
     @property
@@ -91,7 +94,8 @@ def _read_layouts(file: str, name: str, raw: dict) -> tuple[Layout, ...]:
         if layouts and _version_numbers(since) <= _version_numbers(layouts[-1].since):
             raise ProfileError(f"{file}: 'layouts' must be listed oldest first (since)")
         sizes.add(size)
-        layouts.append(Layout(since, size, str(entry.get("csv") or f"{name}-stock-{since}.csv")))
+        first = str(entry["from"]) if entry.get("from") else None
+        layouts.append(Layout(since, size, str(entry.get("csv") or f"{name}-stock-{since}.csv"), first))
     return tuple(layouts)
 
 
@@ -122,6 +126,7 @@ def load_profile(name: str, devices_dir: Path = DEVICES_DIR) -> Profile:
         package=str(raw["package"]) if raw.get("package") else None,
         channel=str(raw.get("channel", "stable")),
         layout_since=str(raw["layout_since"]) if raw.get("layout_since") else None,
+        layout_from=str(raw["layout_from"]) if raw.get("layout_from") else None,
     )
 
 

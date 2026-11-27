@@ -320,8 +320,11 @@ def cmd_ca(args) -> None:
     if cacert.expired():
         ui.say(f"WARNING: this root expired on {cacert.SHELLY_ROOT_NOT_AFTER}. Shelly has probably changed it: look for a newer tool version.")
 
-def _compile_for_build(args, p) -> None:
-    """--compile YAML: build the binaries first and hand them to the build below as APP and --esphome-factory."""
+def _compile_for_build(args, p):
+    """--compile YAML: build the binaries first and hand them to the build below as APP and --esphome-factory.
+
+    For a profile with several flash layouts the layout can only be known here (esp32: from packages:, or the compiled
+    factory.bin). Returns the layout found that way, else None."""
     if args.app:
         raise builder.OtaError("Give either APP.bin or --compile YAML, not both.")
     image = args.image or compile_.DEFAULT_IMAGE
@@ -332,6 +335,12 @@ def _compile_for_build(args, p) -> None:
         # The esp32: block may come from packages or !include: let ESPHome put the config together (kept in memory only)
         ui.say("No esp32: block in the file: asking ESPHome for the full config (github:// packages need the network) ...")
         cfg = args.resolved_cfg = lint.load_config(compile_.resolve_config(args.compile, args.runner, image))
+    choose = bool(p.variants()[1:]) and not args.layout
+    found = None
+    if choose:
+        size = _table_app_size(p, args.compile, None, cfg)
+        if size is not None:
+            p = found = _variant_for_size(p, size)
     problems = lint.lint_esphome(args.compile, p, cfg=cfg, relocated=args.pt_addr is not None)
     if problems:      # before the compile, which takes minutes
         raise builder.OtaError("ESPHome config check failed:\n  - " + "\n  - ".join(problems))
@@ -342,6 +351,11 @@ def _compile_for_build(args, p) -> None:
     args.app = done.ota
     args.esphome_factory = args.esphome_factory or done.factory
     args.esphome_yaml = args.esphome_yaml or args.compile
+    if choose:      # the table that was really built decides
+        size = _table_app_size(p, None, done.factory)
+        if size is not None:
+            found = _variant_for_size(p, size)
+    return found
 
 
 def _table_app_size(p, yaml_path, factory, cfg=None) -> int | None:
@@ -354,7 +368,7 @@ def _table_app_size(p, yaml_path, factory, cfg=None) -> int | None:
                 for line in (yaml_path.parent / name).read_text(encoding="utf-8").splitlines():
                     cols = [c.strip() for c in line.split(",")]
                     if not line.lstrip().startswith("#") and len(cols) > 4 and cols[0] == p.app_ptn:
-                        return int(cols[4], 0)
+                        return lint._parse_size(cols[4])
         except (OSError, ValueError, AttributeError, lint.yaml.YAMLError):
             pass
     if factory and factory.is_file():
@@ -381,8 +395,12 @@ def _layout_for_build(p, args):
             raise builder.OtaError(f"--layout {args.layout}: the {p.name} profile knows {', '.join(names)}.")
         return variants[names.index(args.layout)]
     size = _table_app_size(p, args.esphome_yaml or args.compile, args.esphome_factory)
-    if size is None:
-        return None
+    return None if size is None else _variant_for_size(p, size)
+
+
+def _variant_for_size(p, size: int):
+    """The layout of the profile with this app slot size; OtaError if it knows none."""
+    variants = p.variants()
     match = next((v for v in variants if v.app_slot_size == size), None)
     if match is None:
         known = ", ".join(f"0x{v.app_slot_size:x} ({v.csv_name})" for v in variants)
@@ -393,10 +411,7 @@ def _layout_for_build(p, args):
 def cmd_build(args) -> None:
     p = profile.load_profile(args.device)
     wanted = _layout_for_build(p, args)
-    if wanted:
-        p = wanted
-        ui.say(f"Flash layout: {'since Shelly ' + p.layout_since if p.base else 'the first one'} "
-               f"(app slot 0x{p.app_slot_size:x}, {p.csv_name})")
+    p = wanted or p
     if not args.compile and not args.app:
         raise builder.OtaError("Give APP.bin, or --compile YAML to build it from an ESPHome config.")
     if not args.compile and (args.runner != "auto" or args.image):
@@ -410,7 +425,12 @@ def cmd_build(args) -> None:
     if would_replace and not args.dry_run:
         raise builder.OtaError(f"{output} already exists. Use --tag LABEL or -o ZIP for another name, or --force to replace it.")
     if args.compile:
-        _compile_for_build(args, p)
+        compiled = _compile_for_build(args, p)
+        if compiled:
+            p = wanted = compiled
+    if wanted:
+        ui.say(f"Flash layout: {'since Shelly ' + p.layout_since if p.base else 'the first one'} "
+               f"(app slot 0x{p.app_slot_size:x}, {p.csv_name})")
     resolved = getattr(args, "resolved_cfg", None) if args.esphome_yaml == args.compile else None
     if args.esphome_yaml:
         problems = lint.lint_esphome(args.esphome_yaml, p, cfg=resolved, relocated=args.pt_addr is not None)
@@ -439,8 +459,14 @@ def cmd_build(args) -> None:
         official = firmware.cached_zip(p.package_name, args.version, prerelease=p.channel == "beta")
     if official is None:
         if not args.download:
+            if wanted:
+                raise builder.OtaError(
+                    f"No official {p.name} package with this flash layout ({p.csv_name}, app slot 0x{p.app_slot_size:x}) in "
+                    f"{firmware.FW_DIR / p.package_name}.\n  Fix: 'ota.py fetch {p.name}' gets the newest package, which may "
+                    f"have another layout; an older one: add --from-version <installed version> to that fetch. Or pass "
+                    f"--official <zip>.")
             raise builder.OtaError(
-                f"No official {p.name} ZIP in {firmware.FW_DIR / p.name}. Put one there, pass --official <zip>, "
+                f"No official {p.name} ZIP in {firmware.FW_DIR / p.package_name}. Put one there, pass --official <zip>, "
                 f"run 'ota.py fetch {p.name}', or add --download to build.")
         official = _fetch_official(p, version=args.version, insecure=args.insecure, cafile=args.cafile,
                                   channel=args.channel, from_version=args.from_version)

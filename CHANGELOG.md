@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- `send` compares the whole Shelly version, betas in order (`2.2.0-beta1` < `2.2.0-beta2` < `2.2.0`). A layout entry can say `from:`, the first firmware that has it; the 17 devices whose 2.2.0-beta2 package already has the new layout say `2.2.0-beta2`. Visible effect: a device on `2.2.0-beta1` is refused for the new layout (`--force` overrides; whether beta1 had the old layout is not confirmed), Mini 1PM Gen3 and Multicolor Bulb on `2.2.0-beta2` are accepted.
+- `build --compile` finds the layout also when `esp32:` comes from `packages:` or `!include` (it stopped before with the wrong size), partition sizes may be written as `3M` or `3072K`, and a missing package for the chosen layout is named with the way to get it. Not breaking.
+- `docker/check.sh` and `docker\check.ps1` run the tests and the docs build in containers. Developer tooling only.
 - `partition-csv` takes `--layout`, and if the package is not cached it says so and can download it (asked in a terminal, or `--download`, with `--cafile` or `--insecure`). Not breaking: without a cache it used to stop, and still does without a terminal.
 - `profiles --check-api` asks Shelly's update API what is offered per profile and, with `--download`, compares a new package's flash layout and loader with the profile. Not breaking: new option.
 - Pages, guide, README and UART recovery name the second stock CSV where they said to copy `<Profile>-stock.csv`; the `build` messages about another partition table name the CSV of the chosen layout; `list --details` shows all slot sizes; the `send --force` help names the layout refusal. Not breaking: texts and output only.
