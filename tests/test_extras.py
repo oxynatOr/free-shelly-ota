@@ -1,5 +1,6 @@
 """Run from ShellyOTA/: python -m unittest discover tests"""
 
+import argparse
 import hashlib
 import http.server
 import json
@@ -13,10 +14,13 @@ import time
 import unittest
 import urllib.parse
 import urllib.request
+import zipfile
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import ota  # noqa: E402
 from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import builder, devicegen, firmware, lint, logwatch, profile, rpc, sender  # noqa: E402
 
@@ -453,6 +457,28 @@ class OfflineTests(unittest.TestCase):
         devicegen.create_profile(base_zip("PlugMG3"), devices_dir=self.tmp)
         with self.assertRaises(builder.OtaError):
             devicegen.create_profile(base_zip("PlugMG3"), devices_dir=self.tmp)
+
+    def test_add_device_with_another_name_than_the_package(self):
+        # issue #154: the profile was written, then storing the ZIP failed with "Package is for ..."
+        source = self.tmp / "official.zip"
+        with zipfile.ZipFile(source, "w") as zf:
+            table = devicegen.ENTRY.pack(devicegen.MAGIC, 0, 0x10, 0x20000, 0x300000, b"app_0", 0)
+            parts = {}
+            for key, src, data in (("pt", "pt.bin", table), ("app", "app.bin", b"app")):
+                zf.writestr(src, data)
+                parts[key] = {"src": src, "size": len(data), "cs_sha256": hashlib.sha256(data).hexdigest()}
+            parts["app"]["ptn"] = "app_0"
+            zf.writestr("manifest.json", json.dumps({"name": "Base", "version": "1.0.0", "parts": parts}))
+        fw_dir = self.tmp / "fw"
+        create, store = devicegen.create_profile, firmware.store_zip
+        args = argparse.Namespace(zip=source, name="Base-variant", parent=None, force=False)
+        with mock.patch.object(devicegen, "create_profile", lambda *a, **kw: create(*a, devices_dir=self.tmp, **kw)),              mock.patch.object(firmware, "store_zip", lambda *a, **kw: store(*a, fw_dir=fw_dir, **kw)),              mock.patch.object(ota.ui, "say"):
+            ota.cmd_add_device(args)
+        self.assertEqual(profile.load_profile("Base-variant", self.tmp).package_name, "Base")
+        self.assertTrue((fw_dir / "Base" / "1.0.0" / "Base.zip").is_file())
+        # same name as the package: no `package:` line
+        path, _ = create(source, devices_dir=self.tmp)
+        self.assertNotIn("package:", path.read_text(encoding="utf-8"))
 
     def _yaml(self, text, csv=None):
         y = self.tmp / "app.yaml"

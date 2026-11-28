@@ -187,9 +187,9 @@ def cmd_fetch(args) -> None:
 
 def cmd_add_device(args) -> None:
     path, info = devicegen.create_profile(args.zip, name=args.name, force=args.force, parent=args.parent)
-    firmware.store_zip(info["name"], args.zip.read_bytes(), source=f"local file: {args.zip.name}")
+    firmware.store_zip(info["package"], args.zip.read_bytes(), source=f"local file: {args.zip.name}")
     ui.say(f"Wrote {path.name}: {info['ptn']} @0x{info['slot_offset']:x}, slot 0x{info['slot_size']:x}")
-    ui.say(f"Stored the ZIP in {firmware.FW_DIR / info['name']}")
+    ui.say(f"Stored the ZIP in {firmware.FW_DIR / info['package']}")
 
 
 def _ask(question: str) -> str:
