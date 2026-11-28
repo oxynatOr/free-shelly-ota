@@ -31,54 +31,50 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [Plus RGBW PM (Gen2)](PlusRGBWPM.md) | `PlusRGBWPM` | **`0x8000`** | `0x190000` | ✅ | Three PWM outputs, voltage and NTC checked; inputs, button, LED not |
 | [Pro 3EM (Gen2)](Pro3EM.md) | `Pro3EM` | **`0x8000`** | `0x200000` | 🧪 |  |
 | [Plus 2PM (Gen2)](Plus2PM.md) | `Plus2PM` | **`0x8000`** | `0x190000` | 🧪 | Not run on the dev board: the stock app restarts in a loop without factory data |
-| [Pro 1 (Gen2)](Pro1.md) | `Pro1` | **`0x8000`** | `0x200000` | 🧪 |  |
-| [Pro 1PM (Gen2)](Pro1PM.md) | `Pro1PM` | **`0x8000`** | `0x200000` | 🧪 |  |
-| [Pro 2 (Gen2)](Pro2.md) | `Pro2` | **`0x8000`** | `0x200000` | 🧪 |  |
-| [Pro 2PM (Gen2)](Pro2PM.md) | `Pro2PM` | **`0x8000`** | `0x200000` | 🧪 |  |
-| [Pro 3 (Gen2)](Pro3.md) | `Pro3` | **`0x8000`** | `0x200000` | 🧪 |  |
-| [Pro 4PM (Gen2)](Pro4PM.md) | `Pro4PM` | **`0x8000`** | `0x200000` | 🧪 |  |
-| [Pro RGBWW PM (Gen2)](ProRGBWWPM.md) | `ProRGBWWPM` | **`0x8000`** | `0x200000` | 🧪 |  |
+| [Pro 1 (Gen2)](Pro1.md) | `Pro1` | **`0x8000`** | `0x200000` | 🧪 | 2.2.0 layout (`0x300000`): untested |
+| [Pro 1PM (Gen2)](Pro1PM.md) | `Pro1PM` | **`0x8000`** | `0x200000` | 🧪 | 2.2.0 layout (`0x300000`): untested |
+| [Pro 2 (Gen2)](Pro2.md) | `Pro2` | **`0x8000`** | `0x200000` | 🧪 | 2.2.0 layout (`0x300000`): untested |
+| [Pro 2PM (Gen2)](Pro2PM.md) | `Pro2PM` | **`0x8000`** | `0x200000` | 🧪 | 2.2.0 layout (`0x300000`): untested |
+| [Pro 3 (Gen2)](Pro3.md) | `Pro3` | **`0x8000`** | `0x200000` | 🧪 | 2.2.0 layout (`0x300000`): untested |
+| [Pro 4PM (Gen2)](Pro4PM.md) | `Pro4PM` | **`0x8000`** | `0x200000` | 🧪 | 2.2.0 layout (`0x300000`): untested |
+| [Pro RGBWW PM (Gen2)](ProRGBWWPM.md) | `ProRGBWWPM` | **`0x8000`** | `0x200000` | 🧪 | 2.2.0 layout (`0x300000`): untested |
 
 ### Gen3 (ESP32-C3)
 
-30 profiles: ✅ 9 · 🟡 9 · 🔬 0 · 🧪 12
+26 profiles: ✅ 9 · 🟡 5 · 🔬 7 · 🧪 5
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
-| [Plug M Gen3](PlugMG3.md) | `PlugMG3` | `0x10000` | `0x2a0000` | ✅ |  |
-| [AZ Plug](PlugAZ.md) | `PlugAZ` | **`0xf000`** | `0x280000` | 🟡 | Later OTA and relay confirmed; power cycle needed; calibration not checked |
-| [Plug S Gen3](PlugSG3.md) | `PlugSG3` | `0x10000` | `0x2a0000` | ✅ |  |
+| [Plug M Gen3](PlugMG3.md) | `PlugMG3` | `0x10000` | `0x2a0000` | ✅ | 2.2.0 layout (`0x300000`): DevKit-tested |
+| [AZ Plug](PlugAZ.md) | `PlugAZ` | **`0xf000`** | `0x280000` | 🟡 | Later OTA and relay confirmed; power cycle needed; calibration not checked; 2.2.0 layout (`0x300000`): DevKit-tested |
+| [Plug S Gen3](PlugSG3.md) | `PlugSG3` | `0x10000` | `0x2a0000` | ✅ | 2.2.0 layout (`0x300000`): partly checked |
 | [H&T Gen3](HTG3.md) | `HTG3` | **`0xf000`** | `0x280000` | ✅ |  |
-| [PM Mini Gen3 (no relay)](MiniPMG3.md) | `MiniPMG3` | **`0xf000`** | `0x280000` | ✅ | Measures only, no relay |
-| [Multicolor Bulb E27 Gen3](RGBCCTBulbG3.md) | `RGBCCTBulbG3` | `0x10000` | `0x280000` | ✅ |  |
-| [Mini 1 Gen3](Mini1G3.md) | `Mini1G3` | **`0xf000`** | `0x2a0000` | ✅ |  |
-| [1 Gen3](S1G3.md) | `S1G3` | **`0xf000`** | `0x2b0000` | ✅ |  |
-| [2PM Gen3](S2PMG3.md) | `S2PMG3` | `0x10000` | `0x2c0000` | ✅ | Relays and meter not reported |
+| [PM Mini Gen3 (no relay)](MiniPMG3.md) | `MiniPMG3` | **`0xf000`** | `0x280000` | ✅ | Measures only, no relay; 2.2.0 layout (`0x300000`): DevKit-tested |
+| [Multicolor Bulb E27 Gen3](RGBCCTBulbG3.md) | `RGBCCTBulbG3` | `0x10000` | `0x280000` | ✅ | 2.2.1 layout (`0x300000`): partly checked |
+| [Mini 1 Gen3](Mini1G3.md) | `Mini1G3` | **`0xf000`** | `0x2a0000` | ✅ | 2.2.0 layout (`0x300000`): DevKit-tested |
+| [1 Gen3](S1G3.md) | `S1G3` | **`0xf000`** | `0x2b0000` | ✅ | 2.2.0 layout (`0x300000`): DevKit-tested |
+| [2PM Gen3](S2PMG3.md) | `S2PMG3` | `0x10000` | `0x2c0000` | ✅ | Relays and meter not reported; 2.2.0 layout (`0x300000`): partly checked |
 | [Plug M Gen3, beta layout](PlugMG3.md#beta-layout) | `PlugMG3-beta` | `0x10000` | `0x300000` | ✅ | Shelly 2.2.0-beta2 only |
-| [Plug PM Gen3 (no relay)](PlugPMG3.md) | `PlugPMG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay |
-| [Duo Bulb Gen3](DuoBulbG3.md) | `DuoBulbG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware |
-| [Mini 1PM Gen3](Mini1PMG3.md) | `Mini1PMG3` | **`0xf000`** | `0x2a0000` | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked |
-| [1PM Gen3](S1PMG3.md) | `S1PMG3` | **`0xf000`** | `0x2c0000` | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked |
-| [2PM Gen3, 2.2.0 layout](S2PMG3.md#220-layout) | `S2PMG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0 and later; installer took a plain package with a non-ESPHome app, ESPHome not tested |
-| [Plug S Gen3, 2.2.0 layout](PlugSG3.md#220-layout) | `PlugSG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.0 and later; `restore` to 2.2.0 and a plain package with a non-ESPHome app ran, ESPHome not tested |
-| [Mini 1PM Gen3, 2.2.1 layout](Mini1PMG3.md#221-layout) | `Mini1PMG3-v2` | **`0xf000`** | `0x300000` | 🟡 | Shelly 2.2.1 and later; a plain package with a non-ESPHome app and the way back to 2.2.1 ran; ESPHome OTA, relay and meter partly checked on one more unit |
-| [Multicolor Bulb E27 Gen3, 2.2.1 layout](RGBCCTBulbG3.md#221-layout) | `RGBCCTBulbG3-v2` | `0x10000` | `0x300000` | 🟡 | Shelly 2.2.1 and later; a plain package with a non-ESPHome app (second run, with `send`) and the way back to 2.2.1 ran, ESPHome not tested |
-| [The Pill](Pill.md) | `Pill` | `0x10000` | `0x280000` | 🧪 |  |
-| [1L Gen3](S1LG3.md) | `S1LG3` | `0x10000` | `0x2b0000` | 🧪 |  |
-| [2L Gen3](S2LG3.md) | `S2LG3` | `0x10000` | `0x2b0000` | 🧪 |  |
-| [i4 Gen3](I4G3.md) | `I4G3` | **`0xf000`** | `0x280000` | 🧪 |  |
-| [Dimmer Gen3](DimmerG3.md) | `DimmerG3` | `0x10000` | `0x300000` | 🧪 |  |
-| [Dimmer 0/1-10V PM Gen3](Dimmer0110VPMG3.md) | `Dimmer0110VPMG3` | **`0xf000`** | `0x280000` | 🧪 |  |
+| [Plug PM Gen3 (no relay)](PlugPMG3.md) | `PlugPMG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA, readings not checked. Measures only, no relay; 2.2.0 layout (`0x300000`): DevKit-tested |
+| [Duo Bulb Gen3](DuoBulbG3.md) | `DuoBulbG3` | `0x10000` | `0x280000` | 🟡 | Flashed over OTA and runs; the GPIOs (PWM, from the stock dump) are not confirmed on the hardware; 2.2.0 layout (`0x300000`): DevKit-tested |
+| [Mini 1PM Gen3](Mini1PMG3.md) | `Mini1PMG3` | **`0xf000`** | `0x2a0000` | 🟡 | Flashed over OTA (two units); a second OTA, the relay under load and the meter not checked; 2.2.1 layout (`0x300000`): partly checked |
+| [1PM Gen3](S1PMG3.md) | `S1PMG3` | **`0xf000`** | `0x2c0000` | 🟡 | Flashed over OTA with the reporter's own tooling, not `ota.py`; meter not checked; 2.2.0 layout (`0x300000`): DevKit-tested |
+| [The Pill](Pill.md) | `Pill` | `0x10000` | `0x280000` | 🔬 | 2.2.0 layout (`0x300000`): DevKit-tested |
+| [1L Gen3](S1LG3.md) | `S1LG3` | `0x10000` | `0x2b0000` | 🔬 | 2.2.0 layout (`0x300000`): DevKit-tested |
+| [2L Gen3](S2LG3.md) | `S2LG3` | `0x10000` | `0x2b0000` | 🔬 | 2.2.0 layout (`0x300000`): DevKit-tested |
+| [i4 Gen3](I4G3.md) | `I4G3` | **`0xf000`** | `0x280000` | 🔬 | 2.2.0 layout (`0x300000`): DevKit-tested |
+| [Dimmer Gen3](DimmerG3.md) | `DimmerG3` | `0x10000` | `0x300000` | 🔬 |  |
+| [Dimmer 0/1-10V PM Gen3](Dimmer0110VPMG3.md) | `Dimmer0110VPMG3` | **`0xf000`** | `0x280000` | 🔬 | 2.2.0 layout (`0x300000`): DevKit-tested |
 | [EM Gen3](EMG3.md) | `EMG3` | `0x10000` | `0x280000` | 🧪 |  |
 | [3EM-63 Gen3](S3EMG3.md) | `S3EMG3` | `0x10000` | `0x280000` | 🧪 |  |
-| [Outdoor Plug S Gen3](OutdoorPlugSG3.md) | `OutdoorPlugSG3` | `0x10000` | `0x2a0000` | 🧪 |  |
+| [Outdoor Plug S Gen3](OutdoorPlugSG3.md) | `OutdoorPlugSG3` | `0x10000` | `0x2a0000` | 🔬 | 2.2.0 layout (`0x300000`): DevKit-tested |
 | [Plus 1 Mini](Plus1Mini.md) | `Plus1Mini` | **`0x8000`** | `0x190000` | 🧪 | ESP32-C3 hardware, sold as Plus Mini |
 | [Plus 1PM Mini](Plus1PMMini.md) | `Plus1PMMini` | **`0x8000`** | `0x190000` | 🧪 | ESP32-C3 hardware, sold as Plus Mini |
 | [Plus PM Mini (no relay)](PlusPMMini.md) | `PlusPMMini` | **`0x8000`** | `0x190000` | 🧪 | ESP32-C3 hardware, sold as Plus Mini |
 
 ### Gen4 (ESP32-C6)
 
-17 profiles: ✅ 1 · 🟡 1 · 🔬 7 · 🧪 8
+17 profiles: ✅ 1 · 🟡 1 · 🔬 14 · 🧪 1
 
 | Device | Profile | Partition table | App slot size | State | Note |
 | --- | --- | --- | --- | --- | --- |
@@ -90,15 +86,15 @@ Jump to: [Gen2](#gen2-esp32) · [Gen3](#gen3-esp32-c3) · [Gen4](#gen4-esp32-c6)
 | [Dimmer 0/1-10V PM Gen4](Dimmer0110VPMG4.md) | `Dimmer0110VPMG4` | `0x10000` | `0x300000` | 🔬 |  |
 | [1 Mini Gen4](Mini1G4.md) | `Mini1G4` | `0x10000` | `0x300000` | 🔬 |  |
 | [EM Mini Gen4](MiniEMG4.md) | `MiniEMG4` | `0x10000` | `0x2f0000` | 🔬 |  |
-| [Power Strip 4 Gen4 (Zigbee)](PowerStripZB.md) | `PowerStripZB` | `0x10000` | `0x300000` | 🧪 |  |
+| [Power Strip 4 Gen4 (Zigbee)](PowerStripZB.md) | `PowerStripZB` | `0x10000` | `0x300000` | 🔬 |  |
 | [1 Gen4](S1G4.md) | `S1G4` | `0x10000` | `0x300000` | ✅ |  |
-| [1PM Gen4](S1PMG4.md) | `S1PMG4` | `0x10000` | `0x300000` | 🧪 |  |
-| [2PM Gen4](S2PMG4.md) | `S2PMG4` | `0x10000` | `0x300000` | 🧪 |  |
-| [1L Gen4](S1LG4.md) | `S1LG4` | `0x10000` | `0x300000` | 🧪 |  |
-| [2L Gen4](S2LG4.md) | `S2LG4` | `0x10000` | `0x300000` | 🧪 |  |
+| [1PM Gen4](S1PMG4.md) | `S1PMG4` | `0x10000` | `0x300000` | 🔬 |  |
+| [2PM Gen4](S2PMG4.md) | `S2PMG4` | `0x10000` | `0x300000` | 🔬 |  |
+| [1L Gen4](S1LG4.md) | `S1LG4` | `0x10000` | `0x300000` | 🔬 |  |
+| [2L Gen4](S2LG4.md) | `S2LG4` | `0x10000` | `0x300000` | 🔬 |  |
 | [EM Gen4](EMG4.md) | `EMG4` | `0x10000` | `0x300000` | 🧪 | 16 MB flash layout: its DevKit image needs a 16 MB board |
-| [Plug US Gen4](PlugUSG4.md) | `PlugUSG4` | `0x10000` | `0x300000` | 🧪 |  |
-| [Presence Gen4](PresenceG4.md) | `PresenceG4` | `0x10000` | `0x300000` | 🧪 |  |
+| [Plug US Gen4](PlugUSG4.md) | `PlugUSG4` | `0x10000` | `0x300000` | 🔬 |  |
+| [Presence Gen4](PresenceG4.md) | `PresenceG4` | `0x10000` | `0x300000` | 🔬 |  |
 
 The partition table offset goes into your ESPHome config as `CONFIG_PARTITION_TABLE_OFFSET`; `build` refuses a config that
 does not match the profile. Details per device are on its page.

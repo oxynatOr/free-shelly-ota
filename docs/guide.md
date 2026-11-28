@@ -47,7 +47,9 @@ If you accept that, go on. If you are unsure, test the whole update on a spare d
 4. **Check what the device runs now.**
    - It must run **Shelly firmware**, not ESPHome. (Already ESPHome? Then use ESPHome's own OTA and skip this guide.)
    - Note the firmware version. Some versions need an extra step (1.8.99 on the Plug M Gen3, a device on slot 1, a beta). The device page says which.
-   - A **beta firmware** can have another flash layout (2.2.0-beta2). `build` and `send` refuse a mismatch; see [Beta firmware](bootloader-and-slots.md#beta-firmware-with-another-flash-layout).
+   - **Shelly 2.2.0 and 2.2.1 changed the flash layout** of many devices. Their profiles know both layouts: copy the CSV that matches the firmware on your
+     device (the device page says which), and `build` takes the matching package.
+   - A **beta firmware** can have another flash layout too. `build` and `send` refuse a mismatch; see [Beta firmware](bootloader-and-slots.md#beta-firmware-with-another-flash-layout).
 5. **Check the state symbol** of your device and decide if you want to be one of the first.
 
 ## 2. Prepare your PC
@@ -109,10 +111,12 @@ The installer needs the device in a state it can accept. Do these checks in the 
 
 Your own YAML decides what the device does. Rules that make the update work:
 
-1. **Partition table.** Copy `partitions/<Profile>-stock.csv` from this repository next to your YAML. For a profile you made yourself:
+1. **Partition table.** Copy `partitions/<Profile>-stock.csv` from this repository next to your YAML.
+   **If the device runs Shelly 2.2.0 or later**, check the device page: many have a second table, `partitions/<Profile>-stock-<version>.csv`.
+   For a profile you made yourself:
    `python ota.py partition-csv <Profile> -o <Profile>-stock.csv`.
 2. **Offset.** `CONFIG_PARTITION_TABLE_OFFSET` must be the profile's `pt_offset` (`0x10000` for most, `0xf000` for H&T, Mini 1 Gen3, Mini 1PM Gen3, PM Mini Gen3,
-   1 Gen3, 1PM Gen3, i4 Gen3, Dimmer 0/1-10V PM Gen3; `0x8000` for the classic ESP32 Gen2 devices). Your device page states it.
+   1 Gen3, 1PM Gen3, i4 Gen3, Dimmer 0/1-10V PM Gen3, AZ Plug; `0x8000` for the classic ESP32 Gen2 devices). Your device page states it.
 3. **The block that every config needs:**
 
    ```yaml

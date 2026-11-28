@@ -9,15 +9,15 @@
 
 [🧰 Before you start](#before-you-start) · [⚙️ Config](#esphome-config) · [📍 Pins](#pins) · [⚡ Flash it](#flash-it) · [👀 What to expect](#what-to-expect) · [↩️ Way back](#way-back)
 
-> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2a0000`). It has its own profile, `PlugSG3-v2`; see [2.2.0 layout](#220-layout). `build` refuses to mix the two layouts.
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2a0000`). The `PlugSG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
 
 | Fact | Value |
 | --- | --- |
-| Profile | `PlugSG3`, `PlugSG3-v2` (for Shelly's 2.2.0 layout, see [2.2.0 layout](#220-layout)) |
+| Profile | `PlugSG3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
-| Official package | 2.2.0 (stable, seen 2026-11-11), with the layout of `PlugSG3-v2`. The `PlugSG3` profile needs a package before 2.2.0: 2.1.1 is the step the update API offered from 1.7.3 on 2026-11-11 (`fetch PlugSG3 --from-version 1.7.3`); 2.1.0 (stable from 2026-10-14) has the same bootloader, partition table and filesystem as 2.0.1, and the hardware runs were made with 2.0.1 |
+| Official package | 2.2.0 (stable, seen 2026-11-11), with the 2.2.0 layout. The first layout needs a package before 2.2.0: 2.1.1 is the step the update API offered from 1.7.3 on 2026-11-11 (`fetch PlugSG3 --from-version 1.7.3`); 2.1.0 (stable from 2026-10-14) has the same bootloader, partition table and filesystem as 2.0.1, and the hardware runs were made with 2.0.1 |
 | Partition table | `0x10000` |
-| App slot size | `0x2a0000` |
+| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 | ESPHome device page | [Shelly Plug S Gen3](https://devices.esphome.io/devices/shelly-plug-s-gen3/) |
 
 > [!NOTE]
@@ -40,13 +40,15 @@ Check first:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/PlugSG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
+>
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/PlugSG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
   variant: ESP32C3
   board: esp32-c3-devkitm-1
   flash_size: 8MB
-  partitions: PlugSG3-stock.csv        # copy from partitions/ in this repository
+  partitions: PlugSG3-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.0+: PlugSG3-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -134,12 +136,14 @@ the update target slot. Command reference: [Commands](../commands.md).
 
 ## 2.2.0 layout
 
-Shelly's stable `2.2.0` for this plug has a **different flash layout**, the same one as the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x2a0000`, and the filesystems and the second slot move up with them. The profile `PlugSG3-v2` describes it; `PlugSG3` does not fit it and `build` refuses the mix.
+The reports below name `PlugSG3-v2`: that was the separate profile for this layout before it became part of `PlugSG3`.
+
+Shelly's stable `2.2.0` for this plug has a **different flash layout**, the same one as the 2.2.0 betas of the other Gen3 devices ([Beta firmware with another flash layout](../bootloader-and-slots.md#beta-firmware-with-another-flash-layout)) and the stable 2.2.0 of the [2PM Gen3](S2PMG3.md#220-layout): the app slots are `0x300000` instead of `0x2a0000`, and the filesystems and the second slot move up with them. The `PlugSG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
 
 | Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
 | --- | --- | --- | --- |
 | 2.0.1 to 2.1.x (`PlugSG3`) | `0x20000` / `0x2a0000` | `0x3a0000` / `0x2a0000` | `0x2c0000` / `0x640000`, `0xe0000` each |
-| 2.2.0 (`PlugSG3-v2`) | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
+| 2.2.0 (`PlugSG3`) | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
 
 `otadata`, `nvs`, `scratch` (`0x7e0000`) and `shelly` (`0x7f0000`) stay where they are.
 
@@ -153,15 +157,16 @@ Shelly's stable `2.2.0` for this plug has a **different flash layout**, the same
 > **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `inspect --device`, a later ESPHome OTA, and the table in flash (no dump).
 
 > [!CAUTION]
-> **Do not send a `PlugSG3` package to a plug on 2.2.0**, and no `PlugSG3-v2` package to one on firmware before 2.2.0. `send` refuses the second case (`layout_since`, `--force` overrides); the first one is not checked by the tool and was not tried.
+> **Match the package to the firmware.** `send` refuses a package of the 2.2.0 layout on firmware before 2.2.0-beta2 (`layouts:`,
+> `--force` overrides). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
 
-- Fetch the package: `python ota.py fetch PlugSG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.0 is the stable release and both profiles use the package called `PlugSG3`. The 2.1.1 step: `--from-version 1.7.3`.
-- Build against its table: copy `partitions/PlugSG3-v2-stock.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
-- Then `python ota.py build PlugSG3-v2 app.ota.bin --esphome-factory app.factory.bin`, and `send PlugSG3-v2`, as above.
+- Fetch the package: `python ota.py fetch PlugSG3 --insecure` (or `--cafile`, see [ca](../commands.md#ca)); 2.2.0 is the stable release and both layouts use the package called `PlugSG3`. The 2.1.1 step: `--from-version 1.7.3`.
+- Build against its table: copy `partitions/PlugSG3-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
+- Then `python ota.py build PlugSG3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send PlugSG3`.
 
 ## Way back
 
-`python ota.py restore PlugSG3` sends the official firmware back while Shelly firmware still runs. For a plug on the 2.2.0 layout use `python ota.py restore PlugSG3-v2`; it also takes a plug on 2.1.1 to 2.2.0 (see [2.2.0 layout](#220-layout)).
+`python ota.py restore PlugSG3` sends the official firmware back while Shelly firmware still runs. For a plug on the 2.2.0 layout the same command applies; it also takes a plug on 2.1.1 to 2.2.0 (see [2.2.0 layout](#220-layout)).
 
 ---
 

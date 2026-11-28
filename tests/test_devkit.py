@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import ota  # noqa: E402
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import builder, devkit, firmware, profile  # noqa: E402
 from shelly_ota.devicegen import parse_partitions  # noqa: E402
 from test_bootswap import make_factory  # noqa: E402
@@ -78,9 +78,9 @@ class ImageTests(unittest.TestCase):
     def test_a_board_with_too_little_flash_is_refused_with_the_need(self):
         plug = profile.load_profile("PlugMG3")
         with self.assertRaises(builder.OtaError) as cm:
-            devkit.build_image(firmware.cached_zip("PlugMG3"), plug, flash_size="4MB")
+            devkit.build_image(base_zip("PlugMG3"), plug, flash_size="4MB")
         self.assertIn("8 MiB", str(cm.exception))
-        self.assertEqual(devkit.build_image(firmware.cached_zip("PlugMG3"), plug, flash_size="8MB").needed_mib, 8)
+        self.assertEqual(devkit.build_image(base_zip("PlugMG3"), plug, flash_size="8MB").needed_mib, 8)
         uni = profile.load_profile("PlusUni")
         self.assertEqual(devkit.build_image(firmware.cached_zip("PlusUni"), uni, flash_size="4MB").needed_mib, 4)
         with self.assertRaises(builder.OtaError) as cm:
@@ -92,7 +92,7 @@ class ImageTests(unittest.TestCase):
     @needs_fw
     def test_a_built_package_gives_the_state_after_the_install(self):
         prof = profile.load_profile("PlugMG3")
-        official = firmware.cached_zip("PlugMG3")
+        official = base_zip("PlugMG3")
         app = fake_app(100_000)
         (self.tmp / "app.bin").write_bytes(app)
         with zipfile.ZipFile(official) as z:
@@ -124,7 +124,7 @@ class ImageTests(unittest.TestCase):
             manifest["parts"]["app"]["size"] = len(data["PlugMG3.bin"])
             manifest["parts"]["app"]["cs_sha256"] = hashlib.sha256(data["PlugMG3.bin"]).hexdigest()
 
-        bad = rewrite(firmware.cached_zip("PlugMG3"), self.tmp / "big.zip", edit=too_big)
+        bad = rewrite(base_zip("PlugMG3"), self.tmp / "big.zip", edit=too_big)
         with self.assertRaises(builder.OtaError) as cm:
             devkit.build_image(bad, prof)
         self.assertIn("does not fit", str(cm.exception))
@@ -136,7 +136,7 @@ class ImageTests(unittest.TestCase):
         def overlap(manifest, data):
             manifest["parts"]["pt"]["addr"] = 0x1000     # inside the bootloader
 
-        bad = rewrite(firmware.cached_zip("PlugMG3"), self.tmp / "overlap.zip", edit=overlap)
+        bad = rewrite(base_zip("PlugMG3"), self.tmp / "overlap.zip", edit=overlap)
         with self.assertRaises(builder.OtaError) as cm:
             devkit.build_image(bad, prof)
         self.assertIn("overlap", str(cm.exception))
@@ -144,7 +144,7 @@ class ImageTests(unittest.TestCase):
     @needs_fw
     def test_a_package_with_a_wrong_hash_is_refused(self):
         prof = profile.load_profile("PlugMG3")
-        bad = rewrite(firmware.cached_zip("PlugMG3"), self.tmp / "hash.zip", files={"fs.img": b"\x00" * 917504})
+        bad = rewrite(base_zip("PlugMG3"), self.tmp / "hash.zip", files={"fs.img": b"\x00" * 917504})
         with self.assertRaises(builder.OtaError):
             devkit.build_image(bad, prof)
 
@@ -180,7 +180,7 @@ class CommandTests(unittest.TestCase):
         text = self._run("PlugMG3", "-o", str(out))
         self.assertIn("--chip esp32c3", text)
         self.assertIn("0x000000", text)
-        with zipfile.ZipFile(firmware.cached_zip("PlugMG3")) as z:
+        with zipfile.ZipFile(firmware.cached_zip("PlugMG3")) as z:      # devkit takes the newest package by default
             boot = z.read("bootloader.bin")
         self.assertEqual(out.read_bytes()[:len(boot)], boot)
 

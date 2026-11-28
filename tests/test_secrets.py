@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import __version__, builder, firmware, profile, secrets_check  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 
@@ -67,7 +67,7 @@ class SecretsTests(unittest.TestCase):
         app = self.tmp / "app.bin"
         app.write_bytes(image_with(PW.encode()))
         p = profile.load_profile("PlugMG3")
-        res = builder.build(p, app, firmware.cached_zip("PlugMG3"), self.tmp / "o.zip", secrets=found)
+        res = builder.build(p, app, base_zip("PlugMG3"), self.tmp / "o.zip", secrets=found)
         self.assertEqual(res.secrets_found, ["wifi.password"])
         self.assertTrue(any("CREDENTIALS IN THE IMAGE" in w for w in res.warnings))
         self.assertFalse(any(PW in w for w in res.warnings))
@@ -85,7 +85,7 @@ class SecretsTests(unittest.TestCase):
         app.write_bytes(image_with(PW.encode()))
         out = self.tmp / "o.zip"
         with self.assertRaises(builder.OtaError) as ctx:
-            builder.build(profile.load_profile("PlugMG3"), app, firmware.cached_zip("PlugMG3"), out,
+            builder.build(profile.load_profile("PlugMG3"), app, base_zip("PlugMG3"), out,
                           secrets=found, fail_on_secrets=True)
         self.assertNotIn(PW, str(ctx.exception))
         self.assertFalse(out.exists())
@@ -94,7 +94,7 @@ class SecretsTests(unittest.TestCase):
     def test_unchecked_build_says_so(self):
         app = self.tmp / "app.bin"
         app.write_bytes(fake_app(100_000))
-        res = builder.build(profile.load_profile("PlugMG3"), app, firmware.cached_zip("PlugMG3"), self.tmp / "o.zip")
+        res = builder.build(profile.load_profile("PlugMG3"), app, base_zip("PlugMG3"), self.tmp / "o.zip")
         self.assertIsNone(res.secrets_found)
         self.assertTrue(any("not checked" in w for w in res.warnings))
         builder.write_report(res)
@@ -104,7 +104,7 @@ class SecretsTests(unittest.TestCase):
     @needs_fw
     def test_build_warns_if_the_image_lacks_partition_access(self):
         p = profile.load_profile("PlugMG3")
-        official = firmware.cached_zip("PlugMG3")
+        official = base_zip("PlugMG3")
         app = self.tmp / "app.bin"
         app.write_bytes(fake_app(100_000))
         res = builder.build(p, app, official, self.tmp / "o.zip")

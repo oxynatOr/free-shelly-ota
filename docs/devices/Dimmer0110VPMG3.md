@@ -2,7 +2,8 @@
 
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
-![State: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![State: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
+![State of the 2.2.0 layout: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
@@ -10,13 +11,15 @@
 
 Gen3 / ESP32-C3.
 
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `Dimmer0110VPMG3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `Dimmer0110VPMG3` |
+| Profile | `Dimmer0110VPMG3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
-| Official package | 2.0.1 |
+| Official package | 2.0.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0xf000` |
-| App slot size | `0x280000` |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 
 ## Before you start
 
@@ -33,13 +36,15 @@ Check first:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/Dimmer0110VPMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
+>
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/Dimmer0110VPMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
   variant: ESP32C3
   board: esp32-c3-devkitm-1
   flash_size: 8MB
-  partitions: Dimmer0110VPMG3-stock.csv        # copy from partitions/ in this repository
+  partitions: Dimmer0110VPMG3-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.0+: Dimmer0110VPMG3-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -104,6 +109,27 @@ No device-specific findings yet. Please report the `--watch` log, especially the
 The profile sets `boot_min_version: "1.0.9"`: devices of this family run Shelly's loader 1.0.3, which would otherwise skip ESPHome's bootloader (`update? 0`).
 
 A Tasmota template exists on [templates.blakadder.com](https://templates.blakadder.com/shelly_Dimmer_Gen3.html) (flashed over USB-serial by someone else): GPIO1 and GPIO10 buttons, GPIO3 ADC temperature, GPIO4 relay, GPIO5 PWM, GPIO6/7 UART to the BL0492 meter. These pins are not checked against Shelly's firmware. There is no ESPHome device page yet.
+
+## 2.2.0 layout
+
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Dimmer0110VPMG3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
+
+| Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
+| --- | --- | --- | --- |
+| before 2.2.0 | `0x20000` / `0x280000` | `0x3a0000` / `0x280000` | `0x2a0000` / `0x620000`, `0x100000` each |
+| 2.2.0 and later | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
+
+> [!NOTE]
+> **DevKit-tested (2026-11-25/26), not on the real device:** `restore` and `send` of an ESPHome SoftAP package with this layout
+> ran on an ESP32-C3 dev board and ESPHome started with this table ([Dev board runs](../devkit-runs.md)).
+
+> [!CAUTION]
+> `send` refuses a package of this layout on firmware before 2.2.0-beta2 (`layouts:`, `--force` overrides; on a dev board such a forced package installed
+> nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
+
+- Fetch the package: `python ota.py fetch Dimmer0110VPMG3 --insecure`. A device on older firmware: `python ota.py restore Dimmer0110VPMG3` first, then `send Dimmer0110VPMG3`.
+- Build against its table: copy `partitions/Dimmer0110VPMG3-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
+- Then `python ota.py build Dimmer0110VPMG3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send Dimmer0110VPMG3`.
 
 ## Way back
 

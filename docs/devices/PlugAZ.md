@@ -3,17 +3,20 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: partly checked](https://img.shields.io/badge/state-partly%20checked-yellow.svg?style=flat-square)
+![State of the 2.2.0 layout: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x280000`). The `PlugAZ` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `PlugAZ` |
+| Profile | `PlugAZ` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Model | `S3PL-10112EU` |
 | Flash | 8 MB |
-| Official package | 2.0.3, build `20261026-122214/2.0.3-g4601943` |
+| Official package | 2.0.3, build `20261026-122214/2.0.3-g4601943`; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0xf000` |
-| App slot size | `0x280000` (2,621,440 bytes) |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 | ESPHome device page | [Plug S Gen3 reference, not AZ confirmation](https://devices.esphome.io/devices/shelly-plug-s-gen3/) |
 
 **Partly checked:** [Tilen (tilenkranjc)](https://github.com/tilenkranjc) reported a successful OTA conversion on one AZ Plug
@@ -40,7 +43,7 @@ Check first:
 
 ## ESPHome config
 
-Copy `partitions/PlugAZ-stock.csv` next to your YAML. Keep your own Wi-Fi,
+Copy `partitions/PlugAZ-stock.csv` next to your YAML (**on Shelly 2.2.0 or later** `partitions/PlugAZ-stock-2.2.0.csv`, [2.2.0 layout](#220-layout)). Keep your own Wi-Fi,
 API and OTA credentials; no credentials or ready-made firmware are shipped here.
 
 ```yaml
@@ -50,7 +53,7 @@ esp32:
   flash_size: 8MB
   flash_mode: dio
   flash_frequency: 80MHz
-  partitions: PlugAZ-stock.csv
+  partitions: PlugAZ-stock.csv       # Shelly 2.2.0+: PlugAZ-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -163,6 +166,27 @@ accuracy or protection calibration.
 - The source package was obtained from Shelly's update service with TLS
   verification disabled because the local CA chain failed; its internal
   hashes were checked. Those checks establish consistency, not authenticity.
+
+## 2.2.0 layout
+
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `PlugAZ` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
+
+| Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
+| --- | --- | --- | --- |
+| before 2.2.0 | `0x20000` / `0x280000` | `0x3a0000` / `0x280000` | `0x2a0000` / `0x620000`, `0x100000` each |
+| 2.2.0 and later | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
+
+> [!NOTE]
+> **DevKit-tested (2026-11-27), not on the real device:** `restore` and `send` of an ESPHome SoftAP package with this layout ran on an
+> ESP32-C3 dev board ([dev board runs](../devkit-runs.md)). No inputs, relays or meters were checked.
+
+> [!CAUTION]
+> `send` refuses a package of this layout on firmware before 2.2.0 (`layouts:`, `--force` overrides; on a dev board such a forced package installed
+> nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
+
+- Fetch the package: `python ota.py fetch PlugAZ --insecure`. A device on older firmware: `python ota.py restore PlugAZ` first, then `send PlugAZ`.
+- Build against its table: copy `partitions/PlugAZ-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
+- Then `python ota.py build PlugAZ app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send PlugAZ`.
 
 ## Way back
 

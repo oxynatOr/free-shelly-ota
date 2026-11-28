@@ -77,6 +77,7 @@ file.
 | `--image NAME:TAG` | no | a fixed ESPHome version | Only with `--compile` and Docker: the ESPHome image |
 | `--esphome-yaml YAML` | no | none | Also check the partition offset and `partitions:` CSV of this config, and run the [credential check](credential-check.md) |
 | `--esphome-factory FACTORY.bin` | no | none | Also ship ESPHome's bootloader and a clean `otadata` taken from this factory image (same build as `APP.bin`). See [Bootloader and slots](bootloader-and-slots.md) |
+| `--layout SINCE` | no | your table | Only for a profile with [several flash layouts](../devices/README.md#several-flash-layouts): build for `base` or the layout whose `since:` in the profile is `SINCE`. Without it the CSV of the ESPHome config or `factory.bin` decides; with neither, the newest cached official package does. Gen3 and Pro devices whose layout Shelly 2.2.x changed have two |
 | `--pt-addr ADDR` | no | none | **Experimental, seen working on dev boards, and on a real device with a plain send.** Only with `--esphome-factory`, from an ESPHome build that leaves `CONFIG_PARTITION_TABLE_OFFSET` unset: ship Shelly's partition table at `ADDR` (only `0x8000`) instead of where Shelly's is, which stays untouched. Needed for `send --slot-swap`; at Shelly's own address the installer keeps the table in a journal ESPHome's bootloader does not read. Going back to Shelly's firmware afterwards worked on two dev boards (ESPHome OTA of Shelly's app image, then `restore`, [how](slot-swap.md#the-way-back-over-the-network-seen-on-two-boards)) ([details](slot-swap.md)) |
 | `--boot-min-version VER` | no | profile value, else one patch above Shelly's | Only with `--esphome-factory`: the bootloader `min_version` in the manifest. The installer writes only a newer bootloader. `keep` leaves it, which probably makes the installer skip the bootloader |
 | `--secrets FILE` | no | `secrets.yaml` next to `--esphome-yaml` | Values to look for in the image |
@@ -98,7 +99,7 @@ file.
 | `--download` | Download the official ZIP if none is cached (off by default) |
 | `--insecure` | With `--download`: skip the TLS check |
 | `--cafile PEM` | With `--download`: check TLS against the CA certificates in this file only (see [`fetch`](#fetch)) |
-| `--channel stable\|beta` | With `--download`: release channel of the update API |
+| `--channel stable\|beta` | `beta`: build from the newest cached beta (never the default); with `--download` the release channel of the update API |
 | `--from-version VER` | With `--download`: ask the update API as a device running VER would (see [`fetch`](#fetch)) |
 
 </details>
@@ -139,6 +140,10 @@ For a package that replaces the bootloader, `send` first reads the update target
 app subtypes swapped in the package's partition table, which `build --pt-addr 0x8000` has moved to a new address
 ([how, and what is not tested](slot-swap.md)).
 
+For a profile with [several flash layouts](../devices/README.md#several-flash-layouts) `send` reads the layout from the package; there is no option for it.
+It refuses a package of a later layout on firmware older than the first one with that layout (`from:` in the profile, else `since:`;
+`--force` overrides), and only warns when the package has an older layout than the firmware on the device.
+
 It also asks the device to fetch `http://<this PC>:<port>/` itself (RPC `HTTP.GET`), so a Shelly that cannot reach this PC
 (firewall, VLAN) is reported at once instead of after the `--timeout`. With `--dry-run` that is an error; a real `send` only
 warns and goes on, because the download is what counts. A device without `HTTP.GET` gets a note.
@@ -164,7 +169,7 @@ warns and goes on, because the download is what counts. A device without `HTTP.G
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `--force` | off | Send even if the device model does not match, or if the package keeps Shelly's bootloader (not built with `--esphome-factory`). Without `--force`, `send` stops in that case: the old image would come back after three starts, and only the first ESPHome OTA could change that ([why](bootloader-and-slots.md#without-esphomes-bootloader-plain-package)) |
+| `--force` | off | Send even if the device model does not match, or if the package keeps Shelly's bootloader (not built with `--esphome-factory`). Without `--force`, `send` stops in that case: the old image would come back after three starts, and only the first ESPHome OTA could change that ([why](bootloader-and-slots.md#without-esphomes-bootloader-plain-package)). `--force` also overrides the refusal of a package whose flash layout is newer than the device's firmware |
 | `--host IP` | auto | This PC's address as seen by the Shelly |
 | `--port PORT` | `8000` | Local web server port |
 | `--log-port PORT` | `9514` | UDP port for the debug log |
@@ -224,6 +229,9 @@ takes the next word as its path. Without a log that reaches this PC (a firewall)
 
 Takes the same options as `send`, but sends the cached official firmware instead of a ZIP you choose. `--version VER` picks a cached version (default: the newest stable one).
 
+**Going back to a version with an older flash layout** (for example 2.2.0 to 2.1.1) needs two runs: the first only switches the slot
+and still reports success. `restore` warns about it; check the version in between.
+
 > [!WARNING]
 > It works only while Shelly firmware is still running: a device that already runs ESPHome with ESPHome's bootloader does not
 > answer, and the way back is UART ([Recovery over UART](recovery-uart.md)).
@@ -266,17 +274,25 @@ Creates a profile from an official ZIP: `python ota.py add-device NewDevice.zip`
 ## partition-csv
 
 Writes Shelly's stock partition table as a CSV for ESPHome's `partitions:` option, read from the cached official package
-(run `fetch` first): `python ota.py partition-csv HTG3 -o HTG3-stock.csv`. Without `-o` it prints the CSV. The same files are
-in `partitions/`; use this command for a profile you added yourself. Set `CONFIG_PARTITION_TABLE_OFFSET` in your config to the
+from `fetch`: `python ota.py partition-csv HTG3 -o HTG3-stock.csv`. Without `-o` it prints the CSV. The same files are
+in `partitions/`; use this command for a profile you added yourself. `<Profile>-stock.csv` is always the **first** layout; for an image
+for Shelly 2.2.x (also over UART) take `<Profile>-stock-<version>.csv`. For a device with several flash layouts the output is the table
+of the package it reads: the newest cached one, the one of `--version`, or with `--layout` the one of that layout. If that package
+is not cached, the command says so and, in a terminal, asks whether to download it and how to check TLS (a CA file or none).
+Set `CONFIG_PARTITION_TABLE_OFFSET` in your config to the
 profile's `pt_offset`.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
 | `DEVICE` | yes | | Profile name |
 | `-o`, `--output CSV` | no | print | Write to this file; refuses to overwrite an existing file |
-| `--force` | no | off | Overwrite an existing output file |
+| `--layout SINCE` | no | newest | For a device with several flash layouts: `base` or the layout's `since:` in the profile |
+| `--version VER` | no | newest stable | Use this cached version (a pre-release only with this option or `--channel beta`) |
 | `--official ZIP` | no | the cache | Use this official ZIP instead of the cached one |
-| `--version VER` | no | newest stable cached | Use this cached version (a pre-release only with this option) |
+| `--channel stable\|beta` | no | `stable` | `beta`: read the newest cached beta |
+| `--download` | no | off | Download a missing package without asking |
+| `--insecure` / `--cafile PEM` | no | none | How the download checks TLS (see [`fetch`](#fetch)) |
+| `--force` | no | off | Overwrite an existing output file |
 
 ## inspect
 
@@ -328,9 +344,26 @@ python ota.py fetch PlugMG3 --cafile fw/shelly-ca.pem
 - **Expiry.** The root expires on 2030-08-02. The tool then prints a warning; a newer version of the tool carries the new fingerprint.
 - **Not in the repository.** The PEM is written on your PC from your package; `fw/` is not committed.
 
+## profiles
+
+`python ota.py profiles` lists the profile revisions and checks `devices/profiles.lock`; `--update-lock` records them.
+
+`python ota.py profiles --check-api --insecure` asks Shelly's update API what it offers for each profile (or only for `DEVICE`) and says
+whether that version is cached, older than the cache, or new. An offered beta gets a line of its own, so a new flash layout shows up early. Only the app name goes to the server. Nothing is downloaded without
+`--download`; with it a new package is fetched and its flash layout and loader are compared with the profile. The command ends with an
+error if a profile needs attention.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `DEVICE` | no | all | With `--check-api`: only this profile |
+| `--check-api` | no | off | Ask the update API |
+| `--download` | no | off | With `--check-api`: fetch new packages and compare them |
+| `--insecure` / `--cafile PEM` | no | none | With `--check-api`: how TLS is checked (see [`fetch`](#fetch)) |
+| `--update-lock` | no | off | Write `devices/profiles.lock` |
+
 ## list
 
-`python ota.py list` shows one line per device: profile, name, app slot size and the cached official firmware versions. The device name is shortened to fit the terminal. `--details` (or `--all`) shows two lines per device with the profile revision and the build id of each cached firmware.
+`python ota.py list` shows one line per device: profile, name, app slot size (all sizes, such as `0x2a0000/0x300000`, for a device with several flash layouts) and the cached official firmware versions. The device name is shortened to fit the terminal. `--details` (or `--all`) shows two lines per device with the profile revision and the build id of each cached firmware.
 
 ## clean
 

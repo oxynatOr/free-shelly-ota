@@ -17,7 +17,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import ota  # noqa: E402
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import builder, firmware, logwatch, profile, rpc, sender  # noqa: E402
 from test_extras import FakeRpcShelly, free_udp_port  # noqa: E402
 
@@ -129,7 +129,7 @@ class SendFlowTests(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.profile = profile.load_profile("DuoBulbG3")
         self.zip = self.tmp / "t.zip"
-        shutil.copy(firmware.cached_zip("DuoBulbG3"), self.zip)
+        shutil.copy(base_zip("DuoBulbG3"), self.zip)
         self.sleeps = []
         self.lines = []
 

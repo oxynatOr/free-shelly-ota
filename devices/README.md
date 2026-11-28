@@ -57,9 +57,29 @@ revision: 2
 | `update_id` | no | file name | Name in Shelly's update API, `https://updates.shelly.cloud/update/<update_id>`, where `fetch` finds the official package |
 | `app_ptn` | no | `app_0` | Partition the `app` part of the package targets. `build` warns if the official package says otherwise |
 | `parent` | no | none | Base device of a variant (for example the Zigbee firmware). The variant is listed under `alt` in the update reply of the parent |
-| `pt_offset` | no | `0x10000` | Where the device keeps its partition table. Your ESPHome config must set `CONFIG_PARTITION_TABLE_OFFSET` to it (`build --esphome-yaml` checks); it is `0xf000` on `HTG3`, `Mini1PMG3` and `MiniPMG3`, `0x8000` on `PlusPlugS` |
+| `pt_offset` | no | `0x10000` | Where the device keeps its partition table. Your ESPHome config must set `CONFIG_PARTITION_TABLE_OFFSET` to it (`build --esphome-yaml` checks); it is `0xf000` on `Dimmer0110VPMG3`, `HTG3`, `I4G3`, `Mini1G3`, `Mini1PMG3`, `MiniPMG3`, `PlugAZ`, `S1G3` and `S1PMG3`, `0x8000` on the classic ESP32 Gen2 profiles such as `PlusPlugS` |
 | `boot_min_version` | no | none | Default for `--boot-min-version` when you ship ESPHome's bootloader. Without it the tool uses one patch above Shelly's loader version. See [Bootloader and slots](../docs/bootloader-and-slots.md#is-the-new-bootloader-really-written-min_version) |
 | `revision` | no | `1` | Counts the changes of the profile, see below |
+| `layouts` | no | none | Later flash layouts of the same device, oldest first, each with `since` (first stable Shelly version seen with it), `app_slot_size` and optionally `csv` (default `<profile>-stock-<since>.csv`) and `from` (first firmware that has it, if that is an earlier beta; `send` compares with this one). The keys above describe the first layout. See below |
+
+### Several flash layouts
+
+```yaml
+app_slot_size: 0x2a0000      # the first layout, partitions/<profile>-stock.csv
+layouts:
+  - since: "2.2.0"
+    from: "2.2.0-beta2"       # optional
+    app_slot_size: 0x300000   # partitions/<profile>-stock-2.2.0.csv
+```
+
+`build` takes the layout from your own table: the CSV of `--esphome-yaml` or `--compile`, else `factory.bin` (or `--layout base`/`--layout 2.2.0`), and uses the newest cached official package that fits it. With neither, the official package decides. `send` reads the layout from the package: a device older than that layout's `from:` (without one: `since:`) is refused (`--force` overrides), and a package of an older layout than the device's firmware gets a warning, not a refusal. The layouts are told apart by the slot size, so two of them cannot have the same one.
+
+The versions between the last package read with the old layout and the first one read with the new layout are not known. `send` takes every version from `from:` (or `since:`) on as the new layout, and every older one as the old.
+
+**Betas** need no profile of their own: a beta is a version with one of these layouts. Nothing uses a beta unless you ask
+(`--version 2.2.0-beta2`, or `--channel beta` for the newest cached one). A layout that only a beta has yet is a normal entry
+under `layouts:`; `build` then says that `--channel beta` is needed. `PlugMG3-beta` is the older way and stays; it equals
+`PlugMG3` with `--channel beta`.
 
 ## Changing a profile
 

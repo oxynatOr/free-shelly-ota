@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import ota  # noqa: E402
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import firmware  # noqa: E402
 from test_builder import fake_app  # noqa: E402
 
@@ -46,7 +46,7 @@ class BuildOutputTests(unittest.TestCase):
         return code, buf.getvalue()
 
     def build(self, *extra, app=None):
-        official = firmware.cached_zip("PlugMG3")
+        official = base_zip("PlugMG3")
         return self.run_ota("build", "PlugMG3", str(app or self.app), "--official", str(official), *extra)
 
     def packages(self) -> dict[str, bytes]:
@@ -154,7 +154,7 @@ class BuildOutputTests(unittest.TestCase):
                 mock.patch.object(ota.compile_, "compile_yaml", return_value=compiled) as comp, \
                 mock.patch.object(ota.builder, "build", fake_build):
             code, text = self.run_ota("build", "PlugMG3", "--compile", str(yaml), "--runner", "docker",
-                                      "--official", str(firmware.cached_zip("PlugMG3")))
+                                      "--official", str(base_zip("PlugMG3")))
         comp.assert_called_once_with(yaml, "docker", ota.compile_.DEFAULT_IMAGE)
         self.assertEqual(seen, {"app": self.app, "factory": factory})
         self.assertIn("stop here", text)
@@ -179,9 +179,9 @@ class BuildOutputTests(unittest.TestCase):
         with mock.patch.object(ota.compile_, "pick_runner"), \
                 mock.patch.object(ota.compile_, "resolve_config", return_value=resolved) as res, \
                 mock.patch.object(ota.compile_, "compile_yaml", return_value=compiled) as comp, \
-                mock.patch.object(ota.builder, "build", side_effect=ota.builder.OtaError("stop here")):
+                mock.patch.object(ota.builder, "require_zip", side_effect=lambda path, what: path),                 mock.patch.object(ota.builder, "zip_layout_problems", return_value=[]),                 mock.patch.object(ota.builder, "build", side_effect=ota.builder.OtaError("stop here")):
             code, text = self.run_ota("build", "PlugMG3", "--compile", str(yaml),
-                                      "--official", str(firmware.cached_zip("PlugMG3")))
+                                      "--official", str(self.tmp / "official.zip"))     # no firmware cache needed
         res.assert_called_once()
         comp.assert_called_once()                                  # the check passed on the resolved config
         self.assertIn("asking ESPHome for the full config", text)

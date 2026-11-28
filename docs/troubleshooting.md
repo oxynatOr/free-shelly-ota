@@ -64,7 +64,7 @@ values and a `Fix:` line. Seen so far:
 | --- | --- |
 | Flash frequency 40 MHz instead of 80 MHz | Classic ESP32: `CONFIG_ESPTOOLPY_FLASHFREQ_80M: "y"` under `sdkconfig_options`. ESP32-C6: `board_build.f_flash: 80000000L` under `platformio_options`. |
 | `minimum_chip_revision` / `sram1_as_iram` | Remove them from the config for the package. They are fine for builds you only update with ESPHome OTA. |
-| Partition table differs | Use the device's `partitions/<Profile>-stock.csv` and its `CONFIG_PARTITION_TABLE_OFFSET`. |
+| Partition table differs | Use the CSV of the layout your device has (`partitions/<Profile>-stock.csv`, or `<Profile>-stock-<version>.csv` for Shelly 2.2.x, see the device page) and its `CONFIG_PARTITION_TABLE_OFFSET`. |
 | `.factory.bin` from another build | Build `APP.bin` and the factory image from the same compile. |
 
 ### `build --compile` is slow, or stops before the compile

@@ -3,6 +3,7 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: confirmed](https://img.shields.io/badge/state-confirmed-brightgreen.svg?style=flat-square)
+![State of the 2.2.0 layout: DevKit-tested](https://img.shields.io/badge/state-devkit%20tested-blueviolet.svg?style=flat-square)
 ![Generation: 3](https://img.shields.io/badge/gen-3-lightgrey.svg?style=flat-square)
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
@@ -11,13 +12,15 @@
 It is the [Mini 1PM Gen3](Mini1PMG3.md) without the power meter (relay, switch input, button, LED and an NTC).
 Like the H&T Gen3 and the Mini 1PM Gen3, the official package keeps its partition table at `0xf000`, so a default ESPHome build does not match.
 
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x2a0000`). The `Mini1G3` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `Mini1G3` |
+| Profile | `Mini1G3` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB |
-| Official package | 2.0.1 |
+| Official package | 2.0.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0xf000` |
-| App slot size | `0x2a0000` |
+| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 | ESPHome device page | [Shelly 1 Mini Gen3](https://devices.esphome.io/devices/shelly-1-mini-gen3/) |
 
 ## Before you start
@@ -35,13 +38,15 @@ Check first:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/Mini1G3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
+>
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/Mini1G3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
   variant: ESP32C3
   board: esp32-c3-devkitm-1
   flash_size: 8MB
-  partitions: Mini1G3-stock.csv        # copy from partitions/ in this repository
+  partitions: Mini1G3-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.0+: Mini1G3-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -111,6 +116,27 @@ In the `--watch` log look for these lines, in this order:
 - **Pins checked on the hardware** (lamp as load): relay GPIO7, button GPIO1 (inverted, pull-up), switch input GPIO10, LED GPIO0 (inverted). Without a load the relay is almost silent, so a quiet click is not a sign that it does not switch.
 - **NTC (GPIO3), read from the official 2.0.1 app:** the stock firmware (`shelly_temp_sensor_ntc.cpp`) reads GPIO3 with 12 dB attenuation and converts it with a **B constant of 3950**, 10 kOhm at 25 °C, a 10 kOhm reference resistor and 3.3 V; the NTC is the lower leg of the divider, which is `DOWNSTREAM` in ESPHome's `resistance` sensor. The sensor range is -55 to 125 °C. So the topology of the ESPHome device page (`DOWNSTREAM`, 10 kOhm) is right, but its **B 3350 is not the stock value**: use `b_constant: 3950`. With the first report's reading of about 57 °C (an idle desk unit; two Mini 1 Gen3 on stock firmware showed 36 to 46 °C) that is about 52 °C, so 3950 explains part of the difference, not all of it. The absolute value stays uncalibrated until it is compared with a reference thermometer.
 - **NTC, stock against ESPHome on the same device** (second report, in the wall): stock 2.0.1 showed 36.7 to 37.9 °C minutes before the flash, ESPHome with B = 3350 51.6 to 52.7 °C at the same place. B = 3950 brings the ESPHome reading to about 48 °C, so the constant explains about 4.5 of the roughly 15 °C. The reporter's guess for the rest is the Wi-Fi power save: the stock firmware had `eco_mode: true`, the ESPHome config `power_save_mode: none`, which may warm the chip itself. Not tested yet; a comparison with a room thermometer and `power_save_mode: light` is planned.
+
+## 2.2.0 layout
+
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Mini1G3` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
+
+| Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
+| --- | --- | --- | --- |
+| before 2.2.0 | `0x20000` / `0x2a0000` | `0x3a0000` / `0x2a0000` | `0x2c0000` / `0x640000`, `0xe0000` each |
+| 2.2.0 and later | `0x20000` / `0x300000` | `0x400000` / `0x300000` | `0x320000` / `0x700000`, `0xe0000` each |
+
+> [!NOTE]
+> **DevKit-tested (2026-11-25/26), not on the real device:** `restore` and `send` of an ESPHome SoftAP package with this layout
+> ran on an ESP32-C3 dev board and ESPHome started with this table ([Dev board runs](../devkit-runs.md)).
+
+> [!CAUTION]
+> `send` refuses a package of this layout on firmware before 2.2.0-beta2 (`layouts:`, `--force` overrides; on a dev board such a forced package installed
+> nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
+
+- Fetch the package: `python ota.py fetch Mini1G3 --insecure`. A device on older firmware: `python ota.py restore Mini1G3` first, then `send Mini1G3`.
+- Build against its table: copy `partitions/Mini1G3-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
+- Then `python ota.py build Mini1G3 app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send Mini1G3`.
 
 ## Way back
 

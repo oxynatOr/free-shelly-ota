@@ -3,6 +3,7 @@
 [← README](../../README.md) · [All devices](README.md) · [Commands](../commands.md)
 
 ![State: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
+![State of the 2.2.0 layout: untested](https://img.shields.io/badge/state-untested-lightgrey.svg?style=flat-square)
 ![Generation: 2](https://img.shields.io/badge/gen-2-lightgrey.svg?style=flat-square)
 ![Chip: ESP32](https://img.shields.io/badge/chip-ESP32-blue.svg?style=flat-square)
 
@@ -10,14 +11,16 @@
 
 Gen2 / classic ESP32: dIN rail module, four relays with power metering. Partition table at the ESP-IDF default `0x8000`, bootloader at `0x1000`, 80 MHz flash frequency, like the [Plus Plug S](PlusPlugS.md).
 
+> **Shelly's stable 2.2.0 has another layout** (app slots of `0x300000` instead of `0x200000`). The `Pro4PM` profile knows both layouts; see [2.2.0 layout](#220-layout). `build` picks the layout that matches your partition table.
+
 | Fact | Value |
 | --- | --- |
-| Profile | `Pro4PM` |
+| Profile | `Pro4PM` (both flash layouts, see [2.2.0 layout](#220-layout)) |
 | Flash | 8 MB (bootloader header and partition table) |
-| Official package | 2.1.1 |
+| Official package | 2.1.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | **`0x8000`** (ESP-IDF default) |
 | Bootloader address | `0x1000` |
-| App slot size | `0x200000` |
+| App slot size | `0x200000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
 
 ## Before you start
 
@@ -34,13 +37,15 @@ Check first:
 > [!IMPORTANT]
 > `build` refuses a config without Shelly's partition table. Copy `partitions/Pro4PM-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x8000"`.
+>
+> **On Shelly 2.2.0 or later** copy `partitions/Pro4PM-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
   variant: ESP32
   board: esp32dev
   flash_size: 8MB
-  partitions: Pro4PM-stock.csv        # copy from partitions/ in this repository
+  partitions: Pro4PM-stock.csv        # copy from partitions/ in this repository; Shelly 2.2.0+: Pro4PM-stock-2.2.0.csv
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -101,7 +106,7 @@ package, reads the update target slot. Command reference: [Commands](../commands
 
 ## Notes for this device
 
-**Not tried on a device.** The profile is made from Shelly's package for the app name `Pro4PM`; nobody has flashed it yet. The stock partition table is in `partitions/Pro4PM-stock.csv`. The DevKit image `python ota.py devkit Pro4PM` is built for it, but it has not been run on a dev board either (so the state stays 🧪, see [DevKit](../devkit.md)).
+**Not tried on a device.** The profile is made from Shelly's package for the app name `Pro4PM`; nobody has flashed it yet. The stock partition tables are in `partitions/Pro4PM-stock.csv` (before 2.2.0) and `partitions/Pro4PM-stock-2.2.0.csv`. The DevKit image `python ota.py devkit Pro4PM` takes the layout of the newest cached package, but it has not been run on a dev board either (so the state stays 🧪, see [DevKit](../devkit.md)).
 
 **Pins.** Not mapped here. No stock dump of this device has been analysed here; pins read from firmware or templates are "not confirmed" until someone has measured them.
 
@@ -113,6 +118,26 @@ default of the newer profiles, because a unit that Shelly has already updated ca
 the target slot for you ([why](../bootloader-and-slots.md#the-app-must-land-in-slot-0)).
 
 Please report the file written by `--log-file`, especially the lines `Update target slot`, `Boot: cur ... update?` and `Will write to slot`.
+
+## 2.2.0 layout
+
+Shelly's stable `2.2.0` for this device has a **different flash layout**. The `Pro4PM` profile lists it under `layouts:`; `build` uses it when your partition table matches it.
+
+| Firmware | `app_0` | `app_1` | `fs_0` / `fs_1` |
+| --- | --- | --- | --- |
+| before 2.2.0 | `0x10000` / `0x200000` | `0x290000` / `0x200000` | `0x210000` / `0x490000`, `0x80000` each |
+| 2.2.0 and later | `0x10000` / `0x300000` | `0x3f0000` / `0x300000` | `0x310000` / `0x6f0000`, `0xe0000` each |
+
+> [!NOTE]
+> **Untested:** read from the official 2.2.0 package; nobody has flashed a package for this layout yet.
+
+> [!CAUTION]
+> `send` refuses a package of this layout on firmware before 2.2.0 (`layouts:`, `--force` overrides; on a dev board such a forced package installed
+> nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
+
+- Fetch the package: `python ota.py fetch Pro4PM --insecure`. A device on older firmware: `python ota.py restore Pro4PM` first, then `send Pro4PM`.
+- Build against its table: copy `partitions/Pro4PM-stock-2.2.0.csv`, use it as `esp32: partitions:` in the ESPHome config and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x8000"`.
+- Then `python ota.py build Pro4PM app.ota.bin --esphome-factory app.factory.bin --esphome-yaml app.yaml`, and `send Pro4PM`.
 
 ## Way back
 

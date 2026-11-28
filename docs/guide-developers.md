@@ -16,7 +16,7 @@ profiles, partitions and the firmware cache from there and is not meant to be in
 | `ota.py` | Entry point and the command line (arguments, the help text, the command functions) |
 | `shelly_ota/` | The modules, one topic each (below) |
 | `devices/*.yaml`, `devices/profiles.lock` | One profile per device, plus the revision and content hash of each |
-| `partitions/<Profile>-stock.csv` | Shelly's partition table as an ESPHome `partitions:` CSV, one per profile |
+| `partitions/<Profile>-stock.csv` | Shelly's partition table as an ESPHome `partitions:` CSV, one per profile and flash layout (`<Profile>-stock-<version>.csv` for later ones) |
 | `docs/` | User docs, `docs/devices/<Profile>.md` one page per device |
 | `fw/` | Cache of the official Shelly packages (git-ignored, never committed) |
 | `out/`, `logs/`, `devkit-configs/` | Built ZIPs, send logs, DevKit configs (git-ignored; `out/` can hold credentials) |
@@ -77,6 +77,23 @@ python -m unittest discover tests
 - The profile revision test fails if a profile changed without a higher `revision:` ([step 10](#10-change-a-profile)).
 - CI (`.github/workflows/tests.yml`) runs `unittest` on Python 3.10 and 3.12 for pushes to `main` and for pull requests, without the firmware cache.
 - New code needs a test. Prefer small synthetic inputs over copies of Shelly firmware.
+
+### In Docker
+
+`docker/check.sh` (PowerShell: `docker\check.ps1`) runs the same in a Linux container. The checkout is mounted read-only and copied
+inside, so nothing is written into it. Docker has to be running; the script does not start it.
+
+| Call | What runs |
+| --- | --- |
+| `docker/check.sh ci` | The suite without a firmware cache on Python 3.10 and 3.12, like CI |
+| `docker/check.sh fw --sync` | The suite with the firmware cache; `--sync` (`-Sync`) first copies new files from your `fw/` into the volume `free-shelly-fw-cache`, `--fw DIR` (`-Fw`) names another folder. It lists the packages that are missing and never downloads one |
+| `docker/check.sh docs` | `mkdocs build --strict` |
+
+A git worktree without its own `fw/` takes the cache of the main checkout.
+
+> [!NOTE]
+> Five slow-download tests fail in the Linux container with the cache (also on `main`): Linux buffers up to a few MB of the ZIP, so
+> `send` counts it as downloaded long before the receiver has it.
 
 ## 4. Rules of the project
 
@@ -188,10 +205,15 @@ DevKit rules:
 
 ## 10. Change a profile
 
+To see whether Shelly has published something new: `python ota.py profiles --check-api --insecure` (add `--download` to compare the
+flash layout and loader of new packages).
+
 1. Edit `devices/<Profile>.yaml`.
 2. Raise `revision:` by one.
 3. `python ota.py profiles --update-lock`.
-4. Update `partitions/<Profile>-stock.csv` if the layout changed (`partition-csv`), and the device page.
+4. If Shelly changed the flash layout, do **not** overwrite the old table: add an entry under [`layouts:`](../devices/README.md#several-flash-layouts),
+   write `partitions/<Profile>-stock-<version>.csv` (`partition-csv <Profile> --version <version>`) and add a section to the device page, with the new CSV
+   named next to the ESPHome config. Do not use `add-device --force` for this: it replaces the profile.
 5. CHANGELOG: this is visible (the build report shows the new revision). Say if it is breaking: a changed `boot_min_version` or `app_slot_size` can make `build` refuse an old command.
 6. Run the tests; the revision test fails if you skip step 2 or 3.
 
@@ -241,7 +263,7 @@ Semantic Versioning; 0.x is experimental. The version is `__version__` in `shell
 **New device (PR)**
 
 - [ ] Profile from the official package, `revision: 1`, `boot_min_version` decided
-- [ ] `partitions/<Profile>-stock.csv`, offset and slot size match
+- [ ] `partitions/<Profile>-stock.csv` (and one CSV per further layout), offset and slot size match
 - [ ] `profiles.lock` updated
 - [ ] Test package builds, `inspect --device` clean
 - [ ] Device page with 🧪, pins "not confirmed" unless measured

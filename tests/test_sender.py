@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import builder, firmware, profile, sender  # noqa: E402
 
 
@@ -98,7 +98,7 @@ class SenderTests(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.profile = profile.load_profile("DuoBulbG3")
         self.zip = self.tmp / "t.zip"
-        shutil.copy(firmware.cached_zip("DuoBulbG3"), self.zip)
+        shutil.copy(base_zip("DuoBulbG3"), self.zip)
 
     def _shelly(self, **kw):
         s = FakeShelly(**kw)
@@ -352,7 +352,7 @@ class SlowDownloadTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, True)
         self.zip = self.tmp / "t.zip"
-        shutil.copy(firmware.cached_zip("DuoBulbG3"), self.zip)
+        shutil.copy(base_zip("DuoBulbG3"), self.zip)
         self.profile = profile.load_profile("DuoBulbG3")
         self.size = self.zip.stat().st_size
 

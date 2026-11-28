@@ -35,7 +35,7 @@ You need a Shelly of a supported model on **Shelly's own firmware**, **Python 3.
 
 **Download.** Get the [latest release](https://github.com/oxynatOr/free-shelly-ota/releases) (*Source code (zip)*) and unpack it, or run `git clone https://github.com/oxynatOr/free-shelly-ota`, then `pip install -r requirements.txt`.
 
-**1. Write your ESPHome config.** It must use Shelly's partition table and offset: copy `partitions/<Profile>-stock.csv` next to your YAML and set `CONFIG_PARTITION_TABLE_OFFSET` to the value on the device page. Without it `build` refuses; it checks the partition table, not the rest of your config. The exact YAML is in the [guide, step 5](docs/guide.md#5-write-the-esphome-config).
+**1. Write your ESPHome config.** It must use Shelly's partition table and offset: copy `partitions/<Profile>-stock.csv` next to your YAML (on Shelly 2.2.0 or later many devices need the second CSV their device page names) and set `CONFIG_PARTITION_TABLE_OFFSET` to the value on the device page. Without it `build` refuses; it checks the partition table, not the rest of your config. The exact YAML is in the [guide, step 5](docs/guide.md#5-write-the-esphome-config).
 
 **2. Compile and pack.** `--compile` runs ESPHome for you (the `esphome` command, else Docker; the first Docker compile downloads the toolchain, see [Compile](docs/commands.md#compile)).
 
@@ -68,7 +68,7 @@ python ota.py send PlugMG3 out/PlugMG3-app-<date>.zip --ip <device IP>
 
 ## Supported devices
 
-**65 profiles:** ✅ 13 confirmed · 🟡 12 partly checked · 🔬 11 DevKit-tested · 🧪 29 untested
+**61 profiles:** ✅ 13 confirmed · 🟡 8 partly checked · 🔬 25 DevKit-tested · 🧪 15 untested
 
 Click a device for its page. Open a generation to see its devices: up to five that ran on real hardware, confirmed (✅) ones first, then partly checked (🟡). The counts cover every profile; the full list, with 🔬 and 🧪, is in the [device overview](docs/devices/README.md#devices).
 
@@ -90,7 +90,7 @@ All 18 Gen2 profiles: [device overview](docs/devices/README.md#gen2-esp32)
 </details>
 
 <details>
-<summary><b>Gen3 (ESP32-C3)</b>: 30 profiles: ✅ 9 · 🟡 9 · 🔬 0 · 🧪 12</summary>
+<summary><b>Gen3 (ESP32-C3)</b>: 26 profiles: ✅ 9 · 🟡 5 · 🔬 7 · 🧪 5</summary>
 
 ![Chip: ESP32-C3](https://img.shields.io/badge/chip-ESP32--C3-blue.svg?style=flat-square)
 
@@ -102,12 +102,12 @@ All 18 Gen2 profiles: [device overview](docs/devices/README.md#gen2-esp32)
 | [PM Mini Gen3 (no relay)](docs/devices/MiniPMG3.md) | ✅ |
 | [Multicolor Bulb E27 Gen3](docs/devices/RGBCCTBulbG3.md) | ✅ |
 
-All 30 Gen3 profiles: [device overview](docs/devices/README.md#gen3-esp32-c3)
+All 26 Gen3 profiles: [device overview](docs/devices/README.md#gen3-esp32-c3)
 
 </details>
 
 <details>
-<summary><b>Gen4 (ESP32-C6)</b>: 17 profiles: ✅ 1 · 🟡 1 · 🔬 7 · 🧪 8</summary>
+<summary><b>Gen4 (ESP32-C6)</b>: 17 profiles: ✅ 1 · 🟡 1 · 🔬 14 · 🧪 1</summary>
 
 ![Chip: ESP32-C6](https://img.shields.io/badge/chip-ESP32--C6-blue.svg?style=flat-square)
 

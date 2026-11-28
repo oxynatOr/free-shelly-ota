@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import bootswap, builder, firmware, profile, sender, ui  # noqa: E402
 from shelly_ota.devicegen import parse_partitions  # noqa: E402
 from test_extras import FakeRpcShelly, free_udp_port  # noqa: E402
@@ -59,7 +59,7 @@ class BootswapTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.profile = profile.load_profile("PlugMG3")
-        self.official = firmware.cached_zip("PlugMG3")
+        self.official = base_zip("PlugMG3")
         self.app = fake_app(100_000)
         (self.tmp / "app.bin").write_bytes(self.app)
 
@@ -207,6 +207,22 @@ class BootswapTests(unittest.TestCase):
             self._build(make_factory(self.official, fake_app(100_000)[:-1] + b"\x01"))
         self.assertIn("same build", str(cm.exception))
         self.assertIn("Fix:", str(cm.exception))
+
+    @needs_fw
+    def test_layout_error_names_the_csv_of_the_chosen_layout(self):
+        later = profile.load_profile("PlugMG3").variants()[-1]
+        official = firmware.zip_for_layout(later)
+        if official is None:
+            self.skipTest("no package of the later layout cached")
+
+        def move_app0(pt):
+            pt[2 * 32 + 8:2 * 32 + 12] = (0x30000).to_bytes(4, "little")
+        app = fake_app(100_000)
+        (self.tmp / "app.bin").write_bytes(app)
+        (self.tmp / "factory.bin").write_bytes(make_factory(official, app, pt_mod=move_app0))
+        with self.assertRaises(builder.OtaError) as cm:
+            builder.build(later, self.tmp / "app.bin", official, self.tmp / "o.zip", factory=self.tmp / "factory.bin")
+        self.assertIn("partitions: PlugMG3-stock-2.2.0.csv", str(cm.exception))
 
     def test_app_checks_name_the_fix(self):
         with self.assertRaises(builder.OtaError) as cm:

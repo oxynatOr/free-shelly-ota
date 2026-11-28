@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from needs_fw import needs_fw  # noqa: E402
+from needs_fw import base_zip, needs_fw  # noqa: E402
 from shelly_ota import builder, firmware, profile  # noqa: E402
 
 
@@ -30,7 +30,7 @@ class BuilderTests(unittest.TestCase):
 
     def _build(self, device, app_bytes, **kw):
         p = profile.load_profile(device)
-        official = firmware.cached_zip(p.package_name, prerelease=p.channel == "beta")
+        official = base_zip(p.name) if p.layouts else firmware.cached_zip(p.package_name, prerelease=p.channel == "beta")
         self.assertIsNotNone(official, "seed ZIP missing in fw/shelly")
         app = self.tmp / "app.bin"
         app.write_bytes(app_bytes)
@@ -41,7 +41,7 @@ class BuilderTests(unittest.TestCase):
         checked = 0
         for device in profile.list_devices():
             p = profile.load_profile(device)
-            official = firmware.cached_zip(p.package_name, prerelease=p.channel == "beta")
+            official = base_zip(p.name) if p.layouts else firmware.cached_zip(p.package_name, prerelease=p.channel == "beta")
             if official is None:  # not in the local firmware cache: nothing to compare with
                 continue
             with zipfile.ZipFile(official) as z:
@@ -70,7 +70,7 @@ class BuilderTests(unittest.TestCase):
 
     @needs_fw
     def test_rejects_bootloader_and_factory_images(self):
-        boot = zipfile.ZipFile(firmware.cached_zip("PlugMG3")).read("bootloader.bin")
+        boot = zipfile.ZipFile(base_zip("PlugMG3")).read("bootloader.bin")
         with self.assertRaises(builder.OtaError) as cm:
             self._build("PlugMG3", boot)
         self.assertIn("factory", str(cm.exception))
