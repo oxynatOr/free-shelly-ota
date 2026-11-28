@@ -259,7 +259,7 @@ python ota.py send Mini1PMG4ZB out/<package>.zip --ip <the address printed> --dr
 
 ## add-device
 
-Creates a profile from an official ZIP: `python ota.py add-device NewDevice.zip`. `--name NAME` sets the device name (default: the name in the ZIP),
+Creates a profile from an official ZIP: `python ota.py add-device NewDevice.zip`. `--name NAME` sets the device name (default: the name in the ZIP; if it differs, the profile gets a `package:` line with the ZIP's name),
 `--parent DEVICE` marks a variant of another device (for example the Zigbee version), `--force` overwrites an existing profile. The new profile starts at
 `revision: 1`; run `python ota.py profiles --update-lock` afterwards ([Versions](versions.md)).
 
