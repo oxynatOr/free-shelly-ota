@@ -1,7 +1,7 @@
 {
   "Dimmer0110VPMG3": {
-    "revision": 4,
-    "hash": "6d98618e39a7"
+    "revision": 5,
+    "hash": "32a18d038649"
   },
   "Dimmer0110VPMG4": {
     "revision": 2,
@@ -16,8 +16,8 @@
     "hash": "db878ba2737a"
   },
   "DuoBulbG3": {
-    "revision": 4,
-    "hash": "390f8f28ae21"
+    "revision": 5,
+    "hash": "3067923fb7af"
   },
   "EMG3": {
     "revision": 2,
@@ -32,24 +32,24 @@
     "hash": "fa7fee3e6280"
   },
   "I4G3": {
-    "revision": 4,
-    "hash": "b37117706be5"
+    "revision": 5,
+    "hash": "60aec64adfea"
   },
   "I4G4": {
     "revision": 2,
     "hash": "ef4a835a79e5"
   },
   "Mini1G3": {
-    "revision": 3,
-    "hash": "417942ccfacd"
+    "revision": 4,
+    "hash": "e8e57e014250"
   },
   "Mini1G4": {
     "revision": 2,
     "hash": "ea3ba38c8d82"
   },
   "Mini1PMG3": {
-    "revision": 4,
-    "hash": "8fb3f8e5609d"
+    "revision": 5,
+    "hash": "2b8a46d6b11c"
   },
   "Mini1PMG4": {
     "revision": 2,
@@ -64,36 +64,36 @@
     "hash": "d7da89b63c36"
   },
   "MiniPMG3": {
-    "revision": 4,
-    "hash": "252f1394d823"
+    "revision": 5,
+    "hash": "67b0a6dc8ae5"
   },
   "OutdoorPlugSG3": {
-    "revision": 4,
-    "hash": "3a124ed9751e"
+    "revision": 5,
+    "hash": "b5a132b5ff9f"
   },
   "Pill": {
-    "revision": 4,
-    "hash": "331529378a0f"
+    "revision": 5,
+    "hash": "731fc6c0538c"
   },
   "PlugAZ": {
     "revision": 2,
     "hash": "b69a128a6052"
   },
   "PlugMG3": {
-    "revision": 4,
-    "hash": "70f9fcaed745"
+    "revision": 5,
+    "hash": "d15f9eafcb9e"
   },
   "PlugMG3-beta": {
     "revision": 3,
     "hash": "f7afba4980c2"
   },
   "PlugPMG3": {
-    "revision": 4,
-    "hash": "04b839468f4c"
+    "revision": 5,
+    "hash": "2e47c127f41b"
   },
   "PlugSG3": {
-    "revision": 4,
-    "hash": "d5c4f1661445"
+    "revision": 5,
+    "hash": "554f15de51a3"
   },
   "PlugUS": {
     "revision": 1,
@@ -196,44 +196,44 @@
     "hash": "2bc9d57b8b99"
   },
   "RGBCCTBulbG3": {
-    "revision": 4,
-    "hash": "bc90ce5a24a7"
+    "revision": 5,
+    "hash": "1cb16ed43df9"
   },
   "S1G3": {
-    "revision": 4,
-    "hash": "51cd9aad2586"
+    "revision": 5,
+    "hash": "e1be606ec9e9"
   },
   "S1G4": {
     "revision": 2,
     "hash": "ec6b4b7eba2e"
   },
   "S1LG3": {
-    "revision": 4,
-    "hash": "f798d1f2a06e"
+    "revision": 5,
+    "hash": "5473ff7ec112"
   },
   "S1LG4": {
     "revision": 2,
     "hash": "31ba6db7ca09"
   },
   "S1PMG3": {
-    "revision": 4,
-    "hash": "d6ccc11c8137"
+    "revision": 5,
+    "hash": "9413b1c70ed5"
   },
   "S1PMG4": {
     "revision": 2,
     "hash": "9981bbc34226"
   },
   "S2LG3": {
-    "revision": 4,
-    "hash": "0052505bf8af"
+    "revision": 5,
+    "hash": "b4346846afec"
   },
   "S2LG4": {
     "revision": 2,
     "hash": "a9fb127b7cc4"
   },
   "S2PMG3": {
-    "revision": 4,
-    "hash": "8643c27a19dd"
+    "revision": 5,
+    "hash": "f26015596ca9"
   },
   "S2PMG4": {
     "revision": 2,
