@@ -57,6 +57,14 @@ class CheckApiTests(unittest.TestCase):
             run(None, query=query)
         self.assertEqual(query.call_count, 1)
 
+    def test_the_download_asks_as_the_check_did(self):
+        listed = {"stable": {"version": "9.0.0"}}
+        only_for_old = lambda *a, **k: listed if k["from_version"] else {"time": 1}
+        for query, expected in ((only_for_old, apicheck.OLD_DEVICE), (lambda *a, **k: listed, None)):
+            fetch = mock.Mock(side_effect=builder.OtaError("stop here"))
+            run(None, query=query, download=True, fetch=fetch)
+            self.assertEqual(fetch.call_args.kwargs["from_version"], expected)
+
     @needs_fw
     def test_download_says_which_layout_fits(self):
         later = profile.load_profile("PlugMG3").variants()[-1]

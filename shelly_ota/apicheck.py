@@ -53,8 +53,10 @@ def check_api(names: list[str], *, download: bool = False, insecure: bool = Fals
             reply = _ask(query, asked, insecure, cafile, None, sleep)
             release = _release(reply, p, channel)
             beta = _release(reply, p, "beta") if channel == "stable" else None
+            seen_as = None   # the device version the release was only listed for; the download has to ask the same way
             if release is None:
                 release = _release(_ask(query, asked, insecure, cafile, OLD_DEVICE, sleep), p, channel)
+                seen_as = OLD_DEVICE
         except OtaError as e:
             if "CERTIFICATE_VERIFY" in str(e):
                 raise   # every request would fail the same way; the message says how to go on
@@ -63,12 +65,12 @@ def check_api(names: list[str], *, download: bool = False, insecure: bool = Fals
             continue
         if release is None:
             out(f"{name}: no {channel} release listed")
-        offered = [(channel, release)] if release else []
+        offered = [(channel, release, seen_as)] if release else []
         if beta:
-            offered.append(("beta", beta))
-        for kind, entry in offered:
+            offered.append(("beta", beta, None))
+        for kind, entry, from_version in offered:
             line, bad = _report(p, name, asked, kind, str(entry.get("version")), download=download, insecure=insecure,
-                                cafile=cafile, fetch=fetch)
+                                cafile=cafile, fetch=fetch, from_version=from_version)
             out(line)
             if bad and name not in attention:
                 attention.append(name)
@@ -76,7 +78,7 @@ def check_api(names: list[str], *, download: bool = False, insecure: bool = Fals
 
 
 def _report(p: profile.Profile, name: str, asked: str, channel: str, version: str, *, download: bool, insecure: bool,
-            cafile: Path | None, fetch) -> tuple[str, bool]:
+            cafile: Path | None, fetch, from_version: str | None) -> tuple[str, bool]:
     """The line for one offered version, and whether it needs attention."""
     cached = firmware.list_versions(p.package_name)
     if version in cached:
@@ -89,7 +91,7 @@ def _report(p: profile.Profile, name: str, asked: str, channel: str, version: st
         return line, False
     try:
         path = fetch(p.package_name, asked, insecure=insecure, cafile=cafile, refresh=True, channel=channel,
-                     alt=p.update_id if p.parent else None)
+                     alt=p.update_id if p.parent else None, from_version=from_version)
     except OtaError as e:
         return f"{line}; WARNING: download failed: {e}", True
     with zipfile.ZipFile(path) as zf:
