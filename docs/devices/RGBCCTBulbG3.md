@@ -19,7 +19,7 @@ The LEDs sit behind a **KP18068** 5-channel driver on SDA GPIO4 / SCL GPIO5. ESP
 | Flash | 8 MB |
 | Official package | 2.2.1 (stable, seen 2026-11-23), with the 2.2.1 layout. The first layout needs a package before 2.2.1; the hardware runs were made with 2.0.1 |
 | Partition table | `0x10000` |
-| App slot size | `0x280000` before Shelly 2.2.1, `0x300000` from 2.2.1 |
+| App slot size | `0x280000` before Shelly 2.2.0-beta2, `0x300000` in 2.2.0-beta2 and from 2.2.1 (the 2.2.0 package was not read) |
 
 > [!NOTE]
 > **Confirmed:** the whole chain ran on a real device: `send` with `--esphome-factory` ran through, ESPHome runs and the light was tested on the bulb (owner, 2026-10-11): channel order and the single warm white LED confirmed. Colour accuracy, the lowest dimming steps and the driver currents are not measured. The colour temperature light of the example config (`rgbw_ct_table`, stock table) was flashed afterwards and runs (owner, 2026-10-16); its colours were not compared with the stock firmware.
@@ -40,7 +40,8 @@ Check first:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/RGBCCTBulbG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
 >
-> **On Shelly 2.2.1 or later** copy `partitions/RGBCCTBulbG3-stock-2.2.1.csv` instead and use that name under `partitions:` ([2.2.1 layout](#221-layout)).
+> **On Shelly 2.2.1 or later, or on 2.2.0-beta2,** copy `partitions/RGBCCTBulbG3-stock-2.2.1.csv` instead and use that name under `partitions:` ([2.2.1 layout](#221-layout)).
+> On 2.2.0 update to 2.2.1 first: that package was not read.
 
 ```yaml
 esp32:
@@ -146,7 +147,7 @@ Shelly's stable `2.2.1` for this bulb has a **different flash layout**, the one 
 > - The same package with `send RGBCCTBulbG3-v2 --force` then worked: `Storing core dumps to app_1 (0x400000)`, `Will write to slot 1`, `Boot: cur 010002ff, new 010003ff, min 010002ff, update? 0`, refused eFuse writes in the log (see [background](../background.md#efuse)), the installer reported success, and the app ran about 9 s later.
 > - That app then took the bulb back to Shelly 2.2.1 from the official ZIP (all parts: `boot`, `pt`, `otadata`, `nvs`, `app`, `fs`). Shelly 2.2.1 started again and connected to the Wi-Fi and the cloud.
 >
-> **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `restore RGBCCTBulbG3-v2` with `ota.py`, `inspect --device`, a later ESPHome OTA, the table in flash (no dump), and whether Shelly's 2.2.0 for this bulb already had the layout (`layout_since` is `2.2.1`, the first version seen with it). `boot_min_version` is `1.0.9`, as for `RGBCCTBulbG3`.
+> **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `restore RGBCCTBulbG3-v2` with `ota.py`, `inspect --device`, a later ESPHome OTA, the table in flash (no dump), and whether Shelly's 2.2.0 for this bulb already had the layout (the profile's `since:` is `2.2.1`, the first stable version seen with it). `boot_min_version` is `1.0.9`, as for `RGBCCTBulbG3`.
 
 > [!CAUTION]
 > **Match the package to the firmware.** `send` refuses a package of the 2.2.1 layout on firmware before 2.2.0-beta2 (`layouts:`,

@@ -116,7 +116,7 @@ Your own YAML decides what the device does. Rules that make the update work:
    For a profile you made yourself:
    `python ota.py partition-csv <Profile> -o <Profile>-stock.csv`.
 2. **Offset.** `CONFIG_PARTITION_TABLE_OFFSET` must be the profile's `pt_offset` (`0x10000` for most, `0xf000` for H&T, Mini 1 Gen3, Mini 1PM Gen3, PM Mini Gen3,
-   1 Gen3, 1PM Gen3, i4 Gen3, Dimmer 0/1-10V PM Gen3; `0x8000` for the classic ESP32 Gen2 devices). Your device page states it.
+   1 Gen3, 1PM Gen3, i4 Gen3, Dimmer 0/1-10V PM Gen3, AZ Plug; `0x8000` for the classic ESP32 Gen2 devices). Your device page states it.
 3. **The block that every config needs:**
 
    ```yaml

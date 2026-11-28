@@ -17,7 +17,7 @@
 | Flash | 8 MB |
 | Official package | 2.2.0 (stable, seen 2026-11-11), with the 2.2.0 layout. The first layout needs a package before 2.2.0: 2.1.1 is the step the update API offered from 1.7.3 on 2026-11-11 (`fetch PlugSG3 --from-version 1.7.3`); 2.1.0 (stable from 2026-10-14) has the same bootloader, partition table and filesystem as 2.0.1, and the hardware runs were made with 2.0.1 |
 | Partition table | `0x10000` |
-| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
+| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 | ESPHome device page | [Shelly Plug S Gen3](https://devices.esphome.io/devices/shelly-plug-s-gen3/) |
 
 > [!NOTE]
@@ -41,7 +41,7 @@ Check first:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/PlugSG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
 >
-> **On Shelly 2.2.0 or later** copy `partitions/PlugSG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/PlugSG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:

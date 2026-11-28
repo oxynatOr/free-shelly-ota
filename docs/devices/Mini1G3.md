@@ -20,7 +20,7 @@ Like the H&T Gen3 and the Mini 1PM Gen3, the official package keeps its partitio
 | Flash | 8 MB |
 | Official package | 2.0.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0xf000` |
-| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
+| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 | ESPHome device page | [Shelly 1 Mini Gen3](https://devices.esphome.io/devices/shelly-1-mini-gen3/) |
 
 ## Before you start
@@ -39,7 +39,7 @@ Check first:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/Mini1G3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
 >
-> **On Shelly 2.2.0 or later** copy `partitions/Mini1G3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/Mini1G3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:

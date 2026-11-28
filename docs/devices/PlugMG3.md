@@ -25,7 +25,7 @@ The first device this tool was confirmed on. A second plug, reported by [815rx1]
 | Flash | 8 MB |
 | Official package | 2.1.0 (stable since 2026-10-14; on 2026-10-27 the update API lists no stable release for this device and the 2.0.1 and 2.1.0 files answer 404 on Shelly's CDN, so keep your cached package; bootloader, partition table and filesystem are the same as in 2.0.1; flashed on a real plug with 2.1.0 and with 2.0.1); for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0x10000` |
-| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
+| App slot size | `0x2a0000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 
 > [!NOTE]
 > **Confirmed:** the whole chain ran on two real plugs: `send` from stock 1.8.99 (running from slot 1), then two ESPHome OTAs. The second plug used the official 2.1.0 package and ESPHome 2026.9.1; both OTAs (ESPHome CLI and the Home Assistant ESPHome builder) took effect.
@@ -46,7 +46,7 @@ Check first:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/PlugMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
 >
-> **On Shelly 2.2.0 or later** copy `partitions/PlugMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/PlugMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:

@@ -19,7 +19,7 @@ Reported: the USB-C port exposes the chip's USB Serial/JTAG, so this device can 
 | Flash | 8 MB |
 | Official package | 2.0.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0x10000` |
-| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 | Bootloader `min_version` | `1.0.9` (set in the profile) |
 | ESPHome device page | [Shelly The Pill](https://devices.esphome.io/devices/shelly-the-pill/) |
 
@@ -42,7 +42,7 @@ Also:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/Pill-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
 >
-> **On Shelly 2.2.0 or later** copy `partitions/Pill-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/Pill-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:

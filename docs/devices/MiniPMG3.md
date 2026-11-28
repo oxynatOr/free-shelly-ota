@@ -21,7 +21,7 @@ The first device that was flashed and reported by someone else: thanks to [imsan
 | Flash | 8 MB |
 | Official package | 2.1.0 (the reported flash started from stock 2.0.1, see the notes); for the [second layout](#220-layout): 2.2.0 |
 | Partition table | **`0xf000`** (not `0x10000`) |
-| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 | Bootloader `min_version` | `1.0.9` (set in the profile) |
 | ESPHome device page | [Shelly PM Mini Gen3](https://devices.esphome.io/devices/shelly-pm-mini-gen3/) |
 
@@ -48,7 +48,7 @@ Also:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/MiniPMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
 >
-> **On Shelly 2.2.0 or later** copy `partitions/MiniPMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/MiniPMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:

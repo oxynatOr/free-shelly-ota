@@ -21,7 +21,7 @@ This plug **only measures**: Shelly lists the Plug PM Gen3 as a monitoring devic
 | Flash | 8 MB |
 | Official package | 2.1.0 (stable since 2026-10-14; Bootloader, partition table and filesystem are the same as in 2.0.1; the hardware run was made with 2.0.1); for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0x10000` |
-| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 
 > [!NOTE]
 > **Partly checked:** flashed over OTA with this tool on a real plug (`send` with `--esphome-factory`; reported by the owner, 2026-10-12). The log lines and the readings are not recorded here yet.
@@ -46,7 +46,7 @@ Also:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/PlugPMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
 >
-> **On Shelly 2.2.0 or later** copy `partitions/PlugPMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/PlugPMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:

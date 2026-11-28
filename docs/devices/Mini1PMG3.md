@@ -19,7 +19,7 @@ This is the Mini with a relay; the measuring-only [PM Mini Gen3](MiniPMG3.md) is
 | Flash | 8 MB |
 | Official package | 2.2.1 (stable, seen 2026-11-20), with the 2.2.1 layout. The first layout needs a 2.1.x or older package: 2.1.0 (stable from 2026-10-14) has the same bootloader, partition table and filesystem as 2.0.1, and the hardware runs were made with 2.1.0 |
 | Partition table | `0xf000` |
-| App slot size | `0x2a0000` before Shelly 2.2.1, `0x300000` from 2.2.1 |
+| App slot size | `0x2a0000` before Shelly 2.2.0-beta2, `0x300000` in 2.2.0-beta2 and from 2.2.1 (the 2.2.0 package was not read) |
 | ESPHome device page | [Shelly 1PM Mini Gen3](https://devices.esphome.io/devices/shelly-1pm-mini-gen3/) |
 
 ## Before you start
@@ -38,7 +38,8 @@ Check first:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/Mini1PMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
 >
-> **On Shelly 2.2.1 or later** copy `partitions/Mini1PMG3-stock-2.2.1.csv` instead and use that name under `partitions:` ([2.2.1 layout](#221-layout)).
+> **On Shelly 2.2.1 or later, or on 2.2.0-beta2,** copy `partitions/Mini1PMG3-stock-2.2.1.csv` instead and use that name under `partitions:` ([2.2.1 layout](#221-layout)).
+> On 2.2.0 update to 2.2.1 first: that package was not read.
 
 ```yaml
 esp32:
@@ -135,7 +136,7 @@ Shelly's stable `2.2.1` for this device has a **different flash layout**, the on
 > - A plain package built with `Mini1PMG3-v2` (no `--esphome-factory`), whose app was a custom ESP-IDF app that replaces the bootloader itself and not ESPHome, was uploaded through Shelly's web interface (Settings → Firmware). One run: the installer took it and the app started. There is no device log of that run, so the slot it was written to is not recorded.
 > - That app then took the unit back to Shelly 2.2.1 from the official ZIP (all parts: `boot`, `pt`, `otadata`, `nvs`, `app`, `fs`). Shelly 2.2.1 started again and joined the Wi-Fi.
 >
-> **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `send` and `restore Mini1PMG3-v2` with `ota.py`, `inspect --device`, a later ESPHome OTA, the table in flash (no dump), the update path to 2.2.1, and whether Shelly's 2.2.0 for this device already had the layout (`layout_since` is `2.2.1`, the first version seen with it). `boot_min_version` is `1.0.9`, as for `Mini1PMG3`.
+> **Not checked:** ESPHome with this profile, a package built with `--esphome-factory` (the bootloader swap), `send` and `restore Mini1PMG3-v2` with `ota.py`, `inspect --device`, a later ESPHome OTA, the table in flash (no dump), the update path to 2.2.1, and whether Shelly's 2.2.0 for this device already had the layout (the profile's `since:` is `2.2.1`, the first stable version seen with it). `boot_min_version` is `1.0.9`, as for `Mini1PMG3`.
 
 > **Partly checked with ESPHome (one unit, `S3SW-001P8EU`, thanks to [broglea](https://github.com/broglea)):**
 >

@@ -19,7 +19,7 @@ Gen3 / ESP32-C3.
 | Flash | 8 MB |
 | Official package | 2.2.0 (stable, seen 2026-11-11), with the 2.2.0 layout. The first layout needs a 2.1.x package: on 2026-11-11 Shelly's own stable update took a unit on 1.4.99 to 2.1.1 first (`fetch S2PMG3 --from-version 1.4.99` asks the update API for that step; not run) |
 | Partition table | `0x10000` |
-| App slot size | `0x2c0000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
+| App slot size | `0x2c0000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 | ESPHome device page | [Shelly 2 PM Gen3](https://devices.esphome.io/devices/shelly-2-pm-gen3/) |
 
 ## Before you start
@@ -38,7 +38,7 @@ Check first:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/S2PMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
 >
-> **On Shelly 2.2.0 or later** copy `partitions/S2PMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/S2PMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:

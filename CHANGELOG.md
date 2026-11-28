@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- Docs and profile comments say which version `send` really compares with (`from:`, else `since:`), that Shelly 2.2.0-beta2 needs the second CSV too, and that the Mini 1PM Gen3 and Multicolor Bulb 2.2.0 packages were not read; the `partition-csv` option table no longer lists two options twice. Raised by [csch0](https://github.com/csch0) in [#153](https://github.com/oxynatOr/free-shelly-ota/pull/153), thanks. Documentation only, not breaking: no behaviour changed; the revision of 17 profiles went up for the comment.
 - `restore` warns when the package has an older flash layout than the device's firmware: Shelly's installer needs two runs then and reports success after the first (seen on a dev board, 2.2.0 to 2.1.1). Not breaking.
 - More dev board runs with the layouts: downgrade, way back, `2.2.0-beta2`, `S1G3` with both layouts, the first run of the `PlugAZ` 2.2.0 layout (now DevKit-tested), `--slot-swap` on a `0xf000` device. Documentation only.
 - `build --channel beta` and `partition-csv --channel beta` use the newest cached beta (before, `--channel` only counted when something was downloaded, so a cached stable package was taken silently). `profiles --check-api` also reports an offered beta. Visible: `build --channel beta` stops if no beta is cached.

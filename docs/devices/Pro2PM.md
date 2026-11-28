@@ -132,7 +132,7 @@ Shelly's stable `2.2.0` for this device has a **different flash layout**. The `P
 > **Untested:** read from the official 2.2.0 package; nobody has flashed a package for this layout yet.
 
 > [!CAUTION]
-> `send` refuses a package of this layout on firmware before 2.2.0 (`layout_since`, `--force` overrides; on a dev board such a forced package installed
+> `send` refuses a package of this layout on firmware before 2.2.0 (`layouts:`, `--force` overrides; on a dev board such a forced package installed
 > nothing). A package of the first layout on 2.2.0 only gets a warning (on a dev board with `PlugSG3` it ran).
 
 - Fetch the package: `python ota.py fetch Pro2PM --insecure`. A device on older firmware: `python ota.py restore Pro2PM` first, then `send Pro2PM`.

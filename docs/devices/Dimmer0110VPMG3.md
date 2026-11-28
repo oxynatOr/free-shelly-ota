@@ -19,7 +19,7 @@ Gen3 / ESP32-C3.
 | Flash | 8 MB |
 | Official package | 2.0.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0xf000` |
-| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 
 ## Before you start
 
@@ -37,7 +37,7 @@ Check first:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/Dimmer0110VPMG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0xf000"`.
 >
-> **On Shelly 2.2.0 or later** copy `partitions/Dimmer0110VPMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/Dimmer0110VPMG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:

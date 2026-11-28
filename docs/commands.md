@@ -77,7 +77,7 @@ file.
 | `--image NAME:TAG` | no | a fixed ESPHome version | Only with `--compile` and Docker: the ESPHome image |
 | `--esphome-yaml YAML` | no | none | Also check the partition offset and `partitions:` CSV of this config, and run the [credential check](credential-check.md) |
 | `--esphome-factory FACTORY.bin` | no | none | Also ship ESPHome's bootloader and a clean `otadata` taken from this factory image (same build as `APP.bin`). See [Bootloader and slots](bootloader-and-slots.md) |
-| `--layout SINCE` | no | your table | Only for a profile with [several flash layouts](../devices/README.md#several-flash-layouts): build for `base` or the layout starting with Shelly `SINCE`. Without it the CSV of the ESPHome config or `factory.bin` decides; with neither, the newest cached official package does. Gen3 and Pro devices whose layout Shelly 2.2.x changed have two |
+| `--layout SINCE` | no | your table | Only for a profile with [several flash layouts](../devices/README.md#several-flash-layouts): build for `base` or the layout whose `since:` in the profile is `SINCE`. Without it the CSV of the ESPHome config or `factory.bin` decides; with neither, the newest cached official package does. Gen3 and Pro devices whose layout Shelly 2.2.x changed have two |
 | `--pt-addr ADDR` | no | none | **Experimental, seen working on dev boards, and on a real device with a plain send.** Only with `--esphome-factory`, from an ESPHome build that leaves `CONFIG_PARTITION_TABLE_OFFSET` unset: ship Shelly's partition table at `ADDR` (only `0x8000`) instead of where Shelly's is, which stays untouched. Needed for `send --slot-swap`; at Shelly's own address the installer keeps the table in a journal ESPHome's bootloader does not read. Going back to Shelly's firmware afterwards worked on two dev boards (ESPHome OTA of Shelly's app image, then `restore`, [how](slot-swap.md#the-way-back-over-the-network-seen-on-two-boards)) ([details](slot-swap.md)) |
 | `--boot-min-version VER` | no | profile value, else one patch above Shelly's | Only with `--esphome-factory`: the bootloader `min_version` in the manifest. The installer writes only a newer bootloader. `keep` leaves it, which probably makes the installer skip the bootloader |
 | `--secrets FILE` | no | `secrets.yaml` next to `--esphome-yaml` | Values to look for in the image |
@@ -141,8 +141,8 @@ app subtypes swapped in the package's partition table, which `build --pt-addr 0x
 ([how, and what is not tested](slot-swap.md)).
 
 For a profile with [several flash layouts](../devices/README.md#several-flash-layouts) `send` reads the layout from the package; there is no option for it.
-It refuses a package of a later layout on firmware older than that layout (`--force` overrides), and only warns when the package has an
-older layout than the firmware on the device.
+It refuses a package of a later layout on firmware older than the first one with that layout (`from:` in the profile, else `since:`;
+`--force` overrides), and only warns when the package has an older layout than the firmware on the device.
 
 It also asks the device to fetch `http://<this PC>:<port>/` itself (RPC `HTTP.GET`), so a Shelly that cannot reach this PC
 (firewall, VLAN) is reported at once instead of after the `--timeout`. With `--dry-run` that is an error; a real `send` only
@@ -286,15 +286,13 @@ profile's `pt_offset`.
 | --- | --- | --- | --- |
 | `DEVICE` | yes | | Profile name |
 | `-o`, `--output CSV` | no | print | Write to this file; refuses to overwrite an existing file |
-| `--layout SINCE` | no | newest | For a device with several flash layouts: `base` or the Shelly version the layout starts with |
-| `--version VER` | no | newest stable | Use this version |
-| `--official ZIP` | no | cache | Read this ZIP |
+| `--layout SINCE` | no | newest | For a device with several flash layouts: `base` or the layout's `since:` in the profile |
+| `--version VER` | no | newest stable | Use this cached version (a pre-release only with this option or `--channel beta`) |
+| `--official ZIP` | no | the cache | Use this official ZIP instead of the cached one |
 | `--channel stable\|beta` | no | `stable` | `beta`: read the newest cached beta |
 | `--download` | no | off | Download a missing package without asking |
 | `--insecure` / `--cafile PEM` | no | none | How the download checks TLS (see [`fetch`](#fetch)) |
 | `--force` | no | off | Overwrite an existing output file |
-| `--official ZIP` | no | the cache | Use this official ZIP instead of the cached one |
-| `--version VER` | no | newest stable cached | Use this cached version (a pre-release only with this option) |
 
 ## inspect
 

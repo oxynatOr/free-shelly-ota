@@ -20,7 +20,7 @@ The owner reports the same main board as the Multicolor Bulb with a different la
 | Flash | 8 MB |
 | Official package | 2.0.1; for the [second layout](#220-layout): 2.2.0 |
 | Partition table | `0x10000` |
-| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 |
+| App slot size | `0x280000` before Shelly 2.2.0, `0x300000` from 2.2.0 (and in 2.2.0-beta2) |
 
 > [!NOTE]
 > **Partly checked:** the owner flashed the package from this tool over OTA and the bulb runs ESPHome (before that an ESPHome config was flashed over UART). The GPIOs are **not confirmed on the hardware** (they were not checked with the LEDs); they come from the stock firmware, see [Pins](#pins). The log of the OTA run is not recorded here.
@@ -44,7 +44,7 @@ Also:
 > `build` refuses a config without Shelly's partition table. Copy `partitions/DuoBulbG3-stock.csv` from this repository next to your
 > YAML and keep `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"`.
 >
-> **On Shelly 2.2.0 or later** copy `partitions/DuoBulbG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
+> **On Shelly 2.2.0 or later, or on 2.2.0-beta2,** copy `partitions/DuoBulbG3-stock-2.2.0.csv` instead and use that name under `partitions:` ([2.2.0 layout](#220-layout)).
 
 ```yaml
 esp32:
